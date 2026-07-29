@@ -59,6 +59,141 @@ class WorkoutPlanScreen extends StatelessWidget {
   }
 
   // =========================================================
+  //  MODAL DE EDIÇÃO (Trazido para funcionar direto da lista)
+  // =========================================================
+  void _openEditRoutineModal(BuildContext context, WorkoutProvider provider, WorkoutRoutine routine) {
+    final nameCtrl = TextEditingController(text: routine.name);
+    final focusCtrl = TextEditingController(text: routine.focus);
+    List<Exercise> currentExercises = List.from(routine.exercises);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: 20, left: 20, right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Editar Ficha de Treino', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                        IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: nameCtrl,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        labelText: 'Nome da Ficha (Ex: Treino A)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: focusCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('GERENCIAR EXERCÍCIOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                    const SizedBox(height: 10),
+
+                    ReorderableListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: currentExercises.length,
+                      onReorder: (oldIndex, newIndex) {
+                        setStateModal(() {
+                          if (newIndex > oldIndex) newIndex -= 1;
+                          final item = currentExercises.removeAt(oldIndex);
+                          currentExercises.insert(newIndex, item);
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final ex = currentExercises[index];
+                        return Container(
+                          key: ValueKey('${ex.id}_$index'),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: ListTile(
+                            leading: Icon(Icons.drag_handle, color: Theme.of(context).colorScheme.primary),
+                            title: Text(ex.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                            subtitle: Text('${ex.reps} • ${ex.rest}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                              onPressed: () {
+                                setStateModal(() {
+                                  currentExercises.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          provider.updateRoutine(
+                            routine.id,
+                            nameCtrl.text.trim().isEmpty ? routine.name : nameCtrl.text.trim(),
+                            focusCtrl.text.trim().isEmpty ? routine.focus : focusCtrl.text.trim(),
+                            routine.groupName,
+                            currentExercises,
+                          );
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: const Text('Ficha atualizada com sucesso!'), backgroundColor: Theme.of(context).colorScheme.primary),
+                          );
+                        },
+                        child: const Text('SALVAR ALTERAÇÕES', style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // =========================================================
   //  CONSTRUTOR DA ABA: MINHAS FICHAS
   // =========================================================
   Widget _buildMyRoutinesTab(BuildContext context, WorkoutProvider provider, List<WorkoutRoutine> routines) {
@@ -106,12 +241,11 @@ class WorkoutPlanScreen extends StatelessWidget {
 
     List<Widget> listItems = [];
 
-    // 1. Constrói os Acordeões (Pastas) com os programas do Catálogo
     groupedRoutines.forEach((groupName, groupRoutines) {
       listItems.add(
           Container(
             margin: const EdgeInsets.only(bottom: 12),
-            clipBehavior: Clip.antiAlias, // Evita vazamento visual do Swipe
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
@@ -140,12 +274,11 @@ class WorkoutPlanScreen extends StatelessWidget {
       );
     });
 
-    // 2. Constrói as fichas avulsas embaixo
     for (var routine in looseRoutines) {
       listItems.add(
           Container(
             margin: const EdgeInsets.only(bottom: 12),
-            clipBehavior: Clip.antiAlias, // Evita vazamento visual da cor vermelha da lixeira
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
@@ -162,9 +295,6 @@ class WorkoutPlanScreen extends StatelessWidget {
     );
   }
 
-  // =========================================================
-  //  MÁGICA DO DISMISSIBLE APLICADA AQUI (Arrastar p/ Apagar)
-  // =========================================================
   Widget _buildRoutineTile(BuildContext context, WorkoutProvider provider, WorkoutRoutine routine, {required bool isInsideGroup}) {
     return Dismissible(
       key: Key(routine.id),
@@ -215,13 +345,8 @@ class WorkoutPlanScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),
                 );
               } else if (value == 'edit') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('O painel de edição está sendo remodelado para o novo formato de Programas!'),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                // AQUI: Agora ele abre o modal de edição imediatamente!
+                _openEditRoutineModal(context, provider, routine);
               } else if (value == 'delete') {
                 provider.deleteRoutine(routine.id);
               }

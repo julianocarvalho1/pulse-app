@@ -6,11 +6,12 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import '../providers/workout_provider.dart';
 import '../theme/app_theme.dart';
+import '../models/exercise.dart';
 import 'workout_session_screen.dart';
 import 'workout_plan_screen.dart';
 import 'routine_detail_screen.dart';
 import 'settings_screen.dart';
-import 'progress_calendar_screen.dart'; // NOVO IMPORT PARA O CALENDÁRIO
+import 'progress_calendar_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -147,6 +148,132 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _mostrarModalTreinoDinamico(BuildContext context, WorkoutProvider provider) {
+    String musculoFoco = 'Full Body';
+    int quantidadeEx = 5;
+
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.surface,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (ctx) {
+          return StatefulBuilder(
+              builder: (context, setStateModal) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    top: 24, left: 24, right: 24,
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Treino Dinâmico ⚡', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+                          IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4)),
+                      const SizedBox(height: 24),
+
+                      const Text('MÚSCULO FOCO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: ['Full Body', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Braços'].map((m) =>
+                            ChoiceChip(
+                              label: Text(m, style: TextStyle(fontWeight: FontWeight.bold, color: musculoFoco == m ? Colors.black : Colors.white)),
+                              selected: musculoFoco == m,
+                              selectedColor: Theme.of(context).colorScheme.primary,
+                              backgroundColor: AppColors.background,
+                              side: BorderSide(color: musculoFoco == m ? Theme.of(context).colorScheme.primary : AppColors.border),
+                              onSelected: (val) => setStateModal(() => musculoFoco = m),
+                            )
+                        ).toList(),
+                      ),
+
+                      const SizedBox(height: 24),
+                      const Text('DURAÇÃO DO TREINO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          {'label': 'Express (~20m)', 'val': 3},
+                          {'label': 'Padrão (~40m)', 'val': 5},
+                          {'label': 'Intenso (~60m)', 'val': 7},
+                        ].map((d) =>
+                            ChoiceChip(
+                              label: Text(d['label'] as String, style: TextStyle(fontWeight: FontWeight.bold, color: quantidadeEx == d['val'] ? Colors.black : Colors.white)),
+                              selected: quantidadeEx == d['val'],
+                              selectedColor: Theme.of(context).colorScheme.primary,
+                              backgroundColor: AppColors.background,
+                              side: BorderSide(color: quantidadeEx == d['val'] ? Theme.of(context).colorScheme.primary : AppColors.border),
+                              onSelected: (val) => setStateModal(() => quantidadeEx = d['val'] as int),
+                            )
+                        ).toList(),
+                      ),
+
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () {
+                            List<Exercise> pool = provider.allExercises.toList();
+
+                            if (musculoFoco != 'Full Body') {
+                              pool = pool.where((e) {
+                                String m = e.muscle.toLowerCase();
+                                if (musculoFoco == 'Peito' && m.contains('peito')) return true;
+                                if (musculoFoco == 'Costas' && (m.contains('costas') || m.contains('dorsal'))) return true;
+                                if (musculoFoco == 'Pernas' && (m.contains('perna') || m.contains('quadríceps') || m.contains('glúteo') || m.contains('isquio') || m.contains('panturrilha'))) return true;
+                                if (musculoFoco == 'Ombros' && m.contains('ombro')) return true;
+                                if (musculoFoco == 'Braços' && (m.contains('bíceps') || m.contains('tríceps') || m.contains('antebraço'))) return true;
+                                return false;
+                              }).toList();
+                            }
+
+                            if (pool.isEmpty) pool = provider.allExercises.toList();
+
+                            pool.shuffle();
+                            final selectedExercises = pool.take(quantidadeEx).toList();
+
+                            final routine = WorkoutRoutine(
+                              id: 'dinamico_${DateTime.now().millisecondsSinceEpoch}',
+                              name: 'Treino Dinâmico: $musculoFoco',
+                              focus: 'Gerado Aleatoriamente',
+                              groupName: 'Treinos Rápidos',
+                              exercises: List<Exercise>.from(selectedExercises),
+                            );
+
+                            Navigator.pop(ctx);
+                            provider.startRoutine(routine);
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
+                          },
+                          icon: const Icon(Icons.bolt),
+                          label: const Text('GERAR E INICIAR TREINO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              }
+          );
+        }
     );
   }
 
@@ -356,31 +483,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orangeAccent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text('CONTINUAR TREINO ATIVO', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-                          SizedBox(width: 8),
-                          Icon(Icons.play_circle_filled, size: 20),
-                        ],
-                      ),
-                    ),
-                  ),
-
+                  // BOTÃO DUPLICADO FOI REMOVIDO DAQUI
                 ] else if (rotinaDoDia != null) ...[
                   GestureDetector(
                     onTap: () {
@@ -560,11 +663,54 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
 
+                const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () => _mostrarModalTreinoDinamico(context, provider),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), AppColors.surface],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('TREINO DINÂMICO ⚡', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5)),
+                              const SizedBox(height: 6),
+                              const Text('Sem tempo para planejar?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                              const SizedBox(height: 4),
+                              const Text('Nós geramos um treino aleatório para você agora mesmo.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)
+                              ]
+                          ),
+                          child: const Icon(Icons.shuffle, color: Colors.black, size: 24),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 28),
 
-                // ==========================================
-                // LIGAÇÃO PARA O NOVO CALENDÁRIO
-                // ==========================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -581,7 +727,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (_) => const ProgressCalendarScreen()),
                         );
                       },
-                      child: Text('VER CALENDÁRIO 📅',
+                      child: Text('HISTÓRICO DE TREINOS 📅',
                           style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,

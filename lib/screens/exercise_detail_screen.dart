@@ -21,9 +21,6 @@ class ExerciseDetailScreen extends StatefulWidget {
 class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   int _tab = 0;
 
-  // ====================================================================
-  // TRADUTOR DE IMAGENS OFICIAL (Correção Definitiva)
-  // ====================================================================
   String _getImagePath(String exerciseName) {
     String cleanName = exerciseName.toLowerCase().trim();
 
@@ -75,9 +72,6 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     return 'assets/images/$cleanName.gif';
   }
 
-  // ====================================================================
-  // INTELIGÊNCIA: DICIONÁRIO DE BIOMECÂNICA AVANÇADA
-  // ====================================================================
   Map<String, dynamic> _getDetailedInfo() {
     String id = widget.exercise.id;
     List<String> steps = [];
@@ -165,7 +159,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       } else if (id == 'pe6' || id == 'pe13' || id == 'pe14') {
         secondary = 'Músculos Estabilizadores da Pelve';
         steps = ['Sente-se e ajuste a máquina para que o eixo de rotação fique alinhado com a articulação (joelho ou quadril).', 'Trave bem as costas no encosto.', 'Execute o movimento com explosão na ida e freie lentamente na volta.', 'Evite que as placas de peso batam entre as repetições.'];
-      } else if (id == 'pe15') { // NOVO: PASSADA/AFUNDO BIOMECÂNICA
+      } else if (id == 'pe15') {
         secondary = 'Glúteos, Isquiotibiais e Estabilizadores do Core';
         steps = ['Dê um passo largo à frente mantendo o tronco ereto e o olhar para frente.', 'Desça verticalmente até o joelho de trás quase tocar o chão.', 'O joelho da frente deve ficar alinhado, sem passar excessivamente da ponta do pé.', 'Empurre o chão com o calcanhar da perna da frente para retornar (afundo) ou dar o próximo passo (passada).'];
       } else if (id == 'pe7' || id == 'pe8' || id == 'pe9' || id == 'pe10' || id == 'pe11' || id == 'pe19') {
@@ -200,99 +194,192 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     };
   }
 
+  // ====================================================================
+  // MODAL ATUALIZADO IGUAL O DA LISTA (Com campo de observação visível)
+  // ====================================================================
   void _showExerciseConfigDialog(BuildContext context, Exercise ex, WorkoutProvider provider, {WorkoutRoutine? targetRoutine}) {
     final repsCtrl = TextEditingController(text: ex.reps);
     final restCtrl = TextEditingController(text: ex.rest);
 
+    String initialTechnique = 'Normal';
+    if (ex.isSuperset) initialTechnique = 'Bi-Set';
+    else if (ex.customNote.contains('Drop-Set')) initialTechnique = 'Drop-Set';
+    else if (ex.customNote.contains('Rest-Pause')) initialTechnique = 'Rest-Pause';
+    else if (ex.customNote.contains('Falha Muscular') || ex.customNote.contains('Ir até a Falha')) initialTechnique = 'Até a Falha';
+
+    String cleanNote = ex.customNote
+        .replaceAll('Técnica: Drop-Set', '')
+        .replaceAll('Drop-Set | ', '')
+        .replaceAll('Técnica: Rest-Pause', '')
+        .replaceAll('Rest-Pause | ', '')
+        .replaceAll('Ir até a Falha Muscular', '')
+        .replaceAll('Falha Muscular | ', '').trim();
+
+    final noteCtrl = TextEditingController(text: cleanNote);
+    String selectedTechnique = initialTechnique;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
-        title: const Text('Configurar Exercício', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(ex.name, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
-            TextField(
-              controller: repsCtrl,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                labelText: 'Séries e Repetições (ex: 3x 10-12)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: restCtrl,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                labelText: 'Tempo de Descanso (ex: 60 seg)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.black),
-            onPressed: () {
-              final customizedEx = Exercise(
-                id: ex.id,
-                name: ex.name,
-                muscle: ex.muscle,
-                description: ex.description,
-                reps: repsCtrl.text.trim().isEmpty ? ex.reps : repsCtrl.text.trim(),
-                rest: restCtrl.text.trim().isEmpty ? ex.rest : restCtrl.text.trim(),
-              );
+      builder: (ctx) => StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: AppColors.border)),
+              title: const Text('Configurar Exercício', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(ex.name, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
 
-              if (targetRoutine != null) {
-                final updatedExercises = List<Exercise>.from(targetRoutine.exercises)..add(customizedEx);
-                provider.updateRoutine(
-                  targetRoutine.id,
-                  targetRoutine.name,
-                  targetRoutine.focus,
-                  targetRoutine.groupName,
-                  updatedExercises,
-                );
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${ex.name} adicionado ao ${targetRoutine.name}!'),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              } else {
-                provider.addExerciseToWorkout(customizedEx);
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${ex.name} adicionado ao treino ativo!'),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-            child: const Text('Confirmar e Salvar', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
+                    TextField(
+                      controller: repsCtrl,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        labelText: 'Séries e Repetições (ex: 3x 10-12)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextField(
+                      controller: restCtrl,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        labelText: 'Tempo de Descanso (ex: 60 seg)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('TÉCNICA E OBSERVAÇÕES', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedTechnique,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Técnica / Método',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                      ),
+                      items: ['Normal', 'Bi-Set', 'Drop-Set', 'Rest-Pause', 'Até a Falha'].map((String val) {
+                        return DropdownMenuItem(
+                          value: val,
+                          child: Text(val == 'Bi-Set' ? '🔗 Bi-Set (Ligar ao próximo)' : val),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setStateDialog(() {
+                          selectedTechnique = val!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextField(
+                      controller: noteCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Observação Livre (Ex: Banco no 4)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.black),
+                  onPressed: () {
+                    bool isSupersetFinal = selectedTechnique == 'Bi-Set';
+                    String finalNote = noteCtrl.text.trim();
+
+                    if (selectedTechnique == 'Drop-Set') {
+                      finalNote = finalNote.isEmpty ? 'Técnica: Drop-Set' : 'Drop-Set | $finalNote';
+                    } else if (selectedTechnique == 'Rest-Pause') {
+                      finalNote = finalNote.isEmpty ? 'Técnica: Rest-Pause' : 'Rest-Pause | $finalNote';
+                    } else if (selectedTechnique == 'Até a Falha') {
+                      finalNote = finalNote.isEmpty ? 'Ir até a Falha Muscular' : 'Falha Muscular | $finalNote';
+                    }
+
+                    final customizedEx = Exercise(
+                      id: ex.id,
+                      name: ex.name,
+                      muscle: ex.muscle,
+                      description: ex.description,
+                      reps: repsCtrl.text.trim().isEmpty ? ex.reps : repsCtrl.text.trim(),
+                      rest: restCtrl.text.trim().isEmpty ? ex.rest : restCtrl.text.trim(),
+                      isSuperset: isSupersetFinal,
+                      customNote: finalNote,
+                    );
+
+                    if (targetRoutine != null) {
+                      final updatedExercises = List<Exercise>.from(targetRoutine.exercises)..add(customizedEx);
+                      provider.updateRoutine(
+                        targetRoutine.id,
+                        targetRoutine.name,
+                        targetRoutine.focus,
+                        targetRoutine.groupName,
+                        updatedExercises,
+                      );
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${ex.name} adicionado ao ${targetRoutine.name}!'),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    } else {
+                      provider.addExerciseToWorkout(customizedEx);
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${ex.name} adicionado ao treino ativo!'),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Confirmar e Salvar', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
       ),
     );
   }

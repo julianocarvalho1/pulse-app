@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/workout_provider.dart';
 import '../theme/app_theme.dart';
+import 'workout_history_detail_screen.dart';
 
 // ============================================================
 //  TELA 1: PERFIL PRINCIPAL
@@ -11,16 +12,15 @@ import '../theme/app_theme.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  void _showPersonalDataPanel(BuildContext context, String currentName, WorkoutProvider provider) {
+  void _showPersonalDataPanel(BuildContext context, String currentName, double currentWeight, WorkoutProvider provider) {
     final nameCtrl = TextEditingController(text: currentName == 'Atleta' ? '' : currentName);
-    final ageCtrl = TextEditingController();
-    final heightCtrl = TextEditingController();
+    final weightCtrl = TextEditingController(text: currentWeight > 0 ? currentWeight.toString() : '');
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
         child: Column(
@@ -30,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('DADOS PESSOAIS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const Text('EDITAR DADOS PESSOAIS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 IconButton(icon: const Icon(Icons.close, color: AppColors.textSecondary), onPressed: () => Navigator.pop(ctx))
               ],
             ),
@@ -41,26 +41,11 @@ class ProfileScreen extends StatelessWidget {
               decoration: _inputDecoration(context, 'Nome ou Apelido'),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: ageCtrl,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    decoration: _inputDecoration(context, 'Idade (anos)'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: heightCtrl,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    decoration: _inputDecoration(context, 'Altura (cm)'),
-                  ),
-                ),
-              ],
+            TextField(
+              controller: weightCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              decoration: _inputDecoration(context, 'Peso Atual (kg)'),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -68,10 +53,16 @@ class ProfileScreen extends StatelessWidget {
               child: ElevatedButton(
                 style: _primaryButtonStyle(context),
                 onPressed: () {
-                  if (nameCtrl.text.isNotEmpty) provider.setUserName(nameCtrl.text);
+                  if (nameCtrl.text.isNotEmpty) {
+                    provider.setUserName(nameCtrl.text);
+                  }
+                  final parsedWeight = double.tryParse(weightCtrl.text.replaceAll(',', '.'));
+                  if (parsedWeight != null) {
+                    provider.setUserWeight(parsedWeight);
+                  }
                   Navigator.pop(ctx);
                 },
-                child: const Text('SALVAR DADOS', style: TextStyle(fontWeight: FontWeight.w800)),
+                child: const Text('SALVAR ALTERAÇÕES', style: TextStyle(fontWeight: FontWeight.w800)),
               ),
             )
           ],
@@ -105,9 +96,10 @@ class ProfileScreen extends StatelessWidget {
     final provider = context.watch<WorkoutProvider>();
     final history = provider.history;
     final userName = provider.userName.isEmpty ? 'Atleta' : provider.userName;
+    final userWeight = provider.userWeight;
 
     final rotinaAtiva = provider.nextRoutineToTrain ?? (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
-    final focoAtual = rotinaAtiva != null ? rotinaAtiva.focus : 'Escolha um treino para definir o foco';
+    final focoAtual = rotinaAtiva != null ? rotinaAtiva.focus : 'Mantenha a consistência';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -117,53 +109,64 @@ class ProfileScreen extends StatelessWidget {
           const Text('PERFIL', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
           const SizedBox(height: 20),
 
-          Row(
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
-                child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 40),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 4),
-                    Text('Foco: $focoAtual', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                  ],
+          // CABEÇALHO DO PERFIL
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
+                  child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 34),
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      Text('Foco: $focoAtual', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
 
+          // ATALHOS DE CONFIGURAÇÃO E DADOS
           _tile(
               context,
-              Icons.person_outline,
-              'Dados pessoais',
-              subtitle: 'Nome cadastrado: $userName',
-              onTapAction: () => _showPersonalDataPanel(context, userName, provider)
+              Icons.badge_outlined,
+              'Dados Pessoais',
+              subtitle: 'Nome: $userName ${userWeight > 0 ? '•  ${userWeight.toStringAsFixed(1)} kg' : ''}',
+              onTapAction: () => _showPersonalDataPanel(context, userName, userWeight, provider)
           ),
 
           _tile(
               context,
               Icons.settings_outlined,
               'Configurações do App',
-              subtitle: 'Temas, Unidades e Alertas',
+              subtitle: 'Temas, Cores e Preferências',
               onTapAction: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
               }
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
+          // HISTÓRICO RECENTE NO PERFIL
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('HISTÓRICO DE TREINOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5)),
+              const Text('MEU HISTÓRICO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5)),
               Text('${history.length} concluídos', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
             ],
           ),
@@ -172,9 +175,17 @@ class ProfileScreen extends StatelessWidget {
           if (history.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-              child: const Text('Nenhum treino concluído ainda.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary, height: 1.5)),
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+              child: Column(
+                children: const [
+                  Icon(Icons.fitness_center_outlined, size: 36, color: AppColors.textSecondary),
+                  SizedBox(height: 12),
+                  Text('Nenhum treino concluído ainda.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text('Seus treinos finalizados aparecerão aqui.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ],
+              ),
             )
           else
             ListView.separated(
@@ -184,20 +195,15 @@ class ProfileScreen extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final item = history[index];
+                final dataFormatada = DateFormat("dd/MM/yyyy").format(item.date);
 
-                // ==================================================
-                // CORREÇÃO: O Dismissible envolve o card para permitir exclusão
-                // ==================================================
                 return Dismissible(
                   key: Key(item.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                    decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
                     child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
                   ),
                   onDismissed: (direction) {
@@ -206,30 +212,51 @@ class ProfileScreen extends StatelessWidget {
                       const SnackBar(content: Text('Treino excluído do histórico!'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
                     );
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                          child: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item.routineName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                              const SizedBox(height: 2),
-                              Text(DateFormat("dd/MM/yyyy").format(item.date), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                            ],
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WorkoutHistoryDetailScreen(workout: item),
                           ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                              child: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.routineName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 3),
+                                  Text(dataFormatada, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(item.duration, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
+                                const SizedBox(height: 3),
+                                Text('${item.totalExercises} exerc.', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                              ],
+                            ),
+                          ],
                         ),
-                        Text(item.duration, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
-                      ],
+                      ),
                     ),
                   ),
                 );

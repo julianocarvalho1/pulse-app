@@ -28,7 +28,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -45,11 +45,9 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      // Aqui a cor dinâmica entra com opacidade
                       color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    // O const foi removido daqui e a cor dinâmica aplicada
                     child: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 32),
                   ),
                   const SizedBox(height: 16),
@@ -67,7 +65,6 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // O context agora é passado para o método para ele saber a cor
                       _buildStatBadge(context, Icons.access_time, workout.duration, 'Duração'),
                       Container(height: 40, width: 1, color: AppColors.border),
                       _buildStatBadge(context, Icons.format_list_bulleted, '${workout.totalExercises}', 'Exercícios'),
@@ -76,6 +73,40 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+            // NOVO: CAIXA DE ANOTAÇÕES/FEEDBACK DO TREINO
+            if (workout.notes.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text('ANOTAÇÕES DO TREINO',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5)),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.edit_note, color: Theme.of(context).colorScheme.primary, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        workout.notes,
+                        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             const SizedBox(height: 32),
             const Text('EXERCÍCIOS REALIZADOS',
@@ -173,7 +204,6 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
     );
   }
 
-  // O método agora recebe o BuildContext para acessar o Theme.of(context)
   Widget _buildStatBadge(BuildContext context, IconData icon, String value, String label) {
     return Column(
       children: [

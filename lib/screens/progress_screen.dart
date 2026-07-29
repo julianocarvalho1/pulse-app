@@ -6,10 +6,6 @@ import '../theme/app_theme.dart';
 import '../widgets/mini_line_chart.dart';
 import 'workout_history_detail_screen.dart';
 
-// ============================================================
-//  TELA: PROGRESSO
-// ============================================================
-
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
@@ -20,7 +16,7 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   int _tab = 0;
   final List<String> _tabs = const [
-    'Geral',
+    'Consistência',
     'Treinos',
     'Medidas',
     'Desempenho'
@@ -87,13 +83,251 @@ class _ProgressScreenState extends State<ProgressScreen> {
         return _buildDesempenho(context);
       case 0:
       default:
-        return _buildGeral(context);
+        return _buildConsistencia(context);
     }
   }
 
-  // ==========================================
-  //  CONTEÚDO DA ABA: MEDIDAS
-  // ==========================================
+  Widget _buildConsistencia(BuildContext context) {
+    final provider = context.watch<WorkoutProvider>();
+    final history = provider.history;
+    final now = DateTime.now();
+
+    final treinosEsteMes = history.where((h) => h.date.month == now.month && h.date.year == now.year).toList();
+
+    int totalTreinos = treinosEsteMes.length;
+    int totalMinutos = 0;
+    double volumeTotal = 0;
+
+    for (var t in treinosEsteMes) {
+      final partes = t.duration.split(':');
+      if (partes.length == 3) {
+        totalMinutos += (int.tryParse(partes[0]) ?? 0) * 60 + (int.tryParse(partes[1]) ?? 0);
+      } else if (partes.length == 2) {
+        totalMinutos += int.tryParse(partes[0]) ?? 0;
+      }
+
+      for (var ex in t.exercises) {
+        for (var set in ex.sets) {
+          volumeTotal += set.reps * set.weight;
+        }
+      }
+    }
+
+    int calorias = totalMinutos * 7;
+    int horas = totalMinutos ~/ 60;
+    int minsRestantes = totalMinutos % 60;
+    String duracaoStr = horas > 0 ? '${horas}h ${minsRestantes}m' : '${minsRestantes}m';
+    String volumeStr = volumeTotal >= 1000 ? '${(volumeTotal / 1000).toStringAsFixed(1)} ton' : '${volumeTotal.toStringAsFixed(0)} kg';
+
+    double pesoAtual = _medidas['Peso'] ?? 0.0;
+    String pesoStr = pesoAtual > 0 ? '${pesoAtual.toStringAsFixed(1)} kg' : '-- kg';
+    String subtituloPeso = pesoAtual > 0 ? 'Atualizado recentemente' : 'Atualize seu peso nas Medidas';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildCalendarioCheckin(context, history, now),
+
+        const SizedBox(height: 24),
+        const Text('METAS E ESTATÍSTICAS (ESTE MÊS)',
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.5)),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(child: _statCard(Icons.fitness_center, totalTreinos.toString(), 'Treinos', 'Meta: 20', totalTreinos / 20)),
+            const SizedBox(width: 12),
+            Expanded(child: _statCard(Icons.access_time, duracaoStr, 'Duração', 'Meta: 20h', (horas + (minsRestantes/60)) / 20)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _statCard(Icons.local_fire_department, calorias.toString(), 'Calorias', 'Meta: 8.000', calorias / 8000)),
+            const SizedBox(width: 12),
+            Expanded(child: _statCard(Icons.bar_chart, volumeStr, 'Volume', 'Meta: 50 ton', volumeTotal / 50000)),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('EVOLUÇÃO DE PESO',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.5)),
+
+                  PopupMenuButton<String>(
+                    color: AppColors.surfaceLight,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    onSelected: (String resultado) {
+                      setState(() {
+                        _periodoGeral = resultado;
+                      });
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return _opcoesDePeriodo.map((String opcao) {
+                        return PopupMenuItem<String>(
+                          value: opcao,
+                          child: Text(opcao, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        );
+                      }).toList();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                          color: AppColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Row(
+                        children: [
+                          Text('Últimos $_periodoGeral', style: const TextStyle(fontSize: 12)),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.keyboard_arrow_down, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(pesoStr,
+                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text(subtituloPeso,
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary)),
+              const SizedBox(height: 16),
+              MiniLineChart(
+                values: _gerarDadosSimulados('Peso', _periodoGeral),
+                height: 120,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarioCheckin(BuildContext context, List<WorkoutHistoryItem> history, DateTime now) {
+    const meses = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+    final mesAtualStr = meses[now.month - 1];
+
+    final int diasNoMes = DateUtils.getDaysInMonth(now.year, now.month);
+    final int primeiroDiaDaSemana = DateTime(now.year, now.month, 1).weekday;
+
+    final int deslocamento = primeiroDiaDaSemana == 7 ? 0 : primeiroDiaDaSemana;
+    final int totalCelulas = diasNoMes + deslocamento;
+    final int linhas = (totalCelulas / 7).ceil();
+
+    Set<int> diasTreinados = {};
+    for (var h in history) {
+      if (h.date.year == now.year && h.date.month == now.month) {
+        diasTreinados.add(h.date.day);
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$mesAtualStr ${now.year}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${diasTreinados.length} TREINOS',
+                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.bold)
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia) =>
+                SizedBox(
+                  width: 32,
+                  child: Center(child: Text(dia, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold))),
+                )
+            ).toList(),
+          ),
+          const SizedBox(height: 12),
+
+          GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+              ),
+              itemCount: 7 * linhas,
+              itemBuilder: (context, index) {
+                if (index < deslocamento || index >= deslocamento + diasNoMes) {
+                  return const SizedBox();
+                }
+
+                int diaCorrente = index - deslocamento + 1;
+                bool treinou = diasTreinados.contains(diaCorrente);
+                bool ehHoje = diaCorrente == now.day;
+
+                return Container(
+                  decoration: BoxDecoration(
+                      color: treinou ? Theme.of(context).colorScheme.primary : (ehHoje ? AppColors.surfaceLight : Colors.transparent),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: ehHoje && !treinou ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                        width: 1.5,
+                      )
+                  ),
+                  child: Center(
+                    child: Text(
+                      diaCorrente.toString(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: treinou || ehHoje ? FontWeight.bold : FontWeight.normal,
+                        color: treinou ? Colors.black : (ehHoje ? Theme.of(context).colorScheme.primary : Colors.white),
+                      ),
+                    ),
+                  ),
+                );
+              }
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMedidas(BuildContext context) {
     String labelInicio = 'Início';
     String labelMeio = 'Meio';
@@ -103,13 +337,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     if (_periodoMedidas == '1 ano') { labelInicio = 'Ano passado'; labelMeio = 'Semestre ant.'; }
 
     double valorAtual = _medidas[_medidaSelecionadaParaGrafico] ?? 0.0;
-    String textoVariacao = '0';
-    if (valorAtual > 0) {
-      textoVariacao = _medidaSelecionadaParaGrafico == 'Cintura' || _medidaSelecionadaParaGrafico == 'Peso'
-          ? '-2,0'
-          : '+1,5';
-    }
-
     String unidade = _medidaSelecionadaParaGrafico == 'Peso' ? 'kg' : 'cm';
 
     return Column(
@@ -201,7 +428,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
               const SizedBox(height: 4),
 
-              Text('$textoVariacao $unidade',
+              Text(valorAtual > 0 ? 'Último registro: $valorAtual $unidade' : 'Sem registros na ficha',
                   style: TextStyle(
                       fontSize: 14,
                       color: valorAtual == 0 ? AppColors.textSecondary : Theme.of(context).colorScheme.primary,
@@ -374,9 +601,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  // ==========================================
-  //  CONTEÚDO DA ABA: TREINOS (HISTÓRICO COM EXCLUSÃO)
-  // ==========================================
   Widget _buildTreinos(BuildContext context) {
     final history = context.watch<WorkoutProvider>().history;
 
@@ -417,9 +641,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
         final item = history[index];
         final dataFormatada = DateFormat("dd/MM/yyyy").format(item.date);
 
-        // ============================================================
-        // AQUI ESTÁ O DISMISSIBLE (ARRANSTAR PARA DELETAR)
-        // ============================================================
         return Dismissible(
           key: Key(item.id),
           direction: DismissDirection.endToStart,
@@ -442,57 +663,61 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             );
           },
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WorkoutHistoryDetailScreen(workout: item),
-                ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary),
+          child: Material(
+            color: Colors.transparent, // Deixa a cor do Container brilhar por trás
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14), // Respeita a borda arredondada
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WorkoutHistoryDetailScreen(workout: item),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface, // O fundo agora fica aqui
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.routineName,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 4),
+                          Text(dataFormatada,
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(item.routineName,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text(item.duration,
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
                         const SizedBox(height: 4),
-                        Text(dataFormatada,
+                        Text('${item.totalExercises} exercícios',
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(item.duration,
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
-                      const SizedBox(height: 4),
-                      Text('${item.totalExercises} exercícios',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -501,9 +726,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  // ==========================================
-  //  NOVO: ABA DESEMPENHO (INTELIGENTE E DINÂMICA)
-  // ==========================================
   Widget _buildDesempenho(BuildContext context) {
     final history = context.watch<WorkoutProvider>().history;
 
@@ -618,144 +840,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             );
           }).toList(),
-      ],
-    );
-  }
-
-  // ==========================================
-  //  CONTEÚDO DA ABA: GERAL (COM METAS)
-  // ==========================================
-  Widget _buildGeral(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
-    final history = provider.history;
-    final now = DateTime.now();
-
-    final treinosEsteMes = history.where((h) => h.date.month == now.month && h.date.year == now.year).toList();
-
-    int totalTreinos = treinosEsteMes.length;
-    int totalMinutos = 0;
-    double volumeTotal = 0;
-
-    for (var t in treinosEsteMes) {
-      final partes = t.duration.split(':');
-      if (partes.length == 3) {
-        totalMinutos += (int.tryParse(partes[0]) ?? 0) * 60 + (int.tryParse(partes[1]) ?? 0);
-      } else if (partes.length == 2) {
-        totalMinutos += int.tryParse(partes[0]) ?? 0;
-      }
-
-      for (var ex in t.exercises) {
-        for (var set in ex.sets) {
-          volumeTotal += set.reps * set.weight;
-        }
-      }
-    }
-
-    int calorias = totalMinutos * 7;
-
-    int horas = totalMinutos ~/ 60;
-    int minsRestantes = totalMinutos % 60;
-    String duracaoStr = horas > 0 ? '${horas}h ${minsRestantes}m' : '${minsRestantes}m';
-
-    String volumeStr = volumeTotal >= 1000 ? '${(volumeTotal / 1000).toStringAsFixed(1)} ton' : '${volumeTotal.toStringAsFixed(0)} kg';
-
-    double pesoAtual = _medidas['Peso'] ?? 0.0;
-    String pesoStr = pesoAtual > 0 ? '${pesoAtual.toStringAsFixed(1)} kg' : '-- kg';
-    String subtituloPeso = pesoAtual > 0 ? 'Atualizado recentemente' : 'Atualize seu peso nas Medidas';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('EVOLUÇÃO DE PESO',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.5)),
-
-                  PopupMenuButton<String>(
-                    color: AppColors.surfaceLight,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    onSelected: (String resultado) {
-                      setState(() {
-                        _periodoGeral = resultado;
-                      });
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return _opcoesDePeriodo.map((String opcao) {
-                        return PopupMenuItem<String>(
-                          value: opcao,
-                          child: Text(opcao, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                        );
-                      }).toList();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                          color: AppColors.surfaceLight,
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Row(
-                        children: [
-                          Text('Últimos $_periodoGeral', style: const TextStyle(fontSize: 12)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.keyboard_arrow_down, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(pesoStr,
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 2),
-              Text(subtituloPeso,
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary)),
-              const SizedBox(height: 16),
-              MiniLineChart(
-                values: _gerarDadosSimulados('Peso', _periodoGeral),
-                height: 120,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Text('METAS E ESTATÍSTICAS (ESTE MÊS)',
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5)),
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(child: _statCard(Icons.fitness_center, totalTreinos.toString(), 'Treinos', 'Meta: 20', totalTreinos / 20)),
-            const SizedBox(width: 12),
-            Expanded(child: _statCard(Icons.access_time, duracaoStr, 'Duração', 'Meta: 20h', (horas + (minsRestantes/60)) / 20)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _statCard(Icons.local_fire_department, calorias.toString(), 'Calorias', 'Meta: 8.000', calorias / 8000)),
-            const SizedBox(width: 12),
-            Expanded(child: _statCard(Icons.bar_chart, volumeStr, 'Volume', 'Meta: 50 ton', volumeTotal / 50000)),
-          ],
-        ),
       ],
     );
   }

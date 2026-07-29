@@ -314,9 +314,6 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                             Text(ex.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                             const SizedBox(height: 4),
 
-                            // ==========================================
-                            // RENDERIZA A OBSERVAÇÃO AQUI TAMBÉM
-                            // ==========================================
                             if (ex.customNote.isNotEmpty) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -377,8 +374,11 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
               elevation: 4,
             ),
             onPressed: () => _handleStartRoutine(context, provider),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('INICIAR ESTE TREINO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)),
+            icon: Icon(provider.isWorkoutActive && provider.activeRoutineName == widget.routine.name ? Icons.play_circle_filled : Icons.play_arrow),
+            label: Text(
+                provider.isWorkoutActive && provider.activeRoutineName == widget.routine.name ? 'CONTINUAR TREINO INICIADO' : 'INICIAR ESTE TREINO',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)
+            ),
           ),
         ),
       ),

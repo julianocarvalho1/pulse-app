@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_tts/flutter_tts.dart'; // NOVO IMPORT DA VOZ
 import '../models/exercise.dart';
 
 class ExerciseSet {
@@ -83,7 +84,7 @@ class WorkoutProvider extends ChangeNotifier {
 
   String _userName = '';
   String _userPassword = '';
-  double _userWeight = 0.0; // NOVO: Guarda o peso corporal do usuário
+  double _userWeight = 0.0;
   bool _isAuthenticated = false;
 
   bool _usarBiometria = false;
@@ -101,12 +102,22 @@ class WorkoutProvider extends ChangeNotifier {
   int _restSeconds = 0;
   Timer? _restTimer;
 
+  // Instância do motor de voz
+  final FlutterTts _flutterTts = FlutterTts();
+
   bool get isResting => _isResting;
   int get restSeconds => _restSeconds;
 
   WorkoutProvider() {
     _initPreMadePrograms();
     _loadData();
+    _configurarVoz();
+  }
+
+  Future<void> _configurarVoz() async {
+    await _flutterTts.setLanguage("pt-BR");
+    await _flutterTts.setSpeechRate(0.5); // Velocidade normal da voz
+    await _flutterTts.setVolume(1.0);
   }
 
   List<Exercise> get allExercises => [...exerciseDatabase, ..._customExercises];
@@ -190,21 +201,99 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _playAlarm() {
-    for (int i = 0; i < 6; i++) {
-      Future.delayed(Duration(milliseconds: i * 350), () {
-        HapticFeedback.vibrate();
-        SystemSound.play(SystemSoundType.alert);
+  // ==========================================================
+  // NOVO SISTEMA DE ALARME: INTELIGÊNCIA ARTIFICIAL FALANDO
+  // ==========================================================
+  Future<void> _playAlarm() async {
+    try {
+      // Fala a frase em português
+      await _flutterTts.speak("Descanso finalizado. Bora pra cima!");
+    } catch (e) {
+      debugPrint('Erro na voz: $e');
+    }
+
+    // Mantém a vibração pesada para você sentir no bolso
+    for (int i = 0; i < 4; i++) {
+      Future.delayed(Duration(milliseconds: i * 600), () {
+        HapticFeedback.heavyImpact();
       });
     }
   }
 
   void _initPreMadePrograms() {
     _preMadePrograms = [
-      WorkoutProgram(id: 'prog_hipertrofia', name: 'Hipertrofia Extrema (ABCD)', focus: 'Foco total em volume muscular.', routines: []),
-      WorkoutProgram(id: 'prog_forca', name: 'Força e Base (Powerbuilding)', focus: 'Aumento de carga nos compostos.', routines: []),
-      WorkoutProgram(id: 'prog_emagrecimento', name: 'Seca Tudo (Emagrecimento)', focus: 'Alta intensidade e pausas curtas.', routines: []),
-      WorkoutProgram(id: 'prog_terapeutico', name: 'Saúde Articular (Terapêutico)', focus: 'Fortalecer tendões e postura.', routines: []),
+      WorkoutProgram(
+          id: 'prog_hipertrofia_abc',
+          name: 'Hipertrofia Moderna (ABC)',
+          focus: 'Divisão clássica para volume e densidade.',
+          routines: [
+            WorkoutRoutine(
+                id: 'rout_hip_A',
+                name: 'Treino A - Peito, Ombro e Tríceps',
+                focus: 'Foco em empurrar (Push)',
+                groupName: 'Hipertrofia Moderna (ABC)',
+                exercises: [
+                  Exercise(id: 'ex_pm_1', name: 'Chest Press', muscle: 'Peito', description: 'Controle bem a descida.', reps: '4x 8-12', rest: '60 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_2', name: 'Crucifixo com Halteres', muscle: 'Peito', description: 'Foque no alongamento do músculo.', reps: '3x 12', rest: '45 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_3', name: 'Desenvolvimento Militar', muscle: 'Ombro', description: 'Sente-se com a coluna reta.', reps: '4x 10', rest: '60 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_4', name: 'Tríceps na Polia', muscle: 'Tríceps', description: 'Mantenha o cotovelo colado no corpo.', reps: '3x 12', rest: '45 seg', customNote: 'Falha Muscular | Use a corda se preferir'),
+                ]
+            ),
+            WorkoutRoutine(
+                id: 'rout_hip_B',
+                name: 'Treino B - Costas e Bíceps',
+                focus: 'Foco em puxar (Pull)',
+                groupName: 'Hipertrofia Moderna (ABC)',
+                exercises: [
+                  Exercise(id: 'ex_pm_5', name: 'Puxada na Frente', muscle: 'Costas', description: 'Estufe o peito na puxada.', reps: '4x 10', rest: '60 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_6', name: 'Remada Curvada', muscle: 'Costas', description: 'Mantenha a lombar travada.', reps: '4x 8-10', rest: '60 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_7', name: 'Rosca Direta', muscle: 'Bíceps', description: 'Não balance o tronco.', reps: '3x 12', rest: '45 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_8', name: 'Rosca Scott', muscle: 'Bíceps', description: 'Isole completamente o músculo.', reps: '3x 10', rest: '45 seg', customNote: 'Drop-Set | Na última série'),
+                ]
+            ),
+            WorkoutRoutine(
+                id: 'rout_hip_C',
+                name: 'Treino C - Pernas e Core',
+                focus: 'Membros Inferiores (Legs)',
+                groupName: 'Hipertrofia Moderna (ABC)',
+                exercises: [
+                  Exercise(id: 'ex_pm_9', name: 'Agachamento', muscle: 'Pernas', description: 'Quebre a paralela se tiver mobilidade.', reps: '4x 8-10', rest: '90 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_10', name: 'Leg Press', muscle: 'Pernas', description: 'Não trave o joelho em cima.', reps: '4x 12', rest: '60 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_11', name: 'Cadeira Extensora', muscle: 'Pernas', description: 'Aperte no topo por 1 segundo.', reps: '3x 15', rest: '45 seg', customNote: 'Falha Muscular'),
+                  Exercise(id: 'ex_pm_12', name: 'Crunch Abdominal', muscle: 'Core', description: 'Foque em dobrar o tronco.', reps: '4x 15-20', rest: '45 seg', customNote: ''),
+                ]
+            )
+          ]
+      ),
+      WorkoutProgram(
+          id: 'prog_seca_tudo',
+          name: 'Seca Tudo (Projeto Verão)',
+          focus: 'Alta intensidade, bi-sets e pausas curtas.',
+          routines: [
+            WorkoutRoutine(
+                id: 'rout_seca_A',
+                name: 'Treino A - Superiores Intensos',
+                focus: 'Gasto Calórico',
+                groupName: 'Seca Tudo (Projeto Verão)',
+                exercises: [
+                  Exercise(id: 'ex_pm_13', name: 'Chest Press', muscle: 'Peito', description: 'Sem pausa.', reps: '3x 15', rest: '0 seg', isSuperset: true, customNote: ''),
+                  Exercise(id: 'ex_pm_14', name: 'Remada Baixa', muscle: 'Costas', description: 'Direto do Chest Press.', reps: '3x 15', rest: '45 seg', customNote: ''),
+                  Exercise(id: 'ex_pm_15', name: 'Elevação Frontal com Barra', muscle: 'Ombro', description: 'Movimento controlado.', reps: '3x 15', rest: '30 seg', customNote: ''),
+                ]
+            ),
+            WorkoutRoutine(
+                id: 'rout_seca_B',
+                name: 'Treino B - Inferiores Express',
+                focus: 'Gasto Calórico',
+                groupName: 'Seca Tudo (Projeto Verão)',
+                exercises: [
+                  Exercise(id: 'ex_pm_16', name: 'Passada / Afundo', muscle: 'Pernas', description: 'Passos largos.', reps: '4x 20', rest: '45 seg', customNote: '10 cada perna'),
+                  Exercise(id: 'ex_pm_17', name: 'Cadeira Extensora', muscle: 'Pernas', description: 'Explosivo.', reps: '3x 15', rest: '0 seg', isSuperset: true, customNote: ''),
+                  Exercise(id: 'ex_pm_18', name: 'Crunch Abdominal', muscle: 'Core', description: 'Até queimar.', reps: '3x 20', rest: '45 seg', customNote: ''),
+                ]
+            )
+          ]
+      ),
     ];
   }
 
@@ -212,27 +301,50 @@ class WorkoutProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _userName = prefs.getString('user_name') ?? '';
     _userPassword = prefs.getString('user_password') ?? '';
-    _userWeight = prefs.getDouble('user_weight') ?? 0.0;
     _activeProgramName = prefs.getString('active_program') ?? '';
     _usarBiometria = prefs.getBool('usarBiometria') ?? false;
 
-    final customExStr = prefs.getString('custom_exercises');
-    if (customExStr != null) {
-      final List decoded = jsonDecode(customExStr);
-      _customExercises = decoded.map((e) => Exercise.fromMap(e)).toList();
+    final weightData = prefs.get('user_weight');
+    if (weightData is double) {
+      _userWeight = weightData;
+    } else if (weightData is int) {
+      _userWeight = weightData.toDouble();
+    } else if (weightData is String) {
+      _userWeight = double.tryParse(weightData) ?? 0.0;
+    } else {
+      _userWeight = 0.0;
     }
 
-    final routinesStr = prefs.getString('my_routines');
-    if (routinesStr != null && routinesStr != '[]') {
-      final List decoded = jsonDecode(routinesStr);
-      _myRoutines = decoded.map((e) => WorkoutRoutine.fromMap(e)).toList();
+    try {
+      final customExStr = prefs.getString('custom_exercises');
+      if (customExStr != null && customExStr.isNotEmpty) {
+        final List decoded = jsonDecode(customExStr);
+        _customExercises = decoded.map((e) => Exercise.fromMap(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar customExercises: $e');
     }
 
-    final historyStr = prefs.getString('workout_history');
-    if (historyStr != null) {
-      final List decoded = jsonDecode(historyStr);
-      _history = decoded.map((e) => WorkoutHistoryItem.fromMap(e)).toList();
+    try {
+      final routinesStr = prefs.getString('my_routines');
+      if (routinesStr != null && routinesStr != '[]' && routinesStr.isNotEmpty) {
+        final List decoded = jsonDecode(routinesStr);
+        _myRoutines = decoded.map((e) => WorkoutRoutine.fromMap(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar myRoutines: $e');
     }
+
+    try {
+      final historyStr = prefs.getString('workout_history');
+      if (historyStr != null && historyStr.isNotEmpty) {
+        final List decoded = jsonDecode(historyStr);
+        _history = decoded.map((e) => WorkoutHistoryItem.fromMap(e as Map<String, dynamic>)).toList();
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar workout_history: $e');
+    }
+
     notifyListeners();
   }
 

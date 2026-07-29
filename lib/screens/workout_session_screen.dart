@@ -395,6 +395,9 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     return true;
   }
 
+  // ==========================================================
+  // NOVO SISTEMA DE FINALIZAÇÃO (Pop-up com Campo de Anotações)
+  // ==========================================================
   void _confirmFinish(WorkoutProvider provider) {
     List<ExerciseLog> workoutLogs = [];
     final exercises = provider.currentWorkoutExercises;
@@ -405,26 +408,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       for (int j = 0; j < SessionStateCache.setsStatus[i]!.length; j++) {
         if (SessionStateCache.setsStatus[i]![j]) {
           double weight = double.tryParse(_weightControllers[i]![j].text.replaceAll(',', '.')) ?? 0.0;
+          int reps = int.tryParse(_repsControllers[i]![j].text) ?? 0;
 
-          int reps = 0;
-          int originalSetsCount = _getSetsCount(exercises[i].reps);
-          bool isDropset = j >= originalSetsCount;
-
-          String cleanReps = exercises[i].reps.toLowerCase();
-          if (cleanReps.contains('x')) cleanReps = cleanReps.split('x').last.trim();
-          bool isSpecificSequence = cleanReps.contains('-') && cleanReps.split('-').length == originalSetsCount;
-
-          if (isSpecificSequence && !isDropset) {
-            reps = int.tryParse(_getSmartTarget(exercises[i].reps, j)) ?? 0;
-          } else {
-            reps = int.tryParse(_repsControllers[i]![j].text) ?? 0;
-            if (reps == 0 && !isDropset) {
-              String target = _getSmartTarget(exercises[i].reps, j);
-              final match = RegExp(r'\d+').firstMatch(target);
-              if (match != null) reps = int.parse(match.group(0)!);
-            }
+          if (reps == 0) {
+            String target = _getSmartTarget(exercises[i].reps, j);
+            final match = RegExp(r'\d+').firstMatch(target);
+            if (match != null) reps = int.parse(match.group(0)!);
           }
-
           setsCompleted.add(ExerciseSet(reps: reps, weight: weight));
         }
       }
@@ -444,11 +434,30 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
           title: const Text('Calma lá!', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
-          content: const Text('Notei que você não marcou todas as séries. Vai desistir no meio do caminho ou esqueceu de marcar?', style: TextStyle(color: AppColors.textSecondary)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Notei que você não marcou todas as séries. Vai desistir no meio do caminho ou esqueceu de marcar?', style: TextStyle(color: AppColors.textSecondary)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notesController,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: 'Anotações sobre a falha/desistência (Opcional)',
+                  hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  filled: true,
+                  fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Voltar pro treino', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+              child: Text('Voltar', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
@@ -461,7 +470,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                   const SnackBar(content: Text('Ficha salva como incompleta no histórico.'), backgroundColor: Colors.redAccent),
                 );
               },
-              child: const Text('Arregar', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text('Arregar e Salvar', style: TextStyle(fontWeight: FontWeight.w800)),
             ),
           ],
         ),
@@ -474,7 +483,26 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: const Text('Finalizar Treino?', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
-        content: const Text('Excelente trabalho! Deseja encerrar a sessão e salvar no histórico?', style: TextStyle(color: AppColors.textSecondary)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Excelente trabalho! Deseja encerrar a sessão e salvar no histórico?', style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _notesController,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Como foi o treino? (Opcional)',
+                hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                filled: true,
+                fillColor: Theme.of(context).scaffoldBackgroundColor,
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -610,33 +638,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               )
                   : ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: exercises.length + 1,
+                itemCount: exercises.length, // <-- Alterado de exercises.length + 1 para exercises.length
                 itemBuilder: (context, index) {
-
-                  if (index == exercises.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 12, bottom: 20),
-                      child: TextField(
-                        controller: _notesController,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: 'Anotações (Ex: Estava fraco, ombro doeu...)',
-                          hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.border),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
 
                   final ex = exercises[index];
                   final sets = SessionStateCache.setsStatus[index]!;
@@ -788,9 +791,6 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                   Text(ex.description, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
                                   const SizedBox(height: 4),
 
-                                  // ==========================================
-                                  // NOVO: AQUI APARECE A SUA OBSERVAÇÃO DE BANCO
-                                  // ==========================================
                                   if (ex.customNote.isNotEmpty) ...[
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -841,27 +841,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                             children: [
                               ...List.generate(sets.length, (setIndex) {
                                 bool isCompleted = sets[setIndex];
-
-                                int originalSetsCount = _getSetsCount(ex.reps);
-                                bool isDropset = setIndex >= originalSetsCount;
-
-                                String smartTarget = isDropset ? 'Falha' : _getSmartTarget(ex.reps, setIndex);
-
-                                bool isSpecificSequence = false;
-                                String cleanReps = ex.reps.toLowerCase();
-                                if (cleanReps.contains('x')) cleanReps = cleanReps.split('x').last.trim();
-                                if (cleanReps.contains('-') && cleanReps.split('-').length == originalSetsCount) {
-                                  isSpecificSequence = true;
-                                }
-
-                                Widget repsWidget;
-                                if (isDropset) {
-                                  repsWidget = _buildInputForm(context, _repsControllers[index]![setIndex], 'Falha', isReps: true);
-                                } else if (isSpecificSequence) {
-                                  repsWidget = Center(child: Text(smartTarget, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)));
-                                } else {
-                                  repsWidget = _buildInputForm(context, _repsControllers[index]![setIndex], 'Ex: $smartTarget', isReps: true);
-                                }
+                                String smartTarget = _getSmartTarget(ex.reps, setIndex);
 
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -870,11 +850,11 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                       Expanded(
                                           flex: 2,
                                           child: Text(
-                                              isDropset ? 'Drop' : '${setIndex + 1}',
+                                              '${setIndex + 1}',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.w800,
-                                                  color: isDropset ? Colors.orangeAccent : (isCompleted ? Theme.of(context).colorScheme.primary : Colors.white),
-                                                  fontSize: isDropset ? 12 : 14
+                                                  color: isCompleted ? Theme.of(context).colorScheme.primary : Colors.white,
+                                                  fontSize: 14
                                               )
                                           )
                                       ),
@@ -889,7 +869,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                           flex: 3,
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                                            child: repsWidget,
+                                            child: _buildInputForm(context, _repsControllers[index]![setIndex], '$smartTarget', isReps: true),
                                           )
                                       ),
                                       Expanded(
@@ -900,14 +880,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                               scale: 1.0,
                                               child: Checkbox(
                                                 value: isCompleted,
-                                                activeColor: isDropset ? Colors.orangeAccent : Theme.of(context).colorScheme.primary,
+                                                activeColor: Theme.of(context).colorScheme.primary,
                                                 checkColor: Colors.black,
                                                 side: const BorderSide(color: AppColors.border, width: 1.5),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                                                 onChanged: (val) {
                                                   setState(() {
                                                     SessionStateCache.setsStatus[index]![setIndex] = val ?? false;
-                                                    if (val == true && !isDropset) {
+                                                    if (val == true) {
                                                       FocusScope.of(context).unfocus();
                                                       provider.startRestTimer(ex.rest);
                                                     }
@@ -921,50 +901,6 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                   ),
                                 );
                               }),
-
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0, right: 8.0),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      int newIndex = sets.length;
-                                      SessionStateCache.setsStatus[index]!.add(false);
-                                      SessionStateCache.weights[index]!.add('');
-                                      SessionStateCache.reps[index]!.add('');
-
-                                      var wCtrl = TextEditingController();
-                                      wCtrl.addListener(() {
-                                        SessionStateCache.weights[index]![newIndex] = wCtrl.text;
-                                      });
-                                      _weightControllers[index]!.add(wCtrl);
-
-                                      var rCtrl = TextEditingController();
-                                      rCtrl.addListener(() {
-                                        SessionStateCache.reps[index]![newIndex] = rCtrl.text;
-                                      });
-                                      _repsControllers[index]!.add(rCtrl);
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orangeAccent.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('ADICIONAR DROPSET', style: TextStyle(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              )
                             ],
                           ),
                         ),

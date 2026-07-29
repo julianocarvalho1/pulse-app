@@ -79,8 +79,23 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   void _showExerciseConfigDialog(BuildContext context, Exercise ex, WorkoutProvider provider, {WorkoutRoutine? targetRoutine}) {
     final repsCtrl = TextEditingController(text: ex.reps);
     final restCtrl = TextEditingController(text: ex.rest);
-    final noteCtrl = TextEditingController(text: ex.customNote); // NOVO: Controlador da observação
-    bool isSuperset = ex.isSuperset;
+
+    String initialTechnique = 'Normal';
+    if (ex.isSuperset) initialTechnique = 'Bi-Set';
+    else if (ex.customNote.contains('Drop-Set')) initialTechnique = 'Drop-Set';
+    else if (ex.customNote.contains('Rest-Pause')) initialTechnique = 'Rest-Pause';
+    else if (ex.customNote.contains('Falha Muscular') || ex.customNote.contains('Ir até a Falha')) initialTechnique = 'Até a Falha';
+
+    String cleanNote = ex.customNote
+        .replaceAll('Técnica: Drop-Set', '')
+        .replaceAll('Drop-Set | ', '')
+        .replaceAll('Técnica: Rest-Pause', '')
+        .replaceAll('Rest-Pause | ', '')
+        .replaceAll('Ir até a Falha Muscular', '')
+        .replaceAll('Falha Muscular | ', '').trim();
+
+    final noteCtrl = TextEditingController(text: cleanNote);
+    String selectedTechnique = initialTechnique;
 
     showDialog(
       context: context,
@@ -97,6 +112,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   children: [
                     Text(ex.name, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 24),
+
                     TextField(
                       controller: repsCtrl,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -110,6 +126,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
                     TextField(
                       controller: restCtrl,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -122,43 +139,57 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    // ==========================================
-                    // NOVO: CAMPO DE OBSERVAÇÕES ESPECÍFICAS
-                    // ==========================================
-                    TextField(
-                      controller: noteCtrl,
-                      style: const TextStyle(color: Colors.white),
+                    // TÍTULO DESTACADO PARA A OBSERVAÇÃO
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('TÉCNICA E OBSERVAÇÕES', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.5)),
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: selectedTechnique,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       decoration: InputDecoration(
-                        labelText: 'Observação (Ex: Banco no 4, pino 2)',
+                        labelText: 'Técnica / Método',
                         labelStyle: const TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: Theme.of(context).scaffoldBackgroundColor,
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
                       ),
+                      items: ['Normal', 'Bi-Set', 'Drop-Set', 'Rest-Pause', 'Até a Falha'].map((String val) {
+                        return DropdownMenuItem(
+                          value: val,
+                          child: Text(val == 'Bi-Set' ? '🔗 Bi-Set (Ligar ao próximo)' : val),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        setStateDialog(() {
+                          selectedTechnique = val!;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isSuperset ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isSuperset ? Theme.of(context).colorScheme.primary : AppColors.border),
-                      ),
-                      child: CheckboxListTile(
-                        title: const Text('🔗 Ligar ao próximo (Bi-Set)', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Gruda este exercício no próximo sem intervalo.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-                        value: isSuperset,
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        checkColor: Colors.black,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        onChanged: (val) {
-                          setStateDialog(() {
-                            isSuperset = val ?? false;
-                          });
-                        },
+                    TextField(
+                      controller: noteCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Observação Livre (Ex: Banco no 4)',
+                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        filled: true,
+                        fillColor: Theme.of(context).scaffoldBackgroundColor,
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
                       ),
                     ),
                   ],
@@ -172,6 +203,17 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.black),
                   onPressed: () {
+                    bool isSupersetFinal = selectedTechnique == 'Bi-Set';
+                    String finalNote = noteCtrl.text.trim();
+
+                    if (selectedTechnique == 'Drop-Set') {
+                      finalNote = finalNote.isEmpty ? 'Técnica: Drop-Set' : 'Drop-Set | $finalNote';
+                    } else if (selectedTechnique == 'Rest-Pause') {
+                      finalNote = finalNote.isEmpty ? 'Técnica: Rest-Pause' : 'Rest-Pause | $finalNote';
+                    } else if (selectedTechnique == 'Até a Falha') {
+                      finalNote = finalNote.isEmpty ? 'Ir até a Falha Muscular' : 'Falha Muscular | $finalNote';
+                    }
+
                     final customizedEx = Exercise(
                       id: ex.id,
                       name: ex.name,
@@ -179,8 +221,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                       description: ex.description,
                       reps: repsCtrl.text.trim().isEmpty ? ex.reps : repsCtrl.text.trim(),
                       rest: restCtrl.text.trim().isEmpty ? ex.rest : restCtrl.text.trim(),
-                      isSuperset: isSuperset,
-                      customNote: noteCtrl.text.trim(), // Salva a observação!
+                      isSuperset: isSupersetFinal,
+                      customNote: finalNote,
                     );
 
                     if (targetRoutine != null) {
@@ -201,16 +243,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         ),
                       );
                     } else if (widget.isSelecting) {
-                      provider.addExerciseToWorkout(customizedEx);
                       Navigator.pop(ctx);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${ex.name} adicionado ao treino ativo!'),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      Navigator.pop(context, customizedEx);
                     }
                   },
                   child: const Text('Confirmar e Salvar', style: TextStyle(fontWeight: FontWeight.bold)),

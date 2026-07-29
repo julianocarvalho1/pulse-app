@@ -1,104 +1,94 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// ============================================================
-//  CORES FIXAS (Restauradas para não quebrar o resto do app!)
-// ============================================================
 class AppColors {
-  // Cores de Fundo Padrão (Usadas pelas telas antigas)
-  static const Color background = Color(0xFF0A0E0A);
-  static const Color surface = Color(0xFF151A16);
-  static const Color surfaceLight = Color(0xFF1D241E);
+  static const Color background = Color(0xFF0F0F12);
+  static const Color surface = Color(0xFF16161A);
+  static const Color surfaceLight = Color(0xFF202025);
+  static const Color border = Color(0xFF2A2A30);
 
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF8A928B);
-  static const Color border = Color(0xFF283028);
-
-  // Cores de Destaque
-  static const Color neon = Color(0xFFC5F92E);
-  static const Color orange = Color(0xFFFF5A1F);
-  static const Color cyan = Color(0xFF00E5FF);
-  static const Color purple = Color(0xFFB026FF);
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Color(0xFFA0A0A5);
 }
 
-// ============================================================
-//  ESTRUTURA DA PALETA COMPLETA
-// ============================================================
-class AppThemePalette {
+// Criamos a estrutura exata que a sua tela de perfil está procurando!
+class AppPalette {
   final String name;
   final Color primary;
-  final Color background;
-  final Color surface;
-
-  AppThemePalette({
-    required this.name,
-    required this.primary,
-    required this.background,
-    required this.surface
-  });
+  const AppPalette(this.name, this.primary);
 }
 
-// ============================================================
-//  GERENCIADOR DE TEMA DINÂMICO
-// ============================================================
 class ThemeProvider extends ChangeNotifier {
-  // As 5 Paletas perfeitamente harmonizadas para o Dark Mode
-  static final List<AppThemePalette> availablePalettes = [
-    AppThemePalette(
-      name: 'Neon Matrix',
-      primary: AppColors.neon,
-      background: const Color(0xFF0A0E0A), // Fundo preto esverdeado
-      surface: const Color(0xFF151A16),    // Card cinza esverdeado
-    ),
-    AppThemePalette(
-      name: 'Chama',
-      primary: AppColors.orange,
-      background: const Color(0xFF140A08), // Fundo preto avermelhado
-      surface: const Color(0xFF1F1210),    // Card marrom escuro
-    ),
-    AppThemePalette(
-      name: 'Oceano',
-      primary: AppColors.cyan,
-      background: const Color(0xFF040A14), // Fundo azul marinho profundo
-      surface: const Color(0xFF0B1421),    // Card azul escuro
-    ),
-    AppThemePalette(
-      name: 'Ametista',
-      primary: AppColors.purple,
-      background: const Color(0xFF0D0612), // Fundo roxo muito escuro
-      surface: const Color(0xFF16101F),    // Card violeta escuro
-    ),
-    AppThemePalette(
-      name: 'Ouro Negro',
-      primary: const Color(0xFFFFD700),
-      background: const Color(0xFF121212), // Fundo grafite neutro
-      surface: const Color(0xFF1E1E1E),    // Card cinza clássico
-    ),
+  // Cor padrão
+  Color _primaryColor = const Color(0xFF00FF88);
+
+  Color get primaryColor => _primaryColor;
+
+  // Agora a lista fornece o "name" e o "primary" para o perfil não quebrar
+  final List<AppPalette> palettes = const [
+    AppPalette('Ciano', Color(0xFF00E5FF)),
+    AppPalette('Verde Neon', Color(0xFF00E676)),
+    AppPalette('Laranja', Color(0xFFFF3D00)),
+    AppPalette('Amarelo', Color(0xFFFFEA00)),
+    AppPalette('Vermelho', Color(0xFFFF1744)),
+    AppPalette('Rosa', Color(0xFFF50057)),
+    AppPalette('Roxo Cyber', Color(0xFFD500F9)),
+    AppPalette('Azul Puro', Color(0xFF2979FF)),
   ];
 
-  int _currentPaletteIndex = 0;
-
-  AppThemePalette get currentPalette => availablePalettes[_currentPaletteIndex];
-  Color get primaryColor => currentPalette.primary;
-  List<AppThemePalette> get palettes => availablePalettes;
+  ThemeProvider() {
+    _loadThemeColor();
+  }
 
   ThemeData get currentTheme {
     return ThemeData(
-      useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: currentPalette.background,
-      fontFamily: 'Roboto',
-      colorScheme: ColorScheme.dark(
-        primary: currentPalette.primary,
-        surface: currentPalette.surface,
+      scaffoldBackgroundColor: AppColors.background,
+      fontFamily: 'Inter',
+
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: _primaryColor,
+        brightness: Brightness.dark,
+        primary: _primaryColor,
+        surface: AppColors.surface,
         onPrimary: Colors.black,
       ),
-      highlightColor: Colors.transparent,
-      splashColor: currentPalette.primary.withValues(alpha: 0.08),
+
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+
+      cardTheme: CardThemeData(
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 0,
+      ),
     );
   }
 
-  void changePalette(int index) {
-    _currentPaletteIndex = index;
+  Future<void> setPrimaryColor(Color color) async {
+    _primaryColor = color;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('theme_color', color.value);
+  }
+
+  // Função adaptada para ler a nova classe AppPalette
+  void changePalette(int index) {
+    if (index >= 0 && index < palettes.length) {
+      setPrimaryColor(palettes[index].primary);
+    }
+  }
+
+  Future<void> _loadThemeColor() async {
+    final prefs = await SharedPreferences.getInstance();
+    final colorValue = prefs.getInt('theme_color');
+    if (colorValue != null) {
+      _primaryColor = Color(colorValue);
+      notifyListeners();
+    }
   }
 }

@@ -15,22 +15,28 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final LocalAuthentication auth = LocalAuthentication();
   final TextEditingController _senhaController = TextEditingController();
-  final TextEditingController _nomeController = TextEditingController(); // Usado apenas no cadastro
+  final TextEditingController _nomeController = TextEditingController();
   bool _isAuthenticating = false;
+  bool _biometriaJaTentada = false; // Flag para não ficar chamando a biometria em loop
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<WorkoutProvider>();
-      if (provider.usarBiometria && provider.hasPassword) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = context.watch<WorkoutProvider>();
+
+    // A INTELIGÊNCIA AQUI: Só tenta a biometria DEPOIS que o app descobrir se tem senha salva
+    if (provider.usarBiometria && provider.hasPassword && !_biometriaJaTentada) {
+      _biometriaJaTentada = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         _autenticarPorBiometria();
-      }
-    });
+      });
+    }
   }
 
   Future<void> _autenticarPorBiometria() async {
+    if (!mounted) return;
     setState(() => _isAuthenticating = true);
+
     bool authenticated = false;
     try {
       final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
@@ -40,9 +46,12 @@ class _AuthScreenState extends State<AuthScreen> {
     } catch (e) {
       debugPrint('Erro na biometria: $e');
     }
-    setState(() => _isAuthenticating = false);
-    if (authenticated && mounted) {
-      _entrarNoApp();
+
+    if (mounted) {
+      setState(() => _isAuthenticating = false);
+      if (authenticated) {
+        _entrarNoApp();
+      }
     }
   }
 
@@ -83,7 +92,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<WorkoutProvider>();
-    final isFirstTime = !provider.hasPassword; // Se não tem senha, é primeiro acesso (ou reset)
+    final isFirstTime = !provider.hasPassword;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -96,28 +105,47 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // BRANDING
+
+                // BRANDING COM LOGO OFICIAL
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                        color: Theme.of(context).colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                              blurRadius: 30,
+                              spreadRadius: 10
+                          )
+                        ]
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 24),
-                        const SizedBox(width: 12),
-                        const Text('PULSE', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 4.0, color: Colors.white)),
-                      ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/icon.png',
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.fitness_center, color: Colors.black, size: 36),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 24),
+                const Text('PULSE', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 6.0, color: Colors.white)),
+                const SizedBox(height: 48),
 
-                // TEXTOS DINÂMICOS (Muda se for cadastro ou login)
+                // TEXTOS DINÂMICOS
                 Text(
                   isFirstTime ? 'CRIAR PERFIL' : 'ACESSO RESTRITO',
                   textAlign: TextAlign.center,
@@ -127,25 +155,26 @@ class _AuthScreenState extends State<AuthScreen> {
                 Text(
                   isFirstTime ? 'BEM-VINDO' : (provider.userName.isEmpty ? 'ATLETA' : provider.userName.toUpperCase()),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
+                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  isFirstTime ? 'Configure seu nome e crie uma senha para proteger o seu painel de alta performance.' : 'O seu painel de alta performance aguarda.\nConfirme sua identidade para iniciar.',
+                  isFirstTime ? 'Configure seu nome e crie uma senha para proteger o seu painel de alta performance.' : 'O seu painel de evolução aguarda.\nConfirme sua identidade para acessar.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 40),
 
-                // CAMPO DE NOME (Só aparece no primeiro acesso)
+                // CAMPO DE NOME (Com "Crachá" Key)
                 if (isFirstTime) ...[
                   TextField(
+                    key: const ValueKey('campo_nome'),
                     controller: _nomeController,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
-                      hintText: 'Digite o seu nome',
+                      hintText: 'Como quer ser chamado?',
                       hintStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.surface,
@@ -157,8 +186,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // CAMPO DE SENHA
+                // CAMPO DE SENHA (Com "Crachá" Key)
                 TextField(
+                  key: const ValueKey('campo_senha'),
                   controller: _senhaController,
                   obscureText: true,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 2.0),
