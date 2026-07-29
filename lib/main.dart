@@ -1,4 +1,6 @@
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+
 import 'providers/workout_provider.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
@@ -21,13 +23,14 @@ void main() {
   );
 
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => WorkoutProvider()),
-        // AQUI: Adicionamos o novo cérebro que vai controlar as cores
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: const FitApp(),
+    ProviderScope(
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => WorkoutProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ],
+        child: const FitApp(),
+      ),
     ),
   );
 }
@@ -43,7 +46,8 @@ class FitApp extends StatelessWidget {
         return MaterialApp(
           title: 'FitApp',
           debugShowCheckedModeBanner: false,
-          theme: themeProvider.currentTheme, // AQUI: Agora a cor puxa do Provider
+          theme:
+              themeProvider.currentTheme, // AQUI: Agora a cor puxa do Provider
           home: const AuthWrapper(),
         );
       },
@@ -109,21 +113,28 @@ class _MainNavigationState extends State<MainNavigation> {
           unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Início'),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Início',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.fitness_center), label: 'Treinos'),
+              icon: Icon(Icons.fitness_center),
+              label: 'Treinos',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.view_list_outlined),
-                activeIcon: Icon(Icons.view_list),
-                label: 'Exercícios'),
+              icon: Icon(Icons.view_list_outlined),
+              activeIcon: Icon(Icons.view_list),
+              label: 'Exercícios',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart), label: 'Progresso'),
+              icon: Icon(Icons.bar_chart),
+              label: 'Progresso',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Perfil'),
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
           ],
         ),
       ),

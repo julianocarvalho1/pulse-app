@@ -17,6 +17,7 @@ dependencies:
   url_launcher: ^6.3.2
   local_auth: ^3.0.2
   flutter_tts: ^4.2.5
+  flutter_riverpod: ^3.4.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
