@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import 'features/auth/presentation/auth_gate.dart';
+import 'features/settings/domain/pulse_settings.dart';
+import 'features/settings/presentation/providers/settings_controller.dart';
 import 'providers/workout_provider.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
@@ -25,30 +27,30 @@ void main() {
   runApp(
     ProviderScope(
       child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => WorkoutProvider()),
-          ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ],
+        providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],
         child: const PulseApp(),
       ),
     ),
   );
 }
 
-class PulseApp extends StatelessWidget {
+class PulseApp extends ConsumerWidget {
   const PulseApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'PULSE',
-          debugShowCheckedModeBanner: false,
-          theme: themeProvider.currentTheme,
-          home: const AuthGate(child: MainNavigation()),
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsControllerProvider);
+
+    final settings = switch (settingsAsync) {
+      AsyncData<PulseSettings>(:final value) => value,
+      _ => PulseSettings.defaults(),
+    };
+
+    return MaterialApp(
+      title: 'PULSE',
+      debugShowCheckedModeBanner: false,
+      theme: buildPulseTheme(Color(settings.themeColorValue)),
+      home: const AuthGate(child: MainNavigation()),
     );
   }
 }

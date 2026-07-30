@@ -1,0 +1,85 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../domain/pulse_settings.dart';
+
+class SettingsLocalService {
+  static const String _themeColorKey = 'theme_color';
+  static const String _vibrateAfterRestKey = 'settings_vibrate_after_rest';
+  static const String _inactivityReminderKey = 'settings_inactivity_reminder';
+  static const String _measurementSystemKey = 'settings_measurement_system';
+  static const String _userNameKey = 'user_name';
+  static const String _userWeightKey = 'user_weight';
+  static const String _userHeightKey = 'user_height_cm';
+  static const String _userAgeKey = 'user_age';
+
+  Future<PulseSettings> load() async {
+    final preferences = await SharedPreferences.getInstance();
+    final defaults = PulseSettings.defaults();
+
+    final systemName = preferences.getString(_measurementSystemKey);
+    final measurementSystem = systemName == MeasurementSystem.imperial.name
+        ? MeasurementSystem.imperial
+        : MeasurementSystem.metric;
+
+    final savedName = (preferences.getString(_userNameKey) ?? '').trim();
+
+    return PulseSettings(
+      themeColorValue:
+          preferences.getInt(_themeColorKey) ?? defaults.themeColorValue,
+      vibrateAfterRest:
+          preferences.getBool(_vibrateAfterRestKey) ??
+          defaults.vibrateAfterRest,
+      inactivityReminder:
+          preferences.getBool(_inactivityReminderKey) ??
+          defaults.inactivityReminder,
+      measurementSystem: measurementSystem,
+      profile: UserProfile(
+        name: savedName.isEmpty ? defaults.profile.name : savedName,
+        weightKg: _readDouble(preferences, _userWeightKey),
+        heightCm: _readDouble(preferences, _userHeightKey),
+        age: preferences.getInt(_userAgeKey) ?? 0,
+      ),
+    );
+  }
+
+  Future<void> save(PulseSettings settings) async {
+    final preferences = await SharedPreferences.getInstance();
+
+    await Future.wait([
+      preferences.setInt(_themeColorKey, settings.themeColorValue),
+      preferences.setBool(_vibrateAfterRestKey, settings.vibrateAfterRest),
+      preferences.setBool(_inactivityReminderKey, settings.inactivityReminder),
+      preferences.setString(
+        _measurementSystemKey,
+        settings.measurementSystem.name,
+      ),
+      preferences.setString(_userNameKey, settings.profile.displayName),
+      preferences.setDouble(_userWeightKey, settings.profile.weightKg),
+      preferences.setDouble(_userHeightKey, settings.profile.heightCm),
+      preferences.setInt(_userAgeKey, settings.profile.age),
+    ]);
+  }
+
+  Future<void> clearAll() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.clear();
+  }
+
+  double _readDouble(SharedPreferences preferences, String key) {
+    final value = preferences.get(key);
+
+    if (value is double) {
+      return value;
+    }
+
+    if (value is int) {
+      return value.toDouble();
+    }
+
+    if (value is String) {
+      return double.tryParse(value.replaceAll(',', '.')) ?? 0;
+    }
+
+    return 0;
+  }
+}

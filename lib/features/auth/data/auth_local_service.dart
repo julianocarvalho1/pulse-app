@@ -18,9 +18,6 @@ class AuthLocalService {
     : _localAuthentication = localAuthentication ?? LocalAuthentication();
 
   static const String _appLockEnabledKey = 'app_lock_enabled';
-
-  // Chaves antigas. São lidas durante a transição para não perder
-  // a configuração existente do usuário.
   static const String _legacyPasswordKey = 'user_password';
   static const String _legacyBiometricsKey = 'usarBiometria';
   static const String _userNameKey = 'user_name';
@@ -31,20 +28,19 @@ class AuthLocalService {
     final preferences = await SharedPreferences.getInstance();
 
     final savedLockSetting = preferences.getBool(_appLockEnabledKey);
-
     final legacyPassword = preferences.getString(_legacyPasswordKey) ?? '';
-
     final legacyBiometrics = preferences.getBool(_legacyBiometricsKey) ?? false;
 
     final lockEnabled =
         savedLockSetting ?? (legacyBiometrics || legacyPassword.isNotEmpty);
 
-    if (savedLockSetting == null) {
-      await preferences.setBool(_appLockEnabledKey, lockEnabled);
-    }
+    await preferences.setBool(_appLockEnabledKey, lockEnabled);
+
+    // A autenticação antiga não é mais utilizada.
+    await preferences.remove(_legacyPasswordKey);
+    await preferences.remove(_legacyBiometricsKey);
 
     final userName = (preferences.getString(_userNameKey) ?? '').trim();
-
     final canAuthenticate = await _canUseDeviceAuthentication();
 
     return AuthLocalSnapshot(
@@ -64,8 +60,15 @@ class AuthLocalService {
 
   Future<void> setLockEnabled(bool enabled) async {
     final preferences = await SharedPreferences.getInstance();
-
     await preferences.setBool(_appLockEnabledKey, enabled);
+  }
+
+  Future<void> setUserName(String name) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      _userNameKey,
+      name.trim().isEmpty ? 'Atleta' : name.trim(),
+    );
   }
 
   Future<bool> refreshAuthenticationCapability() {
@@ -78,7 +81,6 @@ class AuthLocalService {
 
   Future<bool> _canUseDeviceAuthentication() async {
     final canCheckBiometrics = await _localAuthentication.canCheckBiometrics;
-
     final isDeviceSupported = await _localAuthentication.isDeviceSupported();
 
     return canCheckBiometrics || isDeviceSupported;

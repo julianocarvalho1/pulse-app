@@ -110,34 +110,22 @@ class AuthController extends AsyncNotifier<AppAuthState> {
     }
   }
 
-  Future<void> disableLockAndUnlock() async {
+  Future<bool> setLockEnabled(bool enabled) async {
     final current = _currentValue;
-
     if (current == null) {
-      return;
-    }
-
-    await _service.setLockEnabled(false);
-
-    state = AsyncData(
-      current.copyWith(
-        status: AppAuthStatus.unlocked,
-        isLockEnabled: false,
-        clearMessage: true,
-      ),
-    );
-  }
-
-  Future<void> setLockEnabled(bool enabled) async {
-    final current = _currentValue;
-
-    if (current == null) {
-      return;
+      return false;
     }
 
     if (!enabled) {
-      await disableLockAndUnlock();
-      return;
+      await _service.setLockEnabled(false);
+      state = AsyncData(
+        current.copyWith(
+          status: AppAuthStatus.unlocked,
+          isLockEnabled: false,
+          clearMessage: true,
+        ),
+      );
+      return true;
     }
 
     final canAuthenticate = await _service.refreshAuthenticationCapability();
@@ -145,24 +133,59 @@ class AuthController extends AsyncNotifier<AppAuthState> {
     if (!canAuthenticate) {
       state = AsyncData(
         current.copyWith(
-          status: AppAuthStatus.unavailable,
+          status: AppAuthStatus.unlocked,
           isLockEnabled: false,
           canAuthenticate: false,
           message:
               'Configure uma forma de desbloqueio no aparelho antes de ativar esta proteção.',
         ),
       );
-      return;
+      return false;
     }
 
     await _service.setLockEnabled(true);
 
+    // O app permanece aberto. A proteção será exigida na próxima
+    // abertura ou quando o aplicativo voltar do segundo plano.
     state = AsyncData(
       current.copyWith(
-        status: AppAuthStatus.locked,
+        status: AppAuthStatus.unlocked,
         isLockEnabled: true,
         canAuthenticate: true,
         clearMessage: true,
+      ),
+    );
+    return true;
+  }
+
+  Future<void> disableLockAndUnlock() async {
+    await setLockEnabled(false);
+  }
+
+  Future<void> updateUserName(String name) async {
+    final normalizedName = name.trim().isEmpty ? 'Atleta' : name.trim();
+    await _service.setUserName(normalizedName);
+
+    final current = _currentValue;
+    if (current == null) {
+      return;
+    }
+
+    state = AsyncData(
+      current.copyWith(userName: normalizedName, clearMessage: true),
+    );
+  }
+
+  Future<void> resetAfterFactoryReset() async {
+    await _service.setLockEnabled(false);
+    await _service.setUserName('Atleta');
+
+    state = const AsyncData(
+      AppAuthState(
+        status: AppAuthStatus.unlocked,
+        isLockEnabled: false,
+        canAuthenticate: true,
+        userName: 'Atleta',
       ),
     );
   }
@@ -181,7 +204,6 @@ class AuthController extends AsyncNotifier<AppAuthState> {
 
   Future<void> reload() async {
     state = const AsyncLoading();
-
     state = await AsyncValue.guard(_loadInitialState);
   }
 

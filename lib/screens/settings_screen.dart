@@ -1,28 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
+
+import '../features/auth/domain/app_auth_state.dart';
+import '../features/auth/presentation/providers/auth_controller.dart';
+import '../features/settings/domain/pulse_settings.dart';
+import '../features/settings/presentation/providers/settings_controller.dart';
 import '../providers/workout_provider.dart';
 import '../theme/app_theme.dart';
-import 'auth_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
-    final themeProvider = context.watch<ThemeProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsAsync = ref.watch(settingsControllerProvider);
 
-    // Paleta de Cores Premium para Fitness
-    final List<Map<String, dynamic>> premiumColors = [
-      {'name': 'Ciano', 'color': const Color(0xFF00E5FF)},
-      {'name': 'Verde Neon', 'color': const Color(0xFF00E676)},
-      {'name': 'Laranja', 'color': const Color(0xFFFF3D00)},
-      {'name': 'Amarelo', 'color': const Color(0xFFFFEA00)},
-      {'name': 'Vermelho', 'color': const Color(0xFFFF1744)},
-      {'name': 'Rosa', 'color': const Color(0xFFF50057)},
-      {'name': 'Roxo Cyber', 'color': const Color(0xFFD500F9)},
-      {'name': 'Azul Puro', 'color': const Color(0xFF2979FF)},
-    ];
+    return settingsAsync.when(
+      loading: () => const _SettingsLoadingView(),
+      error: (error, stackTrace) => _SettingsErrorView(
+        onRetry: () {
+          ref.read(settingsControllerProvider.notifier).reload();
+        },
+      ),
+      data: (settings) => _SettingsContent(settings: settings),
+    );
+  }
+}
+
+class _SettingsContent extends ConsumerWidget {
+  const _SettingsContent({required this.settings});
+
+  final PulseSettings settings;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authAsync = ref.watch(authControllerProvider);
+    final authState = switch (authAsync) {
+      AsyncData<AppAuthState>(:final value) => value,
+      _ => null,
+    };
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -31,256 +48,507 @@ class SettingsScreen extends StatelessWidget {
           'Configurações',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
-        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'COR DO APLICATIVO',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.0,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // O SELETOR DE CORES
-            SizedBox(
-              height: 60,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: premiumColors.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (context, index) {
-                  final colorInfo = premiumColors[index];
-                  final Color c = colorInfo['color'];
-                  final bool isSelected =
-                      themeProvider.primaryColor.value == c.value;
-
-                  return GestureDetector(
-                    onTap: () => themeProvider.setPrimaryColor(c),
-                    child: Container(
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected ? Colors.white : Colors.transparent,
-                          width: 3,
-                        ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: c.withValues(alpha: 0.5),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ]
-                            : [],
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check, color: Colors.black)
-                          : null,
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            const Text(
-              'CONTA',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.0,
-              ),
-            ),
+            _sectionTitle('CONTA'),
             const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: _iconBox(context, Icons.person_outline),
+                  title: Text(
+                    settings.profile.displayName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  child: Icon(
-                    Icons.person,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                title: const Text(
-                  'Alterar Nome',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                trailing: const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textSecondary,
-                ),
-                onTap: () {
-                  final txt = TextEditingController(text: provider.userName);
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: AppColors.surface,
-                      title: const Text(
-                        'Seu Nome',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      content: TextField(
-                        controller: txt,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text(
-                            'Cancelar',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed: () {
-                            provider.setUserName(txt.text);
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('Salvar'),
-                        ),
-                      ],
+                  subtitle: Text(
+                    _profileSubtitle(settings),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 32),
-            const Text(
-              'SISTEMA',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.0,
-              ),
-            ),
+            const SizedBox(height: 30),
+            _sectionTitle('APARÊNCIA'),
             const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.fingerprint, color: Colors.white),
-                    title: const Text(
-                      'Usar Biometria',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    trailing: Switch(
-                      value: provider.usarBiometria,
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      onChanged: (val) {
-                        provider.toggleBiometria(val);
-                      },
-                    ),
-                  ),
-                  const Divider(color: AppColors.border, height: 1),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete_forever,
-                      color: Colors.redAccent,
-                    ),
-                    title: const Text(
-                      'Apagar Todos os Dados',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.redAccent,
+            _sectionCard(
+              context,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Cor principal',
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
-                    ),
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: AppColors.surface,
-                          title: const Text(
-                            'Tem Certeza?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          content: const Text(
-                            'Isso apagará todo o seu histórico, fichas e medidas. Não tem volta!',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text(
-                                'Cancelar',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                              ),
-                              onPressed: () {
-                                provider.factoryReset();
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const AuthScreen(),
-                                  ),
-                                  (route) => false,
-                                );
+                      const SizedBox(height: 6),
+                      const Text(
+                        'A cor selecionada é aplicada em botões, indicadores e destaques.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 16,
+                        children: pulsePalettes.map((palette) {
+                          final selected =
+                              settings.themeColorValue ==
+                              palette.primary.toARGB32();
+
+                          return Semantics(
+                            label: 'Tema ${palette.name}',
+                            button: true,
+                            selected: selected,
+                            child: GestureDetector(
+                              onTap: () {
+                                ref
+                                    .read(settingsControllerProvider.notifier)
+                                    .changeThemeColor(
+                                      palette.primary.toARGB32(),
+                                    );
                               },
-                              child: const Text(
-                                'Apagar Tudo',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                              child: SizedBox(
+                                width: 64,
+                                child: Column(
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
+                                      width: 50,
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        color: palette.primary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: selected
+                                              ? Colors.white
+                                              : Colors.transparent,
+                                          width: 3,
+                                        ),
+                                        boxShadow: selected
+                                            ? [
+                                                BoxShadow(
+                                                  color: palette.primary
+                                                      .withValues(alpha: 0.45),
+                                                  blurRadius: 12,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ]
+                                            : const [],
+                                      ),
+                                      child: selected
+                                          ? const Icon(
+                                              Icons.check,
+                                              color: Colors.black,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 7),
+                                    Text(
+                                      palette.name,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: selected
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
+                                        fontSize: 10,
+                                        fontWeight: selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _sectionTitle('ALERTAS DURANTE O TREINO'),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              children: [
+                SwitchListTile(
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                  title: const Text(
+                    'Vibrar ao fim do descanso',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Avisa quando é hora de iniciar a próxima série.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: settings.vibrateAfterRest,
+                  onChanged: (value) async {
+                    await ref
+                        .read(settingsControllerProvider.notifier)
+                        .setVibrateAfterRest(value);
+
+                    if (context.mounted) {
+                      context.read<WorkoutProvider>().setVibrateAfterRest(
+                        value,
                       );
+                    }
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                SwitchListTile(
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                  title: const Text(
+                    'Lembrete de inatividade',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Salva sua preferência para os lembretes futuros.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: settings.inactivityReminder,
+                  onChanged: (value) {
+                    ref
+                        .read(settingsControllerProvider.notifier)
+                        .setInactivityReminder(value);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _sectionTitle('PREFERÊNCIAS GERAIS'),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.straighten,
+                    color: AppColors.textSecondary,
+                  ),
+                  title: const Text(
+                    'Sistema de medidas',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  trailing: DropdownButton<MeasurementSystem>(
+                    value: settings.measurementSystem,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    underline: const SizedBox(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: MeasurementSystem.metric,
+                        child: Text('Kg / Cm'),
+                      ),
+                      DropdownMenuItem(
+                        value: MeasurementSystem.imperial,
+                        child: Text('Lbs / In'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref
+                            .read(settingsControllerProvider.notifier)
+                            .setMeasurementSystem(value);
+                      }
                     },
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _sectionTitle('SEGURANÇA'),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              children: [
+                SwitchListTile(
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                  secondary: const Icon(
+                    Icons.lock_outline,
+                    color: Colors.white,
+                  ),
+                  title: const Text(
+                    'Proteger o PULSE',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Usa biometria, rosto, PIN, padrão ou senha do aparelho.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: authState?.isLockEnabled ?? false,
+                  onChanged: authState == null
+                      ? null
+                      : (value) async {
+                          final enabled = await ref
+                              .read(authControllerProvider.notifier)
+                              .setLockEnabled(value);
+
+                          if (!enabled && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Configure uma forma de desbloqueio no aparelho antes de ativar a proteção.',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _sectionTitle('DADOS E APLICATIVO'),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.info_outline,
+                    color: AppColors.textSecondary,
+                  ),
+                  title: const Text(
+                    'Sobre o PULSE',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textSecondary,
+                  ),
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'PULSE',
+                      applicationVersion: '1.0.0',
+                      applicationLegalese: 'Diário inteligente de musculação.',
+                      applicationIcon: Icon(
+                        Icons.fitness_center,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 40,
+                      ),
+                    );
+                  },
+                ),
+                const Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text(
+                    'Apagar todos os dados',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Remove perfil, fichas, histórico e preferências deste aparelho.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () => _confirmFactoryReset(context, ref),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmFactoryReset(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Apagar todos os dados?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Essa ação apagará perfil, fichas, histórico e preferências salvas neste aparelho. Não será possível desfazer.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Apagar tudo'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    await context.read<WorkoutProvider>().factoryReset();
+    await ref
+        .read(settingsControllerProvider.notifier)
+        .resetToDefaults(clearStorage: false);
+    await ref.read(authControllerProvider.notifier).resetAfterFactoryReset();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Os dados locais do PULSE foram apagados.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  String _profileSubtitle(PulseSettings settings) {
+    final profile = settings.profile;
+    final parts = <String>[];
+
+    if (profile.weightKg > 0) {
+      if (settings.measurementSystem == MeasurementSystem.metric) {
+        parts.add('${profile.weightKg.toStringAsFixed(1)} kg');
+      } else {
+        final pounds = profile.weightKg * 2.2046226218;
+        parts.add('${pounds.toStringAsFixed(1)} lbs');
+      }
+    }
+
+    if (profile.age > 0) {
+      parts.add('${profile.age} anos');
+    }
+
+    return parts.isEmpty
+        ? 'Edite seus dados pessoais na tela Perfil.'
+        : parts.join(' • ');
+  }
+
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: AppColors.textSecondary,
+        letterSpacing: 1,
+      ),
+    );
+  }
+
+  Widget _sectionCard(BuildContext context, {required List<Widget> children}) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: children),
+    );
+  }
+
+  Widget _iconBox(BuildContext context, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+    );
+  }
+}
+
+class _SettingsLoadingView extends StatelessWidget {
+  const _SettingsLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Configurações')),
+      body: Center(
+        child: CircularProgressIndicator(
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsErrorView extends StatelessWidget {
+  const _SettingsErrorView({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Configurações')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.redAccent,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Não foi possível carregar as configurações.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
         ),
       ),
     );

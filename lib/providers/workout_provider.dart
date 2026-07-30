@@ -92,15 +92,8 @@ class WorkoutProvider extends ChangeNotifier {
   List<WorkoutHistoryItem> _history = [];
   List<WorkoutProgram> _preMadePrograms = [];
 
-  String _userName = '';
-  String _userPassword = '';
-  double _userWeight = 0.0;
-
-  bool _isAuthenticated = false;
   bool _isInitialized = false;
-
-  bool _usarBiometria = false;
-  bool get usarBiometria => _usarBiometria;
+  bool _vibrateAfterRest = true;
   bool _isWorkoutActive = false;
   List<Exercise> _currentWorkoutExercises = [];
   String _activeRoutineName = 'Treino do Dia';
@@ -146,10 +139,6 @@ class WorkoutProvider extends ChangeNotifier {
   List<WorkoutRoutine> get myRoutines => _myRoutines;
   List<WorkoutProgram> get preMadePrograms => _preMadePrograms;
   List<WorkoutHistoryItem> get history => _history;
-  String get userName => _userName;
-  double get userWeight => _userWeight;
-  bool get hasPassword => _userPassword.isNotEmpty;
-  bool get isAuthenticated => _isAuthenticated;
   bool get isInitialized => _isInitialized;
   bool get isWorkoutActive => _isWorkoutActive;
   List<Exercise> get currentWorkoutExercises => _currentWorkoutExercises;
@@ -158,12 +147,6 @@ class WorkoutProvider extends ChangeNotifier {
 
   void setActiveProgram(String programName) {
     _activeProgramName = programName;
-    _saveData();
-    notifyListeners();
-  }
-
-  void setUserWeight(double weight) {
-    _userWeight = weight;
     _saveData();
     notifyListeners();
   }
@@ -241,11 +224,12 @@ class WorkoutProvider extends ChangeNotifier {
       debugPrint('Erro na voz: $e');
     }
 
-    // Mantém a vibração pesada para você sentir no bolso
-    for (int i = 0; i < 4; i++) {
-      Future.delayed(Duration(milliseconds: i * 600), () {
-        HapticFeedback.heavyImpact();
-      });
+    if (_vibrateAfterRest) {
+      for (int i = 0; i < 4; i++) {
+        Future.delayed(Duration(milliseconds: i * 600), () {
+          HapticFeedback.heavyImpact();
+        });
+      }
     }
   }
 
@@ -474,21 +458,8 @@ class WorkoutProvider extends ChangeNotifier {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    _userName = prefs.getString('user_name') ?? '';
-    _userPassword = prefs.getString('user_password') ?? '';
     _activeProgramName = prefs.getString('active_program') ?? '';
-    _usarBiometria = prefs.getBool('usarBiometria') ?? false;
-
-    final weightData = prefs.get('user_weight');
-    if (weightData is double) {
-      _userWeight = weightData;
-    } else if (weightData is int) {
-      _userWeight = weightData.toDouble();
-    } else if (weightData is String) {
-      _userWeight = double.tryParse(weightData) ?? 0.0;
-    } else {
-      _userWeight = 0.0;
-    }
+    _vibrateAfterRest = prefs.getBool('settings_vibrate_after_rest') ?? true;
 
     try {
       final customExStr = prefs.getString('custom_exercises');
@@ -533,9 +504,6 @@ class WorkoutProvider extends ChangeNotifier {
 
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', _userName);
-    await prefs.setString('user_password', _userPassword);
-    await prefs.setDouble('user_weight', _userWeight);
     await prefs.setString('active_program', _activeProgramName);
     await prefs.setString(
       'custom_exercises',
@@ -551,42 +519,8 @@ class WorkoutProvider extends ChangeNotifier {
     );
   }
 
-  void registerUser(String name, String password) {
-    _userName = name.trim().isEmpty ? 'Atleta' : name.trim();
-    _userPassword = password.trim();
-    _isAuthenticated = true;
-    _saveData();
-    notifyListeners();
-  }
-
-  void setUserName(String name) {
-    _userName = name.trim().isEmpty ? 'Atleta' : name.trim();
-    _saveData();
-    notifyListeners();
-  }
-
-  bool login(String password) {
-    if (_userPassword == password.trim() && _userPassword.isNotEmpty) {
-      _isAuthenticated = true;
-      notifyListeners();
-      return true;
-    }
-
-    return false;
-  }
-
-  void authenticateWithBiometrics() {
-    if (!hasPassword) {
-      return;
-    }
-
-    _isAuthenticated = true;
-    notifyListeners();
-  }
-
-  void logout() {
-    _isAuthenticated = false;
-    notifyListeners();
+  void setVibrateAfterRest(bool enabled) {
+    _vibrateAfterRest = enabled;
   }
 
   void createCustomExercise(String name, String muscle) {
@@ -770,21 +704,10 @@ class WorkoutProvider extends ChangeNotifier {
     _history.clear();
     _customExercises.clear();
 
-    _userName = '';
-    _userPassword = '';
-    _userWeight = 0.0;
-    _isAuthenticated = false;
-    _usarBiometria = false;
     _activeProgramName = '';
+    _vibrateAfterRest = true;
 
     if (_isWorkoutActive) cancelWorkout();
-    notifyListeners();
-  }
-
-  Future<void> toggleBiometria(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('usarBiometria', value);
-    _usarBiometria = value;
     notifyListeners();
   }
 }
