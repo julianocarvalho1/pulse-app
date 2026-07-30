@@ -1,0 +1,54 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+abstract interface class WorkoutFeedbackService {
+  Future<void> configure();
+
+  Future<void> playRestFinished({required bool vibrate});
+
+  Future<void> dispose();
+}
+
+class DeviceWorkoutFeedbackService implements WorkoutFeedbackService {
+  DeviceWorkoutFeedbackService({FlutterTts? flutterTts})
+    : _flutterTts = flutterTts ?? FlutterTts();
+
+  final FlutterTts _flutterTts;
+
+  @override
+  Future<void> configure() async {
+    await _flutterTts.setLanguage('pt-BR');
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setVolume(1.0);
+  }
+
+  @override
+  Future<void> playRestFinished({required bool vibrate}) async {
+    try {
+      await _flutterTts.speak('Descanso finalizado. Bora pra cima!');
+    } catch (_) {
+      // O alerta visual e o cronômetro continuam funcionando mesmo
+      // quando o mecanismo de voz não estiver disponível.
+    }
+
+    if (!vibrate) {
+      return;
+    }
+
+    for (var index = 0; index < 4; index++) {
+      unawaited(
+        Future<void>.delayed(
+          Duration(milliseconds: index * 600),
+          HapticFeedback.heavyImpact,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _flutterTts.stop();
+  }
+}

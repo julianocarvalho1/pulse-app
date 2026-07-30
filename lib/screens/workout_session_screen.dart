@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_set.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'exercises_screen.dart';
 
@@ -23,14 +23,15 @@ class SessionStateCache {
   }
 }
 
-class WorkoutSessionScreen extends StatefulWidget {
+class WorkoutSessionScreen extends ConsumerStatefulWidget {
   const WorkoutSessionScreen({super.key});
 
   @override
-  State<WorkoutSessionScreen> createState() => _WorkoutSessionScreenState();
+  ConsumerState<WorkoutSessionScreen> createState() =>
+      _WorkoutSessionScreenState();
 }
 
-class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
+class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   final Map<int, List<TextEditingController>> _weightControllers = {};
   final Map<int, List<TextEditingController>> _repsControllers = {};
   final TextEditingController _notesController = TextEditingController();
@@ -405,7 +406,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   void _initializeSets() {
-    final provider = context.read<WorkoutProvider>();
+    final provider = ref.read(workoutControllerProvider);
     final exercises = provider.currentWorkoutExercises;
     final restoredSession = provider.activeSession;
     final currentSessionKey =
@@ -498,12 +499,14 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
       return;
     }
 
-    context.read<WorkoutProvider>().saveActiveSessionProgress(
-      setsStatus: SessionStateCache.setsStatus,
-      weights: SessionStateCache.weights,
-      reps: SessionStateCache.reps,
-      notes: _notesController.text,
-    );
+    ref
+        .read(workoutControllerProvider)
+        .saveActiveSessionProgress(
+          setsStatus: SessionStateCache.setsStatus,
+          weights: SessionStateCache.weights,
+          reps: SessionStateCache.reps,
+          notes: _notesController.text,
+        );
   }
 
   String _formatTime(int totalSeconds) {
@@ -513,7 +516,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   String _getLastWeight(String exerciseId) {
-    final history = context.read<WorkoutProvider>().history;
+    final history = ref.read(workoutControllerProvider).history;
     for (var session in history) {
       for (var ex in session.exercises) {
         if (ex.exerciseId == exerciseId && ex.sets.isNotEmpty) {
@@ -668,7 +671,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     }
   }
 
-  void _confirmExit(WorkoutProvider provider) {
+  void _confirmExit(WorkoutController provider) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -726,7 +729,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   // ==========================================================
   // NOVO SISTEMA DE FINALIZAÇÃO (Pop-up com Campo de Anotações)
   // ==========================================================
-  void _confirmFinish(WorkoutProvider provider) {
+  void _confirmFinish(WorkoutController provider) {
     List<ExerciseLog> workoutLogs = [];
     final exercises = provider.currentWorkoutExercises;
 
@@ -975,7 +978,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
     final exercises = provider.currentWorkoutExercises;
     _initializeSets();
 

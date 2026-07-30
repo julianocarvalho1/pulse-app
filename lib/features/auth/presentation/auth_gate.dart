@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
-import '../../../providers/workout_provider.dart';
+import '../../workouts/presentation/providers/workout_controller.dart';
 import '../../../theme/app_theme.dart';
 import '../domain/app_auth_state.dart';
 import 'providers/auth_controller.dart';
@@ -55,7 +54,7 @@ class _AuthGateState extends ConsumerState<AuthGate>
 
   @override
   Widget build(BuildContext context) {
-    final workoutProvider = context.watch<WorkoutProvider>();
+    final workoutProvider = ref.watch(workoutControllerProvider);
 
     final authAsync = ref.watch(authControllerProvider);
 
@@ -63,10 +62,20 @@ class _AuthGateState extends ConsumerState<AuthGate>
       return const _PulseBootstrapScreen();
     }
 
+    if (workoutProvider.initializationError != null) {
+      return _InitializationErrorView(
+        icon: Icons.storage_rounded,
+        title: 'Não foi possível carregar seus treinos.',
+        onRetry: workoutProvider.reload,
+      );
+    }
+
     return authAsync.when(
       loading: () => const _PulseBootstrapScreen(),
       error: (error, stackTrace) {
-        return _AuthInitializationError(
+        return _InitializationErrorView(
+          icon: Icons.lock_reset_rounded,
+          title: 'Não foi possível preparar a proteção do PULSE.',
           onRetry: () {
             ref.read(authControllerProvider.notifier).reload();
           },
@@ -146,9 +155,15 @@ class _PulseBootstrapScreen extends StatelessWidget {
   }
 }
 
-class _AuthInitializationError extends StatelessWidget {
-  const _AuthInitializationError({required this.onRetry});
+class _InitializationErrorView extends StatelessWidget {
+  const _InitializationErrorView({
+    required this.icon,
+    required this.title,
+    required this.onRetry,
+  });
 
+  final IconData icon;
+  final String title;
   final VoidCallback onRetry;
 
   @override
@@ -166,10 +181,10 @@ class _AuthInitializationError extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.lock_reset_rounded, color: primaryColor, size: 58),
+                  Icon(icon, color: primaryColor, size: 58),
                   const SizedBox(height: 22),
-                  const Text(
-                    'Não foi possível preparar a proteção do PULSE.',
+                  Text(
+                    title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,

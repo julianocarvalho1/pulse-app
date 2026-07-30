@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
 import 'routine_detail_screen.dart';
 
-class WorkoutPlanScreen extends StatelessWidget {
+class WorkoutPlanScreen extends ConsumerWidget {
   const WorkoutPlanScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(workoutControllerProvider);
     final myRoutines = provider.myRoutines;
     final preMadePrograms = provider.preMadePrograms;
 
@@ -72,7 +72,7 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   void _openEditRoutineModal(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
     WorkoutRoutine routine,
   ) {
     final nameCtrl = TextEditingController(text: routine.name);
@@ -284,7 +284,7 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   Widget _buildMyRoutinesTab(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
     List<WorkoutRoutine> routines,
   ) {
     if (routines.isEmpty) {
@@ -437,7 +437,7 @@ class WorkoutPlanScreen extends StatelessWidget {
 
   Widget _buildRoutineTile(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
     WorkoutRoutine routine, {
     required bool isInsideGroup,
   }) {
@@ -557,7 +557,7 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   Widget _buildCatalogTab(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
     List programs,
   ) {
     return Padding(
@@ -764,7 +764,7 @@ class WorkoutPlanScreen extends StatelessWidget {
 
   void _showProgramDetails(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
     dynamic prog,
   ) {
     showModalBottomSheet(

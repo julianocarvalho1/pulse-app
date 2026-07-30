@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
 // ============================================================
 //  TELA: CONSTRUTOR DO PROGRAMA (PASSO 2)
 // ============================================================
 
-class ProgramBuilderScreen extends StatefulWidget {
+class ProgramBuilderScreen extends ConsumerStatefulWidget {
   final String programName;
   final String programFocus;
   final String splitType;
@@ -21,10 +21,11 @@ class ProgramBuilderScreen extends StatefulWidget {
   });
 
   @override
-  State<ProgramBuilderScreen> createState() => _ProgramBuilderScreenState();
+  ConsumerState<ProgramBuilderScreen> createState() =>
+      _ProgramBuilderScreenState();
 }
 
-class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
+class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
   final List<WorkoutRoutine> _draftRoutines = [];
 
   @override
@@ -138,10 +139,9 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     ? 'Geral'
                     : customMuscleCtrl.text.trim();
 
-                context.read<WorkoutProvider>().createCustomExercise(
-                  name,
-                  muscle,
-                );
+                ref
+                    .read(workoutControllerProvider)
+                    .createCustomExercise(name, muscle);
                 Navigator.pop(ctx);
 
                 final newEx = Exercise(
@@ -465,8 +465,8 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final allExercises = context
-                .watch<WorkoutProvider>()
+            final allExercises = ref
+                .read(workoutControllerProvider)
                 .allExercises
                 .where((ex) {
                   return ex.name.toLowerCase().contains(
@@ -641,7 +641,7 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
   }
 
   void _saveProgram() {
-    final provider = context.read<WorkoutProvider>();
+    final provider = ref.read(workoutControllerProvider);
 
     for (var routine in _draftRoutines) {
       provider.createRoutine(

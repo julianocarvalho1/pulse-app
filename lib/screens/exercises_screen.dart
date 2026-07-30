@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'exercise_detail_screen.dart';
 
-class ExercisesScreen extends StatefulWidget {
+class ExercisesScreen extends ConsumerStatefulWidget {
   final bool isSelecting;
 
   const ExercisesScreen({super.key, this.isSelecting = false});
 
   @override
-  State<ExercisesScreen> createState() => _ExercisesScreenState();
+  ConsumerState<ExercisesScreen> createState() => _ExercisesScreenState();
 }
 
-class _ExercisesScreenState extends State<ExercisesScreen> {
+class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -80,7 +80,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   void _showExerciseConfigDialog(
     BuildContext context,
     Exercise ex,
-    WorkoutProvider provider, {
+    WorkoutController provider, {
     WorkoutRoutine? targetRoutine,
   }) {
     final repsCtrl = TextEditingController(text: ex.reps);
@@ -387,7 +387,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   void _showRoutineSelector(
     BuildContext context,
     Exercise ex,
-    WorkoutProvider provider,
+    WorkoutController provider,
   ) {
     final routines = provider.myRoutines;
 
@@ -521,7 +521,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
 
     final allExercises = provider.allExercises.where((ex) {
       return ex.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||

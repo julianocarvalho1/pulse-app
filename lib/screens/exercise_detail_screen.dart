@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
 // ============================================================
 // TELA: DETALHE DO EXERCÍCIO (COM BIOMECÂNICA DINÂMICA)
 // ============================================================
 
-class ExerciseDetailScreen extends StatefulWidget {
+class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final Exercise exercise;
   final bool isSelecting;
 
@@ -19,10 +19,11 @@ class ExerciseDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
+  ConsumerState<ExerciseDetailScreen> createState() =>
+      _ExerciseDetailScreenState();
 }
 
-class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
+class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   int _tab = 0;
 
   String _getImagePath(String exerciseName) {
@@ -361,7 +362,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   void _showExerciseConfigDialog(
     BuildContext context,
     Exercise ex,
-    WorkoutProvider provider, {
+    WorkoutController provider, {
     WorkoutRoutine? targetRoutine,
   }) {
     final repsCtrl = TextEditingController(text: ex.reps);
@@ -675,7 +676,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
   void _showRoutineSelector(
     BuildContext context,
     Exercise ex,
-    WorkoutProvider provider,
+    WorkoutController provider,
   ) {
     final routines = provider.myRoutines;
 
@@ -914,7 +915,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          final provider = context.read<WorkoutProvider>();
+                          final provider = ref.read(workoutControllerProvider);
 
                           if (widget.isSelecting) {
                             _showExerciseConfigDialog(

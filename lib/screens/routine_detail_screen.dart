@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'workout_session_screen.dart';
 
-class RoutineDetailScreen extends StatefulWidget {
+class RoutineDetailScreen extends ConsumerStatefulWidget {
   final WorkoutRoutine routine;
 
   const RoutineDetailScreen({super.key, required this.routine});
 
   @override
-  State<RoutineDetailScreen> createState() => _RoutineDetailScreenState();
+  ConsumerState<RoutineDetailScreen> createState() =>
+      _RoutineDetailScreenState();
 }
 
-class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
+class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
   String _getImagePath(String exerciseName) {
     String cleanName = exerciseName.toLowerCase().trim();
 
@@ -53,7 +54,7 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
     return 'assets/images/$cleanName.gif';
   }
 
-  void _openEditRoutineModal(BuildContext context, WorkoutProvider provider) {
+  void _openEditRoutineModal(BuildContext context, WorkoutController provider) {
     final nameCtrl = TextEditingController(text: widget.routine.name);
     final focusCtrl = TextEditingController(text: widget.routine.focus);
     List<Exercise> currentExercises = List.from(widget.routine.exercises);
@@ -258,7 +259,7 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
     );
   }
 
-  void _handleStartRoutine(BuildContext context, WorkoutProvider provider) {
+  void _handleStartRoutine(BuildContext context, WorkoutController provider) {
     if (provider.isWorkoutActive &&
         provider.activeRoutineName != widget.routine.name) {
       showDialog(
@@ -317,7 +318,7 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

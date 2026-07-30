@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
-class ProgressCalendarScreen extends StatefulWidget {
+class ProgressCalendarScreen extends ConsumerStatefulWidget {
   const ProgressCalendarScreen({super.key});
 
   @override
-  State<ProgressCalendarScreen> createState() => _ProgressCalendarScreenState();
+  ConsumerState<ProgressCalendarScreen> createState() =>
+      _ProgressCalendarScreenState();
 }
 
-class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
+class _ProgressCalendarScreenState
+    extends ConsumerState<ProgressCalendarScreen> {
   DateTime _currentMonth = DateTime.now();
 
   void _mudarMes(int delta) {
@@ -34,7 +36,7 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
     final history = provider.history;
 
     int daysInMonth = _getDaysInMonth(_currentMonth.year, _currentMonth.month);

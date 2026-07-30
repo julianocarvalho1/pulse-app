@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import '../features/auth/domain/app_auth_state.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -209,9 +208,9 @@ class _SettingsContent extends ConsumerWidget {
                         .setVibrateAfterRest(value);
 
                     if (context.mounted) {
-                      context.read<WorkoutProvider>().setVibrateAfterRest(
-                        value,
-                      );
+                      ref
+                          .read(workoutControllerProvider)
+                          .setVibrateAfterRest(value);
                     }
                   },
                 ),
@@ -424,7 +423,7 @@ class _SettingsContent extends ConsumerWidget {
       return;
     }
 
-    await context.read<WorkoutProvider>().factoryReset();
+    await ref.read(workoutControllerProvider).factoryReset();
     await ref
         .read(settingsControllerProvider.notifier)
         .resetToDefaults(clearStorage: false);

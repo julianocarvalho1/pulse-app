@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 import 'workout_history_detail_screen.dart';
@@ -15,7 +14,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final workoutProvider = context.watch<WorkoutProvider>();
+    final workoutProvider = ref.watch(workoutControllerProvider);
     final settingsAsync = ref.watch(settingsControllerProvider);
     final settings = switch (settingsAsync) {
       AsyncData<PulseSettings>(:final value) => value,

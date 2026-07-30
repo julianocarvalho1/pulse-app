@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import '../features/settings/presentation/providers/settings_controller.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../models/exercise.dart';
 import 'workout_session_screen.dart';
@@ -49,7 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return data[0].toUpperCase() + data.substring(1);
   }
 
-  void _mostrarNotificacoes(BuildContext context, WorkoutProvider provider) {
+  void _mostrarNotificacoes(BuildContext context, WorkoutController provider) {
     setState(() {
       _temNotificacoesNaoLidas = false;
     });
@@ -195,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _mostrarModalTreinoDinamico(
     BuildContext context,
-    WorkoutProvider provider,
+    WorkoutController provider,
   ) {
     String musculoFoco = 'Full Body';
     int quantidadeEx = 5;
@@ -434,7 +433,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
     final history = provider.history;
     final settingsAsync = ref.watch(settingsControllerProvider);
     final userName = settingsAsync.when(

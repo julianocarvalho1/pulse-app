@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/settings/domain/pulse_settings.dart';
 import 'features/settings/presentation/providers/settings_controller.dart';
-import 'providers/workout_provider.dart';
+import 'features/workouts/presentation/providers/workout_controller.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
@@ -24,14 +23,7 @@ void main() {
     ),
   );
 
-  runApp(
-    ProviderScope(
-      child: MultiProvider(
-        providers: [ChangeNotifierProvider(create: (_) => WorkoutProvider())],
-        child: const PulseApp(),
-      ),
-    ),
-  );
+  runApp(const ProviderScope(child: PulseApp()));
 }
 
 class PulseApp extends ConsumerWidget {
@@ -39,6 +31,7 @@ class PulseApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(workoutControllerProvider);
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     final settings = switch (settingsAsync) {

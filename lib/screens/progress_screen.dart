@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mini_line_chart.dart';
 import 'workout_history_detail_screen.dart';
 
-class ProgressScreen extends StatefulWidget {
+class ProgressScreen extends ConsumerStatefulWidget {
   const ProgressScreen({super.key});
 
   @override
-  State<ProgressScreen> createState() => _ProgressScreenState();
+  ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> {
+class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   int _tab = 0;
   final List<String> _tabs = const [
     'Consistência',
@@ -96,7 +96,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildConsistencia(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
+    final provider = ref.watch(workoutControllerProvider);
     final history = provider.history;
     final now = DateTime.now();
 
@@ -873,7 +873,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildTreinos(BuildContext context) {
-    final history = context.watch<WorkoutProvider>().history;
+    final history = ref.watch(workoutControllerProvider).history;
 
     if (history.isEmpty) {
       return Container(
@@ -929,7 +929,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ),
           onDismissed: (direction) {
-            context.read<WorkoutProvider>().deleteHistoryItem(item.id);
+            ref.read(workoutControllerProvider).deleteHistoryItem(item.id);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Treino excluído do histórico!'),
@@ -1032,7 +1032,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildDesempenho(BuildContext context) {
-    final history = context.watch<WorkoutProvider>().history;
+    final history = ref.watch(workoutControllerProvider).history;
 
     Map<String, Map<String, dynamic>> personalRecords = {};
 
