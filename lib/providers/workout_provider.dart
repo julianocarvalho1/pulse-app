@@ -21,7 +21,11 @@ class ExerciseLog {
   final String exerciseId;
   final String exerciseName;
   final List<ExerciseSet> sets;
-  ExerciseLog({required this.exerciseId, required this.exerciseName, required this.sets});
+  ExerciseLog({
+    required this.exerciseId,
+    required this.exerciseName,
+    required this.sets,
+  });
   Map<String, dynamic> toMap() => {
     'exerciseId': exerciseId,
     'exerciseName': exerciseName,
@@ -30,7 +34,9 @@ class ExerciseLog {
   factory ExerciseLog.fromMap(Map<String, dynamic> map) => ExerciseLog(
     exerciseId: map['exerciseId'] ?? '',
     exerciseName: map['exerciseName'] ?? '',
-    sets: map['sets'] != null ? List<ExerciseSet>.from(map['sets'].map((x) => ExerciseSet.fromMap(x))) : [],
+    sets: map['sets'] != null
+        ? List<ExerciseSet>.from(map['sets'].map((x) => ExerciseSet.fromMap(x)))
+        : [],
   );
 }
 
@@ -48,7 +54,7 @@ class WorkoutHistoryItem {
     required this.date,
     required this.duration,
     required this.exercises,
-    this.notes = ''
+    this.notes = '',
   });
 
   int get totalExercises => exercises.length;
@@ -70,7 +76,11 @@ class WorkoutHistoryItem {
       routineName: map['routineName'] ?? '',
       date: DateTime.parse(map['date']),
       duration: map['duration'] ?? '',
-      exercises: map['exercises'] != null ? List<ExerciseLog>.from(map['exercises'].map((x) => ExerciseLog.fromMap(x))) : [],
+      exercises: map['exercises'] != null
+          ? List<ExerciseLog>.from(
+              map['exercises'].map((x) => ExerciseLog.fromMap(x)),
+            )
+          : [],
       notes: map['notes'] ?? '',
     );
   }
@@ -85,11 +95,12 @@ class WorkoutProvider extends ChangeNotifier {
   String _userName = '';
   String _userPassword = '';
   double _userWeight = 0.0;
+
   bool _isAuthenticated = false;
+  bool _isInitialized = false;
 
   bool _usarBiometria = false;
   bool get usarBiometria => _usarBiometria;
-
   bool _isWorkoutActive = false;
   List<Exercise> _currentWorkoutExercises = [];
   String _activeRoutineName = 'Treino do Dia';
@@ -110,8 +121,19 @@ class WorkoutProvider extends ChangeNotifier {
 
   WorkoutProvider() {
     _initPreMadePrograms();
-    _loadData();
+    _initialize();
     _configurarVoz();
+  }
+  Future<void> _initialize() async {
+    try {
+      await _loadData();
+    } catch (error, stackTrace) {
+      debugPrint('Erro ao inicializar o WorkoutProvider: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
+    }
   }
 
   Future<void> _configurarVoz() async {
@@ -128,6 +150,7 @@ class WorkoutProvider extends ChangeNotifier {
   double get userWeight => _userWeight;
   bool get hasPassword => _userPassword.isNotEmpty;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isInitialized => _isInitialized;
   bool get isWorkoutActive => _isWorkoutActive;
   List<Exercise> get currentWorkoutExercises => _currentWorkoutExercises;
   String get activeRoutineName => _activeRoutineName;
@@ -147,9 +170,13 @@ class WorkoutProvider extends ChangeNotifier {
 
   WorkoutRoutine? get nextRoutineToTrain {
     if (_activeProgramName.isEmpty) return null;
-    final programRoutines = _myRoutines.where((r) => r.groupName == _activeProgramName).toList();
+    final programRoutines = _myRoutines
+        .where((r) => r.groupName == _activeProgramName)
+        .toList();
     if (programRoutines.isEmpty) return null;
-    programRoutines.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    programRoutines.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
 
     WorkoutHistoryItem? lastProgramWorkout;
     for (var session in _history) {
@@ -161,7 +188,9 @@ class WorkoutProvider extends ChangeNotifier {
 
     if (lastProgramWorkout == null) return programRoutines.first;
 
-    int lastIndex = programRoutines.indexWhere((r) => r.name == lastProgramWorkout!.routineName);
+    int lastIndex = programRoutines.indexWhere(
+      (r) => r.name == lastProgramWorkout!.routineName,
+    );
     if (lastIndex == -1) return programRoutines.first;
 
     int nextIndex = (lastIndex + 1) % programRoutines.length;
@@ -223,76 +252,222 @@ class WorkoutProvider extends ChangeNotifier {
   void _initPreMadePrograms() {
     _preMadePrograms = [
       WorkoutProgram(
-          id: 'prog_hipertrofia_abc',
-          name: 'Hipertrofia Moderna (ABC)',
-          focus: 'Divisão clássica para volume e densidade.',
-          routines: [
-            WorkoutRoutine(
-                id: 'rout_hip_A',
-                name: 'Treino A - Peito, Ombro e Tríceps',
-                focus: 'Foco em empurrar (Push)',
-                groupName: 'Hipertrofia Moderna (ABC)',
-                exercises: [
-                  Exercise(id: 'ex_pm_1', name: 'Chest Press', muscle: 'Peito', description: 'Controle bem a descida.', reps: '4x 8-12', rest: '60 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_2', name: 'Crucifixo com Halteres', muscle: 'Peito', description: 'Foque no alongamento do músculo.', reps: '3x 12', rest: '45 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_3', name: 'Desenvolvimento Militar', muscle: 'Ombro', description: 'Sente-se com a coluna reta.', reps: '4x 10', rest: '60 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_4', name: 'Tríceps na Polia', muscle: 'Tríceps', description: 'Mantenha o cotovelo colado no corpo.', reps: '3x 12', rest: '45 seg', customNote: 'Falha Muscular | Use a corda se preferir'),
-                ]
-            ),
-            WorkoutRoutine(
-                id: 'rout_hip_B',
-                name: 'Treino B - Costas e Bíceps',
-                focus: 'Foco em puxar (Pull)',
-                groupName: 'Hipertrofia Moderna (ABC)',
-                exercises: [
-                  Exercise(id: 'ex_pm_5', name: 'Puxada na Frente', muscle: 'Costas', description: 'Estufe o peito na puxada.', reps: '4x 10', rest: '60 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_6', name: 'Remada Curvada', muscle: 'Costas', description: 'Mantenha a lombar travada.', reps: '4x 8-10', rest: '60 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_7', name: 'Rosca Direta', muscle: 'Bíceps', description: 'Não balance o tronco.', reps: '3x 12', rest: '45 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_8', name: 'Rosca Scott', muscle: 'Bíceps', description: 'Isole completamente o músculo.', reps: '3x 10', rest: '45 seg', customNote: 'Drop-Set | Na última série'),
-                ]
-            ),
-            WorkoutRoutine(
-                id: 'rout_hip_C',
-                name: 'Treino C - Pernas e Core',
-                focus: 'Membros Inferiores (Legs)',
-                groupName: 'Hipertrofia Moderna (ABC)',
-                exercises: [
-                  Exercise(id: 'ex_pm_9', name: 'Agachamento', muscle: 'Pernas', description: 'Quebre a paralela se tiver mobilidade.', reps: '4x 8-10', rest: '90 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_10', name: 'Leg Press', muscle: 'Pernas', description: 'Não trave o joelho em cima.', reps: '4x 12', rest: '60 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_11', name: 'Cadeira Extensora', muscle: 'Pernas', description: 'Aperte no topo por 1 segundo.', reps: '3x 15', rest: '45 seg', customNote: 'Falha Muscular'),
-                  Exercise(id: 'ex_pm_12', name: 'Crunch Abdominal', muscle: 'Core', description: 'Foque em dobrar o tronco.', reps: '4x 15-20', rest: '45 seg', customNote: ''),
-                ]
-            )
-          ]
+        id: 'prog_hipertrofia_abc',
+        name: 'Hipertrofia Moderna (ABC)',
+        focus: 'Divisão clássica para volume e densidade.',
+        routines: [
+          WorkoutRoutine(
+            id: 'rout_hip_A',
+            name: 'Treino A - Peito, Ombro e Tríceps',
+            focus: 'Foco em empurrar (Push)',
+            groupName: 'Hipertrofia Moderna (ABC)',
+            exercises: [
+              Exercise(
+                id: 'ex_pm_1',
+                name: 'Chest Press',
+                muscle: 'Peito',
+                description: 'Controle bem a descida.',
+                reps: '4x 8-12',
+                rest: '60 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_2',
+                name: 'Crucifixo com Halteres',
+                muscle: 'Peito',
+                description: 'Foque no alongamento do músculo.',
+                reps: '3x 12',
+                rest: '45 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_3',
+                name: 'Desenvolvimento Militar',
+                muscle: 'Ombro',
+                description: 'Sente-se com a coluna reta.',
+                reps: '4x 10',
+                rest: '60 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_4',
+                name: 'Tríceps na Polia',
+                muscle: 'Tríceps',
+                description: 'Mantenha o cotovelo colado no corpo.',
+                reps: '3x 12',
+                rest: '45 seg',
+                customNote: 'Falha Muscular | Use a corda se preferir',
+              ),
+            ],
+          ),
+          WorkoutRoutine(
+            id: 'rout_hip_B',
+            name: 'Treino B - Costas e Bíceps',
+            focus: 'Foco em puxar (Pull)',
+            groupName: 'Hipertrofia Moderna (ABC)',
+            exercises: [
+              Exercise(
+                id: 'ex_pm_5',
+                name: 'Puxada na Frente',
+                muscle: 'Costas',
+                description: 'Estufe o peito na puxada.',
+                reps: '4x 10',
+                rest: '60 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_6',
+                name: 'Remada Curvada',
+                muscle: 'Costas',
+                description: 'Mantenha a lombar travada.',
+                reps: '4x 8-10',
+                rest: '60 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_7',
+                name: 'Rosca Direta',
+                muscle: 'Bíceps',
+                description: 'Não balance o tronco.',
+                reps: '3x 12',
+                rest: '45 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_8',
+                name: 'Rosca Scott',
+                muscle: 'Bíceps',
+                description: 'Isole completamente o músculo.',
+                reps: '3x 10',
+                rest: '45 seg',
+                customNote: 'Drop-Set | Na última série',
+              ),
+            ],
+          ),
+          WorkoutRoutine(
+            id: 'rout_hip_C',
+            name: 'Treino C - Pernas e Core',
+            focus: 'Membros Inferiores (Legs)',
+            groupName: 'Hipertrofia Moderna (ABC)',
+            exercises: [
+              Exercise(
+                id: 'ex_pm_9',
+                name: 'Agachamento',
+                muscle: 'Pernas',
+                description: 'Quebre a paralela se tiver mobilidade.',
+                reps: '4x 8-10',
+                rest: '90 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_10',
+                name: 'Leg Press',
+                muscle: 'Pernas',
+                description: 'Não trave o joelho em cima.',
+                reps: '4x 12',
+                rest: '60 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_11',
+                name: 'Cadeira Extensora',
+                muscle: 'Pernas',
+                description: 'Aperte no topo por 1 segundo.',
+                reps: '3x 15',
+                rest: '45 seg',
+                customNote: 'Falha Muscular',
+              ),
+              Exercise(
+                id: 'ex_pm_12',
+                name: 'Crunch Abdominal',
+                muscle: 'Core',
+                description: 'Foque em dobrar o tronco.',
+                reps: '4x 15-20',
+                rest: '45 seg',
+                customNote: '',
+              ),
+            ],
+          ),
+        ],
       ),
       WorkoutProgram(
-          id: 'prog_seca_tudo',
-          name: 'Seca Tudo (Projeto Verão)',
-          focus: 'Alta intensidade, bi-sets e pausas curtas.',
-          routines: [
-            WorkoutRoutine(
-                id: 'rout_seca_A',
-                name: 'Treino A - Superiores Intensos',
-                focus: 'Gasto Calórico',
-                groupName: 'Seca Tudo (Projeto Verão)',
-                exercises: [
-                  Exercise(id: 'ex_pm_13', name: 'Chest Press', muscle: 'Peito', description: 'Sem pausa.', reps: '3x 15', rest: '0 seg', isSuperset: true, customNote: ''),
-                  Exercise(id: 'ex_pm_14', name: 'Remada Baixa', muscle: 'Costas', description: 'Direto do Chest Press.', reps: '3x 15', rest: '45 seg', customNote: ''),
-                  Exercise(id: 'ex_pm_15', name: 'Elevação Frontal com Barra', muscle: 'Ombro', description: 'Movimento controlado.', reps: '3x 15', rest: '30 seg', customNote: ''),
-                ]
-            ),
-            WorkoutRoutine(
-                id: 'rout_seca_B',
-                name: 'Treino B - Inferiores Express',
-                focus: 'Gasto Calórico',
-                groupName: 'Seca Tudo (Projeto Verão)',
-                exercises: [
-                  Exercise(id: 'ex_pm_16', name: 'Passada / Afundo', muscle: 'Pernas', description: 'Passos largos.', reps: '4x 20', rest: '45 seg', customNote: '10 cada perna'),
-                  Exercise(id: 'ex_pm_17', name: 'Cadeira Extensora', muscle: 'Pernas', description: 'Explosivo.', reps: '3x 15', rest: '0 seg', isSuperset: true, customNote: ''),
-                  Exercise(id: 'ex_pm_18', name: 'Crunch Abdominal', muscle: 'Core', description: 'Até queimar.', reps: '3x 20', rest: '45 seg', customNote: ''),
-                ]
-            )
-          ]
+        id: 'prog_seca_tudo',
+        name: 'Seca Tudo (Projeto Verão)',
+        focus: 'Alta intensidade, bi-sets e pausas curtas.',
+        routines: [
+          WorkoutRoutine(
+            id: 'rout_seca_A',
+            name: 'Treino A - Superiores Intensos',
+            focus: 'Gasto Calórico',
+            groupName: 'Seca Tudo (Projeto Verão)',
+            exercises: [
+              Exercise(
+                id: 'ex_pm_13',
+                name: 'Chest Press',
+                muscle: 'Peito',
+                description: 'Sem pausa.',
+                reps: '3x 15',
+                rest: '0 seg',
+                isSuperset: true,
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_14',
+                name: 'Remada Baixa',
+                muscle: 'Costas',
+                description: 'Direto do Chest Press.',
+                reps: '3x 15',
+                rest: '45 seg',
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_15',
+                name: 'Elevação Frontal com Barra',
+                muscle: 'Ombro',
+                description: 'Movimento controlado.',
+                reps: '3x 15',
+                rest: '30 seg',
+                customNote: '',
+              ),
+            ],
+          ),
+          WorkoutRoutine(
+            id: 'rout_seca_B',
+            name: 'Treino B - Inferiores Express',
+            focus: 'Gasto Calórico',
+            groupName: 'Seca Tudo (Projeto Verão)',
+            exercises: [
+              Exercise(
+                id: 'ex_pm_16',
+                name: 'Passada / Afundo',
+                muscle: 'Pernas',
+                description: 'Passos largos.',
+                reps: '4x 20',
+                rest: '45 seg',
+                customNote: '10 cada perna',
+              ),
+              Exercise(
+                id: 'ex_pm_17',
+                name: 'Cadeira Extensora',
+                muscle: 'Pernas',
+                description: 'Explosivo.',
+                reps: '3x 15',
+                rest: '0 seg',
+                isSuperset: true,
+                customNote: '',
+              ),
+              Exercise(
+                id: 'ex_pm_18',
+                name: 'Crunch Abdominal',
+                muscle: 'Core',
+                description: 'Até queimar.',
+                reps: '3x 20',
+                rest: '45 seg',
+                customNote: '',
+              ),
+            ],
+          ),
+        ],
       ),
     ];
   }
@@ -319,7 +494,9 @@ class WorkoutProvider extends ChangeNotifier {
       final customExStr = prefs.getString('custom_exercises');
       if (customExStr != null && customExStr.isNotEmpty) {
         final List decoded = jsonDecode(customExStr);
-        _customExercises = decoded.map((e) => Exercise.fromMap(e as Map<String, dynamic>)).toList();
+        _customExercises = decoded
+            .map((e) => Exercise.fromMap(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
       debugPrint('Erro ao carregar customExercises: $e');
@@ -327,9 +504,13 @@ class WorkoutProvider extends ChangeNotifier {
 
     try {
       final routinesStr = prefs.getString('my_routines');
-      if (routinesStr != null && routinesStr != '[]' && routinesStr.isNotEmpty) {
+      if (routinesStr != null &&
+          routinesStr != '[]' &&
+          routinesStr.isNotEmpty) {
         final List decoded = jsonDecode(routinesStr);
-        _myRoutines = decoded.map((e) => WorkoutRoutine.fromMap(e as Map<String, dynamic>)).toList();
+        _myRoutines = decoded
+            .map((e) => WorkoutRoutine.fromMap(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
       debugPrint('Erro ao carregar myRoutines: $e');
@@ -339,7 +520,9 @@ class WorkoutProvider extends ChangeNotifier {
       final historyStr = prefs.getString('workout_history');
       if (historyStr != null && historyStr.isNotEmpty) {
         final List decoded = jsonDecode(historyStr);
-        _history = decoded.map((e) => WorkoutHistoryItem.fromMap(e as Map<String, dynamic>)).toList();
+        _history = decoded
+            .map((e) => WorkoutHistoryItem.fromMap(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (e) {
       debugPrint('Erro ao carregar workout_history: $e');
@@ -354,9 +537,18 @@ class WorkoutProvider extends ChangeNotifier {
     await prefs.setString('user_password', _userPassword);
     await prefs.setDouble('user_weight', _userWeight);
     await prefs.setString('active_program', _activeProgramName);
-    await prefs.setString('custom_exercises', jsonEncode(_customExercises.map((e) => e.toMap()).toList()));
-    await prefs.setString('my_routines', jsonEncode(_myRoutines.map((e) => e.toMap()).toList()));
-    await prefs.setString('workout_history', jsonEncode(_history.map((e) => e.toMap()).toList()));
+    await prefs.setString(
+      'custom_exercises',
+      jsonEncode(_customExercises.map((e) => e.toMap()).toList()),
+    );
+    await prefs.setString(
+      'my_routines',
+      jsonEncode(_myRoutines.map((e) => e.toMap()).toList()),
+    );
+    await prefs.setString(
+      'workout_history',
+      jsonEncode(_history.map((e) => e.toMap()).toList()),
+    );
   }
 
   void registerUser(String name, String password) {
@@ -379,7 +571,17 @@ class WorkoutProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     }
+
     return false;
+  }
+
+  void authenticateWithBiometrics() {
+    if (!hasPassword) {
+      return;
+    }
+
+    _isAuthenticated = true;
+    notifyListeners();
   }
 
   void logout() {
@@ -388,22 +590,50 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   void createCustomExercise(String name, String muscle) {
-    _customExercises.add(Exercise(
-        id: 'custom_${DateTime.now().millisecondsSinceEpoch}', name: name, muscle: muscle, description: 'Exercicio personalizado.', reps: '3x 10-12', rest: '60 seg'
-    ));
+    _customExercises.add(
+      Exercise(
+        id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
+        name: name,
+        muscle: muscle,
+        description: 'Exercicio personalizado.',
+        reps: '3x 10-12',
+        rest: '60 seg',
+      ),
+    );
     _saveData();
     notifyListeners();
   }
 
-  void createRoutine(String name, String focus, String groupName, List<Exercise> exercises) {
-    String uniqueId = '${DateTime.now().millisecondsSinceEpoch}_${name.hashCode}_${exercises.length}';
-    _myRoutines.add(WorkoutRoutine(id: uniqueId, name: name, focus: focus, groupName: groupName, exercises: exercises));
-    if (_activeProgramName.isEmpty && groupName.isNotEmpty) _activeProgramName = groupName;
+  void createRoutine(
+    String name,
+    String focus,
+    String groupName,
+    List<Exercise> exercises,
+  ) {
+    String uniqueId =
+        '${DateTime.now().millisecondsSinceEpoch}_${name.hashCode}_${exercises.length}';
+    _myRoutines.add(
+      WorkoutRoutine(
+        id: uniqueId,
+        name: name,
+        focus: focus,
+        groupName: groupName,
+        exercises: exercises,
+      ),
+    );
+    if (_activeProgramName.isEmpty && groupName.isNotEmpty)
+      _activeProgramName = groupName;
     _saveData();
     notifyListeners();
   }
 
-  void updateRoutine(String id, String newName, String newFocus, String newGroupName, List<Exercise> newExercises) {
+  void updateRoutine(
+    String id,
+    String newName,
+    String newFocus,
+    String newGroupName,
+    List<Exercise> newExercises,
+  ) {
     final index = _myRoutines.indexWhere((routine) => routine.id == id);
     if (index >= 0) {
       _myRoutines[index].name = newName;
@@ -423,10 +653,15 @@ class WorkoutProvider extends ChangeNotifier {
 
   void importProgram(WorkoutProgram program) {
     for (var routine in program.routines) {
-      _myRoutines.add(WorkoutRoutine(
-        id: DateTime.now().millisecondsSinceEpoch.toString() + routine.id,
-        name: routine.name, focus: routine.focus, groupName: program.name, exercises: List.from(routine.exercises),
-      ));
+      _myRoutines.add(
+        WorkoutRoutine(
+          id: DateTime.now().millisecondsSinceEpoch.toString() + routine.id,
+          name: routine.name,
+          focus: routine.focus,
+          groupName: program.name,
+          exercises: List.from(routine.exercises),
+        ),
+      );
     }
     _activeProgramName = program.name;
     _saveData();
@@ -434,22 +669,36 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   void importRoutine(WorkoutRoutine routine) {
-    _myRoutines.add(WorkoutRoutine(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), name: routine.name, focus: routine.focus, groupName: '', exercises: List.from(routine.exercises)
-    ));
+    _myRoutines.add(
+      WorkoutRoutine(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: routine.name,
+        focus: routine.focus,
+        groupName: '',
+        exercises: List.from(routine.exercises),
+      ),
+    );
     _saveData();
     notifyListeners();
   }
 
-  void _saveToHistory(String routineName, String duration, List<ExerciseLog> exercises, String notes) {
-    _history.insert(0, WorkoutHistoryItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      routineName: routineName.isEmpty ? 'Treino Avulso' : routineName,
-      date: DateTime.now(),
-      duration: duration,
-      exercises: exercises,
-      notes: notes,
-    ));
+  void _saveToHistory(
+    String routineName,
+    String duration,
+    List<ExerciseLog> exercises,
+    String notes,
+  ) {
+    _history.insert(
+      0,
+      WorkoutHistoryItem(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        routineName: routineName.isEmpty ? 'Treino Avulso' : routineName,
+        date: DateTime.now(),
+        duration: duration,
+        exercises: exercises,
+        notes: notes,
+      ),
+    );
     _saveData();
     notifyListeners();
   }
@@ -479,7 +728,9 @@ class WorkoutProvider extends ChangeNotifier {
   void _startGlobalTimer() {
     workoutDuration.value = 0;
     _globalTimer?.cancel();
-    _globalTimer = Timer.periodic(const Duration(seconds: 1), (timer) { workoutDuration.value++; });
+    _globalTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      workoutDuration.value++;
+    });
   }
 
   void addExerciseToWorkout(Exercise exercise) {
@@ -487,7 +738,12 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void finishWorkout(String duration, {required bool isIncomplete, required List<ExerciseLog> logs, String notes = ''}) {
+  void finishWorkout(
+    String duration, {
+    required bool isIncomplete,
+    required List<ExerciseLog> logs,
+    String notes = '',
+  }) {
     if (logs.isNotEmpty) {
       _saveToHistory(_activeRoutineName, duration, logs, notes);
     }

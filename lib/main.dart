@@ -62,6 +62,17 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<WorkoutProvider>();
 
+    if (!provider.isInitialized) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      );
+    }
+
     if (!provider.isAuthenticated) {
       return const AuthScreen();
     }
