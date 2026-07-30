@@ -15,7 +15,6 @@ class RoutineDetailScreen extends StatefulWidget {
 }
 
 class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
-
   String _getImagePath(String exerciseName) {
     String cleanName = exerciseName.toLowerCase().trim();
 
@@ -63,13 +62,17 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return Padding(
               padding: EdgeInsets.only(
-                top: 20, left: 20, right: 20,
+                top: 20,
+                left: 20,
+                right: 20,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
               child: SingleChildScrollView(
@@ -80,20 +83,38 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Editar Ficha de Treino', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                        IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                        const Text(
+                          'Editar Ficha de Treino',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameCtrl,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -102,14 +123,27 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text('GERENCIAR EXERCÍCIOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                    const Text(
+                      'GERENCIAR EXERCÍCIOS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     const SizedBox(height: 10),
 
                     ReorderableListView.builder(
@@ -134,11 +168,31 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                             border: Border.all(color: AppColors.border),
                           ),
                           child: ListTile(
-                            leading: Icon(Icons.drag_handle, color: Theme.of(context).colorScheme.primary),
-                            title: Text(ex.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                            subtitle: Text('${ex.reps} • ${ex.rest}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                            leading: Icon(
+                              Icons.drag_handle,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: Text(
+                              ex.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${ex.reps} • ${ex.rest}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 setStateModal(() {
                                   currentExercises.removeAt(index);
@@ -155,25 +209,43 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () {
                           provider.updateRoutine(
                             widget.routine.id,
-                            nameCtrl.text.trim().isEmpty ? widget.routine.name : nameCtrl.text.trim(),
-                            focusCtrl.text.trim().isEmpty ? widget.routine.focus : focusCtrl.text.trim(),
+                            nameCtrl.text.trim().isEmpty
+                                ? widget.routine.name
+                                : nameCtrl.text.trim(),
+                            focusCtrl.text.trim().isEmpty
+                                ? widget.routine.focus
+                                : focusCtrl.text.trim(),
                             widget.routine.groupName,
                             currentExercises,
                           );
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: const Text('Ficha atualizada com sucesso!'), backgroundColor: Theme.of(context).colorScheme.primary),
+                            SnackBar(
+                              content: const Text(
+                                'Ficha atualizada com sucesso!',
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                            ),
                           );
                         },
-                        child: const Text('SALVAR ALTERAÇÕES', style: TextStyle(fontWeight: FontWeight.w800)),
+                        child: const Text(
+                          'SALVAR ALTERAÇÕES',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ],
@@ -187,23 +259,47 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
   }
 
   void _handleStartRoutine(BuildContext context, WorkoutProvider provider) {
-    if (provider.isWorkoutActive && provider.activeRoutineName != widget.routine.name) {
+    if (provider.isWorkoutActive &&
+        provider.activeRoutineName != widget.routine.name) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: const Text('Trocar Treino?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          content: Text('Você tem um treino ("${provider.activeRoutineName}") em andamento. Deseja substituí-lo por este?', style: const TextStyle(color: AppColors.textSecondary)),
+          title: const Text(
+            'Trocar Treino?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          ),
+          content: Text(
+            'Você tem um treino ("${provider.activeRoutineName}") em andamento. Deseja substituí-lo por este?',
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.black,
+              ),
               onPressed: () {
                 provider.startRoutine(widget.routine);
                 Navigator.pop(ctx);
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WorkoutSessionScreen(),
+                  ),
+                );
               },
-              child: const Text('Trocar', style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text(
+                'Trocar',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         ),
@@ -212,7 +308,10 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
       if (!provider.isWorkoutActive) {
         provider.startRoutine(widget.routine);
       }
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()),
+      );
     }
   }
 
@@ -225,10 +324,16 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: const Text('Detalhes da Ficha', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        title: const Text(
+          'Detalhes da Ficha',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+            icon: Icon(
+              Icons.edit,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             onPressed: () => _openEditRoutineModal(context, provider),
           ),
         ],
@@ -242,31 +347,78 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.routine.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                  Text(
+                    widget.routine.name,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('OBJETIVO / FOCO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5)),
+                  Text(
+                    'OBJETIVO / FOCO',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 4),
-                  Text(widget.routine.focus, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4)),
+                  Text(
+                    widget.routine.focus,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.format_list_numbered, size: 16, color: AppColors.textSecondary),
+                      const Icon(
+                        Icons.format_list_numbered,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 6),
-                      Text('${widget.routine.exercises.length} Exercícios nesta ficha', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                      Text(
+                        '${widget.routine.exercises.length} Exercícios nesta ficha',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            const Text('LISTA DE EXERCÍCIOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 1.0)),
+            const Text(
+              'LISTA DE EXERCÍCIOS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 12),
             ListView.separated(
               shrinkWrap: true,
@@ -278,9 +430,9 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border)
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     children: [
@@ -297,12 +449,19 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                           child: Image.asset(
                             _getImagePath(ex.name),
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 16),
-                              ),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
                           ),
                         ),
                       ),
@@ -311,24 +470,48 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(ex.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                            Text(
+                              ex.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
                             const SizedBox(height: 4),
 
                             if (ex.customNote.isNotEmpty) ...[
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.amber.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                    color: Colors.amber.withValues(alpha: 0.3),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.push_pin, size: 10, color: Colors.amber),
+                                    const Icon(
+                                      Icons.push_pin,
+                                      size: 10,
+                                      color: Colors.amber,
+                                    ),
                                     const SizedBox(width: 4),
                                     Flexible(
-                                      child: Text(ex.customNote, style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      child: Text(
+                                        ex.customNote,
+                                        style: const TextStyle(
+                                          color: Colors.amber,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -336,17 +519,47 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
                               const SizedBox(height: 4),
                             ],
 
-                            Text('MÚSCULO: ${ex.muscle.toUpperCase()}', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                            Text(
+                              'MÚSCULO: ${ex.muscle.toUpperCase()}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                const Icon(Icons.repeat, size: 14, color: AppColors.textSecondary),
+                                const Icon(
+                                  Icons.repeat,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
+                                ),
                                 const SizedBox(width: 4),
-                                Text(ex.reps, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                                Text(
+                                  ex.reps,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 const SizedBox(width: 12),
-                                const Icon(Icons.timer_outlined, size: 14, color: AppColors.textSecondary),
+                                const Icon(
+                                  Icons.timer_outlined,
+                                  size: 14,
+                                  color: AppColors.textSecondary,
+                                ),
                                 const SizedBox(width: 4),
-                                Text(ex.rest, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                                Text(
+                                  ex.rest,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -370,14 +583,28 @@ class _RoutineDetailScreenState extends State<RoutineDetailScreen> {
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               elevation: 4,
             ),
             onPressed: () => _handleStartRoutine(context, provider),
-            icon: Icon(provider.isWorkoutActive && provider.activeRoutineName == widget.routine.name ? Icons.play_circle_filled : Icons.play_arrow),
+            icon: Icon(
+              provider.isWorkoutActive &&
+                      provider.activeRoutineName == widget.routine.name
+                  ? Icons.play_circle_filled
+                  : Icons.play_arrow,
+            ),
             label: Text(
-                provider.isWorkoutActive && provider.activeRoutineName == widget.routine.name ? 'CONTINUAR TREINO INICIADO' : 'INICIAR ESTE TREINO',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 0.5)
+              provider.isWorkoutActive &&
+                      provider.activeRoutineName == widget.routine.name
+                  ? 'CONTINUAR TREINO INICIADO'
+                  : 'INICIAR ESTE TREINO',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),

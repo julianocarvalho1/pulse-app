@@ -29,17 +29,29 @@ class _UserSetupScreenState extends State<UserSetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-               Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 48),
+              Icon(
+                Icons.fitness_center,
+                color: Theme.of(context).colorScheme.primary,
+                size: 48,
+              ),
               const SizedBox(height: 20),
-              const Text('BEM-VINDO AO FITAPP',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+              const Text(
+                'BEM-VINDO AO FITAPP',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
-              const Text('Digite seu nome para personalizar o seu painel de treinos.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+              const Text(
+                'Digite seu nome para personalizar o seu painel de treinos.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              ),
               const SizedBox(height: 32),
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Seu Nome',
                   labelStyle: const TextStyle(color: AppColors.textSecondary),
@@ -59,14 +71,20 @@ class _UserSetupScreenState extends State<UserSetupScreen> {
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () {
-                    context.read<WorkoutProvider>().setUserName(_nameController.text);
+                    context.read<WorkoutProvider>().setUserName(
+                      _nameController.text,
+                    );
                     Navigator.pop(context);
                   },
-                  child: const Text('ACESSAR PAINEL',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+                  child: const Text(
+                    'ACESSAR PAINEL',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
             ],

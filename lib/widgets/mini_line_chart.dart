@@ -28,7 +28,9 @@ class MiniLineChart extends StatelessWidget {
       height: height,
       width: double.infinity,
       // 2. Passamos a cor capturada para dentro do pintor
-      child: CustomPaint(painter: _LineChartPainter(values, showDots, primaryColor)),
+      child: CustomPaint(
+        painter: _LineChartPainter(values, showDots, primaryColor),
+      ),
     );
   }
 }
@@ -85,7 +87,8 @@ class _LineChartPainter extends CustomPainter {
     canvas.drawPath(fillPath, fillPaint);
 
     final Paint linePaint = Paint()
-      ..color = primaryColor // 5. Usando a cor no contorno da linha
+      ..color =
+          primaryColor // 5. Usando a cor no contorno da linha
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
@@ -93,7 +96,8 @@ class _LineChartPainter extends CustomPainter {
     canvas.drawPath(linePath, linePaint);
 
     if (showDots) {
-      final Paint dotFill = Paint()..color = primaryColor; // 6. Usando a cor nas bolinhas
+      final Paint dotFill = Paint()
+        ..color = primaryColor; // 6. Usando a cor nas bolinhas
       final Paint dotBorder = Paint()
         ..color = AppColors.background
         ..style = PaintingStyle.stroke

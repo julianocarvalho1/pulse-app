@@ -16,7 +16,11 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
 
   void _mudarMes(int delta) {
     setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + delta, 1);
+      _currentMonth = DateTime(
+        _currentMonth.year,
+        _currentMonth.month + delta,
+        1,
+      );
     });
   }
 
@@ -34,18 +38,32 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
     final history = provider.history;
 
     int daysInMonth = _getDaysInMonth(_currentMonth.year, _currentMonth.month);
-    int firstWeekday = _getFirstWeekday(_currentMonth.year, _currentMonth.month);
-    int startOffset = firstWeekday == 7 ? 0 : firstWeekday; // Ajusta pra Domingo ser 0
+    int firstWeekday = _getFirstWeekday(
+      _currentMonth.year,
+      _currentMonth.month,
+    );
+    int startOffset = firstWeekday == 7
+        ? 0
+        : firstWeekday; // Ajusta pra Domingo ser 0
 
     // Conta total de treinos do mês atual para exibir no cabeçalho
-    int treinosDoMes = history.where((h) => h.date.year == _currentMonth.year && h.date.month == _currentMonth.month).length;
+    int treinosDoMes = history
+        .where(
+          (h) =>
+              h.date.year == _currentMonth.year &&
+              h.date.month == _currentMonth.month,
+        )
+        .length;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: const Text('Calendário de Treinos', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        title: const Text(
+          'Calendário de Treinos',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -65,15 +83,28 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.chevron_left, color: Colors.white),
+                        icon: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                        ),
                         onPressed: () => _mudarMes(-1),
                       ),
                       Text(
-                        DateFormat('MMMM yyyy', 'pt_BR').format(_currentMonth).toUpperCase(),
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800, fontSize: 16),
+                        DateFormat(
+                          'MMMM yyyy',
+                          'pt_BR',
+                        ).format(_currentMonth).toUpperCase(),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.chevron_right, color: Colors.white),
+                        icon: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                        ),
                         onPressed: () => _mudarMes(1),
                       ),
                     ],
@@ -83,14 +114,23 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
                   // Cabeçalho dos dias da semana
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia) {
-                      return SizedBox(
-                        width: 32,
-                        child: Center(
-                          child: Text(dia, style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12)),
-                        ),
-                      );
-                    }).toList(),
+                    children: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+                        .map((dia) {
+                          return SizedBox(
+                            width: 32,
+                            child: Center(
+                              child: Text(
+                                dia,
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          );
+                        })
+                        .toList(),
                   ),
                   const SizedBox(height: 12),
 
@@ -98,11 +138,12 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 7,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
                     itemCount: daysInMonth + startOffset,
                     itemBuilder: (context, index) {
                       if (index < startOffset) {
@@ -110,24 +151,47 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
                       }
 
                       int day = index - startOffset + 1;
-                      DateTime currentDay = DateTime(_currentMonth.year, _currentMonth.month, day);
+                      DateTime currentDay = DateTime(
+                        _currentMonth.year,
+                        _currentMonth.month,
+                        day,
+                      );
 
                       // Verifica se treinou neste dia exato
-                      bool hasWorkout = history.any((h) => h.date.year == currentDay.year && h.date.month == currentDay.month && h.date.day == currentDay.day);
-                      bool isToday = DateTime.now().year == currentDay.year && DateTime.now().month == currentDay.month && DateTime.now().day == currentDay.day;
+                      bool hasWorkout = history.any(
+                        (h) =>
+                            h.date.year == currentDay.year &&
+                            h.date.month == currentDay.month &&
+                            h.date.day == currentDay.day,
+                      );
+                      bool isToday =
+                          DateTime.now().year == currentDay.year &&
+                          DateTime.now().month == currentDay.month &&
+                          DateTime.now().day == currentDay.day;
 
                       return Container(
                         decoration: BoxDecoration(
-                          color: hasWorkout ? Theme.of(context).colorScheme.primary : (isToday ? AppColors.border : Colors.transparent),
+                          color: hasWorkout
+                              ? Theme.of(context).colorScheme.primary
+                              : (isToday
+                                    ? AppColors.border
+                                    : Colors.transparent),
                           shape: BoxShape.circle,
-                          border: Border.all(color: isToday ? Theme.of(context).colorScheme.primary : Colors.transparent, width: 2),
+                          border: Border.all(
+                            color: isToday
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.transparent,
+                            width: 2,
+                          ),
                         ),
                         child: Center(
                           child: Text(
                             '$day',
                             style: TextStyle(
                               color: hasWorkout ? Colors.black : Colors.white,
-                              fontWeight: hasWorkout || isToday ? FontWeight.w800 : FontWeight.normal,
+                              fontWeight: hasWorkout || isToday
+                                  ? FontWeight.w800
+                                  : FontWeight.normal,
                               fontSize: 14,
                             ),
                           ),
@@ -142,9 +206,20 @@ class _ProgressCalendarScreenState extends State<ProgressCalendarScreen> {
             const SizedBox(height: 24),
             Row(
               children: [
-                Icon(Icons.local_fire_department, color: Theme.of(context).colorScheme.primary, size: 24),
+                Icon(
+                  Icons.local_fire_department,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
+                ),
                 const SizedBox(width: 8),
-                Text('VOCÊ TREINOU $treinosDoMes DIAS NESTE MÊS!', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5)),
+                Text(
+                  'VOCÊ TREINOU $treinosDoMes DIAS NESTE MÊS!',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ],
             ),
           ],

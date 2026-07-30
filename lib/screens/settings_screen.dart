@@ -27,7 +27,10 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Configurações', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Configurações',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -35,7 +38,15 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('COR DO APLICATIVO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 1.0)),
+            const Text(
+              'COR DO APLICATIVO',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 16),
 
             // O SELETOR DE CORES
@@ -48,7 +59,8 @@ class SettingsScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final colorInfo = premiumColors[index];
                   final Color c = colorInfo['color'];
-                  final bool isSelected = themeProvider.primaryColor.value == c.value;
+                  final bool isSelected =
+                      themeProvider.primaryColor.value == c.value;
 
                   return GestureDetector(
                     onTap: () => themeProvider.setPrimaryColor(c),
@@ -61,11 +73,19 @@ class SettingsScreen extends StatelessWidget {
                           color: isSelected ? Colors.white : Colors.transparent,
                           width: 3,
                         ),
-                        boxShadow: isSelected ? [
-                          BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 10, spreadRadius: 2)
-                        ] : [],
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: c.withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : [],
                       ),
-                      child: isSelected ? const Icon(Icons.check, color: Colors.black) : null,
+                      child: isSelected
+                          ? const Icon(Icons.check, color: Colors.black)
+                          : null,
                     ),
                   );
                 },
@@ -73,7 +93,15 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            const Text('CONTA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 1.0)),
+            const Text(
+              'CONTA',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -85,46 +113,81 @@ class SettingsScreen extends StatelessWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8)
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+                  child: Icon(
+                    Icons.person,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                title: const Text('Alterar Nome', style: TextStyle(fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                title: const Text(
+                  'Alterar Nome',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary,
+                ),
                 onTap: () {
                   final txt = TextEditingController(text: provider.userName);
                   showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: AppColors.surface,
-                        title: const Text('Seu Nome', style: TextStyle(color: Colors.white)),
-                        content: TextField(
-                          controller: txt,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: AppColors.surface,
+                      title: const Text(
+                        'Seu Nome',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: TextField(
+                        controller: txt,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white),
                           ),
                         ),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
-                          ElevatedButton(
-                              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.black),
-                              onPressed: () {
-                                provider.setUserName(txt.text);
-                                Navigator.pop(ctx);
-                              },
-                              child: const Text('Salvar')
-                          )
-                        ],
-                      )
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text(
+                            'Cancelar',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Colors.black,
+                          ),
+                          onPressed: () {
+                            provider.setUserName(txt.text);
+                            Navigator.pop(ctx);
+                          },
+                          child: const Text('Salvar'),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
             ),
 
             const SizedBox(height: 32),
-            const Text('SISTEMA', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 1.0)),
+            const Text(
+              'SISTEMA',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -136,7 +199,10 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.fingerprint, color: Colors.white),
-                    title: const Text('Usar Biometria', style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: const Text(
+                      'Usar Biometria',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     trailing: Switch(
                       value: provider.usarBiometria,
                       activeColor: Theme.of(context).colorScheme.primary,
@@ -147,31 +213,67 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const Divider(color: AppColors.border, height: 1),
                   ListTile(
-                    leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                    title: const Text('Apagar Todos os Dados', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent)),
+                    leading: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.redAccent,
+                    ),
+                    title: const Text(
+                      'Apagar Todos os Dados',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.redAccent,
+                      ),
+                    ),
                     onTap: () {
                       showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: AppColors.surface,
-                            title: const Text('Tem Certeza?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            content: const Text('Isso apagará todo o seu histórico, fichas e medidas. Não tem volta!', style: TextStyle(color: AppColors.textSecondary)),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
-                              ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                                  onPressed: () {
-                                    provider.factoryReset();
-                                    Navigator.pushAndRemoveUntil(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => const AuthScreen()),
-                                            (route) => false
-                                    );
-                                  },
-                                  child: const Text('Apagar Tudo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
-                              )
-                            ],
-                          )
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: AppColors.surface,
+                          title: const Text(
+                            'Tem Certeza?',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          content: const Text(
+                            'Isso apagará todo o seu histórico, fichas e medidas. Não tem volta!',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                              ),
+                              onPressed: () {
+                                provider.factoryReset();
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const AuthScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              child: const Text(
+                                'Apagar Tudo',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

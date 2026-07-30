@@ -1,20 +1,20 @@
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
+import 'package:provider/provider.dart';
 
+import 'features/auth/presentation/auth_gate.dart';
 import 'providers/workout_provider.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/workout_plan_screen.dart';
-import 'screens/auth_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -29,55 +29,27 @@ void main() {
           ChangeNotifierProvider(create: (_) => WorkoutProvider()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ],
-        child: const FitApp(),
+        child: const PulseApp(),
       ),
     ),
   );
 }
 
-class FitApp extends StatelessWidget {
-  const FitApp({super.key});
+class PulseApp extends StatelessWidget {
+  const PulseApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // AQUI: O Consumer envolve o app e reconstrói as telas quando a cor muda
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'FitApp',
+          title: 'PULSE',
           debugShowCheckedModeBanner: false,
-          theme:
-              themeProvider.currentTheme, // AQUI: Agora a cor puxa do Provider
-          home: const AuthWrapper(),
+          theme: themeProvider.currentTheme,
+          home: const AuthGate(child: MainNavigation()),
         );
       },
     );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
-
-    if (!provider.isInitialized) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      );
-    }
-
-    if (!provider.isAuthenticated) {
-      return const AuthScreen();
-    }
-
-    return const MainNavigation();
   }
 }
 
@@ -113,11 +85,12 @@ class _MainNavigationState extends State<MainNavigation> {
         ),
         child: BottomNavigationBar(
           currentIndex: _index,
-          onTap: (i) => setState(() => _index = i),
+          onTap: (index) {
+            setState(() => _index = index);
+          },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          // AQUI: Usando a cor dinâmica no ícone selecionado do menu inferior
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: AppColors.textSecondary,
           selectedFontSize: 11,

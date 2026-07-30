@@ -59,7 +59,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     }
 
     final programName = _nameController.text.trim();
-    final programFocus = _focusController.text.trim().isEmpty ? 'Geral' : _focusController.text.trim();
+    final programFocus = _focusController.text.trim().isEmpty
+        ? 'Geral'
+        : _focusController.text.trim();
 
     // Navega para a Tela 2 levando os dados do setup
     Navigator.push(
@@ -80,8 +82,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-            widget.routineToEdit != null ? 'EDITAR PROGRAMA' : 'NOVO PROGRAMA',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)
+          widget.routineToEdit != null ? 'EDITAR PROGRAMA' : 'NOVO PROGRAMA',
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -96,27 +98,53 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.edit_document, color: Theme.of(context).colorScheme.primary, size: 40),
+                child: Icon(
+                  Icons.edit_document,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 40,
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
             // DADOS DO PROGRAMA
-            const Text('PASSO 1: DADOS GERAIS', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+            const Text(
+              'PASSO 1: DADOS GERAIS',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
               decoration: InputDecoration(
                 labelText: 'Nome do Programa (ex: Foco Emagrecimento)',
                 labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -128,16 +156,35 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 labelStyle: const TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
             // DIVISÃO DO TREINO
-            const Text('PASSO 2: DIVISÃO DO TREINO', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+            const Text(
+              'PASSO 2: DIVISÃO DO TREINO',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text('Como você quer organizar seus dias na academia?', style: TextStyle(color: Colors.white, fontSize: 14)),
+            const Text(
+              'Como você quer organizar seus dias na academia?',
+              style: TextStyle(color: Colors.white, fontSize: 14),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
@@ -145,11 +192,21 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               children: _splits.map((split) {
                 final isSelected = _selectedSplit == split;
                 return ChoiceChip(
-                  label: Text(split, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.black : Colors.white)),
+                  label: Text(
+                    split,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.black : Colors.white,
+                    ),
+                  ),
                   selected: isSelected,
                   selectedColor: Theme.of(context).colorScheme.primary,
                   backgroundColor: AppColors.surface,
-                  side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.border),
+                  side: BorderSide(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.border,
+                  ),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -175,10 +232,15 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.black,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onPressed: _nextStep,
-          child: const Text('AVANÇAR E MONTAR FICHAS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          child: const Text(
+            'AVANÇAR E MONTAR FICHAS',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
         ),
       ),
     );

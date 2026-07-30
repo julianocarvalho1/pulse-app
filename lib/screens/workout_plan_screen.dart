@@ -20,7 +20,10 @@ class WorkoutPlanScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Fichas de Treino', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          title: const Text(
+            'Fichas de Treino',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
           backgroundColor: AppColors.background,
           elevation: 0,
           automaticallyImplyLeading: false,
@@ -28,7 +31,10 @@ class WorkoutPlanScreen extends StatelessWidget {
             indicatorColor: Theme.of(context).colorScheme.primary,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: AppColors.textSecondary,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
             tabs: const [
               Tab(text: 'MINHAS FICHAS'),
               Tab(text: 'CATÁLOGO OFICIAL'),
@@ -52,7 +58,10 @@ class WorkoutPlanScreen extends StatelessWidget {
             );
           },
           icon: const Icon(Icons.add),
-          label: const Text('Nova Ficha', style: TextStyle(fontWeight: FontWeight.w800)),
+          label: const Text(
+            'Nova Ficha',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
         ),
       ),
     );
@@ -61,7 +70,11 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   //  MODAL DE EDIÇÃO (Trazido para funcionar direto da lista)
   // =========================================================
-  void _openEditRoutineModal(BuildContext context, WorkoutProvider provider, WorkoutRoutine routine) {
+  void _openEditRoutineModal(
+    BuildContext context,
+    WorkoutProvider provider,
+    WorkoutRoutine routine,
+  ) {
     final nameCtrl = TextEditingController(text: routine.name);
     final focusCtrl = TextEditingController(text: routine.focus);
     List<Exercise> currentExercises = List.from(routine.exercises);
@@ -70,13 +83,17 @@ class WorkoutPlanScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return Padding(
               padding: EdgeInsets.only(
-                top: 20, left: 20, right: 20,
+                top: 20,
+                left: 20,
+                right: 20,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
               child: SingleChildScrollView(
@@ -87,20 +104,38 @@ class WorkoutPlanScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Editar Ficha de Treino', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                        IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+                        const Text(
+                          'Editar Ficha de Treino',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameCtrl,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -109,14 +144,27 @@ class WorkoutPlanScreen extends StatelessWidget {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: const TextStyle(color: AppColors.textSecondary),
+                        labelStyle: const TextStyle(
+                          color: AppColors.textSecondary,
+                        ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.border),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text('GERENCIAR EXERCÍCIOS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                    const Text(
+                      'GERENCIAR EXERCÍCIOS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     const SizedBox(height: 10),
 
                     ReorderableListView.builder(
@@ -141,11 +189,31 @@ class WorkoutPlanScreen extends StatelessWidget {
                             border: Border.all(color: AppColors.border),
                           ),
                           child: ListTile(
-                            leading: Icon(Icons.drag_handle, color: Theme.of(context).colorScheme.primary),
-                            title: Text(ex.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                            subtitle: Text('${ex.reps} • ${ex.rest}', style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                            leading: Icon(
+                              Icons.drag_handle,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: Text(
+                              ex.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${ex.reps} • ${ex.rest}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
                               onPressed: () {
                                 setStateModal(() {
                                   currentExercises.removeAt(index);
@@ -162,25 +230,43 @@ class WorkoutPlanScreen extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                           foregroundColor: Colors.black,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         onPressed: () {
                           provider.updateRoutine(
                             routine.id,
-                            nameCtrl.text.trim().isEmpty ? routine.name : nameCtrl.text.trim(),
-                            focusCtrl.text.trim().isEmpty ? routine.focus : focusCtrl.text.trim(),
+                            nameCtrl.text.trim().isEmpty
+                                ? routine.name
+                                : nameCtrl.text.trim(),
+                            focusCtrl.text.trim().isEmpty
+                                ? routine.focus
+                                : focusCtrl.text.trim(),
                             routine.groupName,
                             currentExercises,
                           );
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: const Text('Ficha atualizada com sucesso!'), backgroundColor: Theme.of(context).colorScheme.primary),
+                            SnackBar(
+                              content: const Text(
+                                'Ficha atualizada com sucesso!',
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                            ),
                           );
                         },
-                        child: const Text('SALVAR ALTERAÇÕES', style: TextStyle(fontWeight: FontWeight.w800)),
+                        child: const Text(
+                          'SALVAR ALTERAÇÕES',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ],
@@ -196,13 +282,21 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   //  CONSTRUTOR DA ABA: MINHAS FICHAS
   // =========================================================
-  Widget _buildMyRoutinesTab(BuildContext context, WorkoutProvider provider, List<WorkoutRoutine> routines) {
+  Widget _buildMyRoutinesTab(
+    BuildContext context,
+    WorkoutProvider provider,
+    List<WorkoutRoutine> routines,
+  ) {
     if (routines.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.fitness_center_outlined, size: 48, color: AppColors.textSecondary),
+            const Icon(
+              Icons.fitness_center_outlined,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(height: 12),
             const Text(
               'Você não possui fichas ativas.',
@@ -214,13 +308,21 @@ class WorkoutPlanScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   DefaultTabController.of(ctx).animateTo(1);
                 },
-                child: const Text('Explorar Catálogo', style: TextStyle(fontWeight: FontWeight.w800)),
+                child: const Text(
+                  'Explorar Catálogo',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ),
           ],
@@ -243,49 +345,87 @@ class WorkoutPlanScreen extends StatelessWidget {
 
     groupedRoutines.forEach((groupName, groupRoutines) {
       listItems.add(
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                collapsedIconColor: AppColors.textSecondary,
-                iconColor: Theme.of(context).colorScheme.primary,
-                leading: Container(
-                  width: 42, height: 42,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(Icons.folder, color: Theme.of(context).colorScheme.primary, size: 20),
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              collapsedIconColor: AppColors.textSecondary,
+              iconColor: Theme.of(context).colorScheme.primary,
+              leading: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                title: Text(groupName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white)),
-                subtitle: Text('${groupRoutines.length} fichas neste programa', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                children: groupRoutines.map((routine) => _buildRoutineTile(context, provider, routine, isInsideGroup: true)).toList(),
+                child: Icon(
+                  Icons.folder,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
               ),
+              title: Text(
+                groupName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: Colors.white,
+                ),
+              ),
+              subtitle: Text(
+                '${groupRoutines.length} fichas neste programa',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              childrenPadding: const EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: 16,
+              ),
+              children: groupRoutines
+                  .map(
+                    (routine) => _buildRoutineTile(
+                      context,
+                      provider,
+                      routine,
+                      isInsideGroup: true,
+                    ),
+                  )
+                  .toList(),
             ),
-          )
+          ),
+        ),
       );
     });
 
     for (var routine in looseRoutines) {
       listItems.add(
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: _buildRoutineTile(context, provider, routine, isInsideGroup: false),
-          )
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: _buildRoutineTile(
+            context,
+            provider,
+            routine,
+            isInsideGroup: false,
+          ),
+        ),
       );
     }
 
@@ -295,7 +435,12 @@ class WorkoutPlanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoutineTile(BuildContext context, WorkoutProvider provider, WorkoutRoutine routine, {required bool isInsideGroup}) {
+  Widget _buildRoutineTile(
+    BuildContext context,
+    WorkoutProvider provider,
+    WorkoutRoutine routine, {
+    required bool isInsideGroup,
+  }) {
     return Dismissible(
       key: Key(routine.id),
       direction: DismissDirection.endToStart,
@@ -318,20 +463,40 @@ class WorkoutPlanScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.only(top: isInsideGroup ? 8.0 : 0),
         child: ListTile(
-          contentPadding: isInsideGroup ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: isInsideGroup
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Container(
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: isInsideGroup ? AppColors.surfaceLight : Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              color: isInsideGroup
+                  ? AppColors.surfaceLight
+                  : Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 20),
+            child: Icon(
+              Icons.fitness_center,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
           ),
-          title: Text(routine.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white)),
+          title: Text(
+            routine.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: Colors.white,
+            ),
+          ),
           subtitle: Text(
             '${routine.exercises.length} exercício(s) • Foco: ${routine.focus}',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -342,7 +507,9 @@ class WorkoutPlanScreen extends StatelessWidget {
               if (value == 'view') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)),
+                  MaterialPageRoute(
+                    builder: (_) => RoutineDetailScreen(routine: routine),
+                  ),
                 );
               } else if (value == 'edit') {
                 // AQUI: Agora ele abre o modal de edição imediatamente!
@@ -354,7 +521,10 @@ class WorkoutPlanScreen extends StatelessWidget {
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'view',
-                child: Text('Ver Detalhes', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Ver Detalhes',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               const PopupMenuItem(
                 value: 'edit',
@@ -362,12 +532,20 @@ class WorkoutPlanScreen extends StatelessWidget {
               ),
               const PopupMenuItem(
                 value: 'delete',
-                child: Text('Excluir', style: TextStyle(color: Colors.redAccent)),
+                child: Text(
+                  'Excluir',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
               ),
             ],
           ),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: routine)));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RoutineDetailScreen(routine: routine),
+              ),
+            );
           },
         ),
       ),
@@ -377,7 +555,11 @@ class WorkoutPlanScreen extends StatelessWidget {
   // =========================================================
   //  CONSTRUTOR DA ABA: CATÁLOGO DE PROGRAMAS
   // =========================================================
-  Widget _buildCatalogTab(BuildContext context, WorkoutProvider provider, List programs) {
+  Widget _buildCatalogTab(
+    BuildContext context,
+    WorkoutProvider provider,
+    List programs,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
       child: Column(
@@ -386,20 +568,34 @@ class WorkoutPlanScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5))
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               children: [
-                Icon(Icons.menu_book, color: Theme.of(context).colorScheme.primary, size: 20),
+                Icon(
+                  Icons.menu_book,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Programas de hipertrofia baseados nas metodologias do Guia Oficial.',
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -411,107 +607,152 @@ class WorkoutPlanScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final prog = programs[index];
                 return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceLight,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(Icons.bolt, color: Theme.of(context).colorScheme.primary, size: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    prog.name,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                            child: Icon(
+                              Icons.bolt,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  prog.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Contém ${prog.routines.length} fichas de treino',
-                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Contém ${prog.routines.length} fichas de treino',
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'MÉTODO E OBJETIVO:',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              prog.focus,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                height: 1.4,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('MÉTODO E OBJETIVO:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
-                              const SizedBox(height: 4),
-                              Text(
-                                prog.focus,
-                                style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Theme.of(context).colorScheme.primary,
-                                  side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                side: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-                                onPressed: () {
-                                  _showProgramDetails(context, provider, prog);
-                                },
-                                child: const Text('Ver Fichas', style: TextStyle(fontWeight: FontWeight.w800)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              onPressed: () {
+                                _showProgramDetails(context, provider, prog);
+                              },
+                              child: const Text(
+                                'Ver Fichas',
+                                style: TextStyle(fontWeight: FontWeight.w800),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
-                                  foregroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                onPressed: () {
-                                  provider.importProgram(prog);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Programa ${prog.name} importado para Minhas Fichas!'),
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                      behavior: SnackBarBehavior.floating,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              onPressed: () {
+                                provider.importProgram(prog);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Programa ${prog.name} importado para Minhas Fichas!',
                                     ),
-                                  );
-                                },
-                                child: const Text('Importar Grupo', style: TextStyle(fontWeight: FontWeight.w800)),
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Importar Grupo',
+                                style: TextStyle(fontWeight: FontWeight.w800),
                               ),
                             ),
-                          ],
-                        )
-                      ],
-                    )
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -521,41 +762,83 @@ class WorkoutPlanScreen extends StatelessWidget {
     );
   }
 
-  void _showProgramDetails(BuildContext context, WorkoutProvider provider, dynamic prog) {
+  void _showProgramDetails(
+    BuildContext context,
+    WorkoutProvider provider,
+    dynamic prog,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(prog.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(
+              prog.name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 8),
-            Text(prog.focus, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
+            Text(
+              prog.focus,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 14,
+              ),
+            ),
             const SizedBox(height: 24),
-            const Text('FICHAS INCLUSAS NO PROGRAMA:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary)),
+            const Text(
+              'FICHAS INCLUSAS NO PROGRAMA:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 12),
-            ...prog.routines.map((r) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
+            ...prog.routines.map(
+              (r) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border)
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${r.exercises.length} exercícios estruturados.',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(r.name, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text('${r.exercises.length} exercícios estruturados.', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                ],
-              ),
-            )),
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -564,22 +847,29 @@ class WorkoutPlanScreen extends StatelessWidget {
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   provider.importProgram(prog);
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Programa importado! Vá para "Minhas Fichas" para iniciar o treino.'),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        behavior: SnackBarBehavior.floating,
-                      )
+                    SnackBar(
+                      content: const Text(
+                        'Programa importado! Vá para "Minhas Fichas" para iniciar o treino.',
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                 },
-                child: const Text('Importar Este Grupo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                child: const Text(
+                  'Importar Este Grupo',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

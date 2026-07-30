@@ -55,19 +55,24 @@ class _HomeScreenState extends State<HomeScreen> {
     final history = provider.history;
     final totalTreinos = history.length;
 
-    String statusTreinoMsg = 'Você ainda não concluiu nenhum treino. Que tal começar hoje?';
-    String analiseRitmoMsg = 'Complete um treino para analisarmos o seu ritmo e tempo de execução.';
+    String statusTreinoMsg =
+        'Você ainda não concluiu nenhum treino. Que tal começar hoje?';
+    String analiseRitmoMsg =
+        'Complete um treino para analisarmos o seu ritmo e tempo de execução.';
 
     if (history.isNotEmpty) {
       final ultimoTreino = history.first;
       final diferencaDias = DateTime.now().difference(ultimoTreino.date).inDays;
 
       if (diferencaDias == 0) {
-        statusTreinoMsg = 'Parabéns! Você treinou hoje e garantiu sua evolução.';
+        statusTreinoMsg =
+            'Parabéns! Você treinou hoje e garantiu sua evolução.';
       } else if (diferencaDias == 1) {
-        statusTreinoMsg = 'Seu último treino foi ontem. Hora de manter a consistência!';
+        statusTreinoMsg =
+            'Seu último treino foi ontem. Hora de manter a consistência!';
       } else {
-        statusTreinoMsg = 'Já se passaram $diferencaDias dias desde o seu último registro.';
+        statusTreinoMsg =
+            'Já se passaram $diferencaDias dias desde o seu último registro.';
       }
 
       final partes = ultimoTreino.duration.split(':');
@@ -78,13 +83,17 @@ class _HomeScreenState extends State<HomeScreen> {
         final tempoPorExercicio = minutosDuracao / totalExercicios;
 
         if (minutosDuracao < 10 && totalExercicios >= 3) {
-          analiseRitmoMsg = 'Análise do último treino: Ritmo relâmpago! (${minutosDuracao}m para $totalExercicios exercícios).';
+          analiseRitmoMsg =
+              'Análise do último treino: Ritmo relâmpago! (${minutosDuracao}m para $totalExercicios exercícios).';
         } else if (tempoPorExercicio < 2.5) {
-          analiseRitmoMsg = 'Análise do último treino: Ritmo acelerado! (${minutosDuracao}m).';
+          analiseRitmoMsg =
+              'Análise do último treino: Ritmo acelerado! (${minutosDuracao}m).';
         } else if (tempoPorExercicio > 8) {
-          analiseRitmoMsg = 'Análise do último treino: Sessão longa (${minutosDuracao}m).';
+          analiseRitmoMsg =
+              'Análise do último treino: Sessão longa (${minutosDuracao}m).';
         } else {
-          analiseRitmoMsg = 'Análise do último treino: Ritmo perfeito! (${minutosDuracao}m para $totalExercicios exercícios).';
+          analiseRitmoMsg =
+              'Análise do último treino: Ritmo perfeito! (${minutosDuracao}m para $totalExercicios exercícios).';
         }
       }
     }
@@ -104,20 +113,39 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('NOTIFICAÇÕES DO SISTEMA',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const Text(
+                  'NOTIFICAÇÕES DO SISTEMA',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text('Fechar', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                  child: Text(
+                    'Fechar',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            _buildNotificationItem(Icons.bolt, 'Status de Consistência', statusTreinoMsg),
+            _buildNotificationItem(
+              Icons.bolt,
+              'Status de Consistência',
+              statusTreinoMsg,
+            ),
             const SizedBox(height: 12),
-            _buildNotificationItem(Icons.analytics_outlined, 'Análise de Desempenho', analiseRitmoMsg),
+            _buildNotificationItem(
+              Icons.analytics_outlined,
+              'Análise de Desempenho',
+              analiseRitmoMsg,
+            ),
             const SizedBox(height: 12),
-            _buildNotificationItem(Icons.military_tech, 'Marcos Alcançados', 'Total de $totalTreinos treino(s) registrado(s).'),
+            _buildNotificationItem(
+              Icons.military_tech,
+              'Marcos Alcançados',
+              'Total de $totalTreinos treino(s) registrado(s).',
+            ),
           ],
         ),
       ),
@@ -140,9 +168,21 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -151,129 +191,242 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _mostrarModalTreinoDinamico(BuildContext context, WorkoutProvider provider) {
+  void _mostrarModalTreinoDinamico(
+    BuildContext context,
+    WorkoutProvider provider,
+  ) {
     String musculoFoco = 'Full Body';
     int quantidadeEx = 5;
 
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: AppColors.surface,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-        builder: (ctx) {
-          return StatefulBuilder(
-              builder: (context, setStateModal) {
-                return Padding(
-                  padding: EdgeInsets.only(
-                    top: 24, left: 24, right: 24,
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: 24,
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Treino Dinâmico ⚡', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
-                          IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text('Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4)),
-                      const SizedBox(height: 24),
-
-                      const Text('MÚSCULO FOCO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ['Full Body', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Braços'].map((m) =>
-                            ChoiceChip(
-                              label: Text(m, style: TextStyle(fontWeight: FontWeight.bold, color: musculoFoco == m ? Colors.black : Colors.white)),
-                              selected: musculoFoco == m,
-                              selectedColor: Theme.of(context).colorScheme.primary,
-                              backgroundColor: AppColors.background,
-                              side: BorderSide(color: musculoFoco == m ? Theme.of(context).colorScheme.primary : AppColors.border),
-                              onSelected: (val) => setStateModal(() => musculoFoco = m),
-                            )
-                        ).toList(),
-                      ),
-
-                      const SizedBox(height: 24),
-                      const Text('DURAÇÃO DO TREINO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5)),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          {'label': 'Express (~20m)', 'val': 3},
-                          {'label': 'Padrão (~40m)', 'val': 5},
-                          {'label': 'Intenso (~60m)', 'val': 7},
-                        ].map((d) =>
-                            ChoiceChip(
-                              label: Text(d['label'] as String, style: TextStyle(fontWeight: FontWeight.bold, color: quantidadeEx == d['val'] ? Colors.black : Colors.white)),
-                              selected: quantidadeEx == d['val'],
-                              selectedColor: Theme.of(context).colorScheme.primary,
-                              backgroundColor: AppColors.background,
-                              side: BorderSide(color: quantidadeEx == d['val'] ? Theme.of(context).colorScheme.primary : AppColors.border),
-                              onSelected: (val) => setStateModal(() => quantidadeEx = d['val'] as int),
-                            )
-                        ).toList(),
-                      ),
-
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: () {
-                            List<Exercise> pool = provider.allExercises.toList();
-
-                            if (musculoFoco != 'Full Body') {
-                              pool = pool.where((e) {
-                                String m = e.muscle.toLowerCase();
-                                if (musculoFoco == 'Peito' && m.contains('peito')) return true;
-                                if (musculoFoco == 'Costas' && (m.contains('costas') || m.contains('dorsal'))) return true;
-                                if (musculoFoco == 'Pernas' && (m.contains('perna') || m.contains('quadríceps') || m.contains('glúteo') || m.contains('isquio') || m.contains('panturrilha'))) return true;
-                                if (musculoFoco == 'Ombros' && m.contains('ombro')) return true;
-                                if (musculoFoco == 'Braços' && (m.contains('bíceps') || m.contains('tríceps') || m.contains('antebraço'))) return true;
-                                return false;
-                              }).toList();
-                            }
-
-                            if (pool.isEmpty) pool = provider.allExercises.toList();
-
-                            pool.shuffle();
-                            final selectedExercises = pool.take(quantidadeEx).toList();
-
-                            final routine = WorkoutRoutine(
-                              id: 'dinamico_${DateTime.now().millisecondsSinceEpoch}',
-                              name: 'Treino Dinâmico: $musculoFoco',
-                              focus: 'Gerado Aleatoriamente',
-                              groupName: 'Treinos Rápidos',
-                              exercises: List<Exercise>.from(selectedExercises),
-                            );
-
-                            Navigator.pop(ctx);
-                            provider.startRoutine(routine);
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
-                          },
-                          icon: const Icon(Icons.bolt),
-                          label: const Text('GERAR E INICIAR TREINO', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      const Text(
+                        'Treino Dinâmico ⚡',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
-                      )
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
                     ],
                   ),
-                );
-              }
-          );
-        }
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    'MÚSCULO FOCO',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        [
+                              'Full Body',
+                              'Peito',
+                              'Costas',
+                              'Pernas',
+                              'Ombros',
+                              'Braços',
+                            ]
+                            .map(
+                              (m) => ChoiceChip(
+                                label: Text(
+                                  m,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: musculoFoco == m
+                                        ? Colors.black
+                                        : Colors.white,
+                                  ),
+                                ),
+                                selected: musculoFoco == m,
+                                selectedColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                backgroundColor: AppColors.background,
+                                side: BorderSide(
+                                  color: musculoFoco == m
+                                      ? Theme.of(context).colorScheme.primary
+                                      : AppColors.border,
+                                ),
+                                onSelected: (val) =>
+                                    setStateModal(() => musculoFoco = m),
+                              ),
+                            )
+                            .toList(),
+                  ),
+
+                  const SizedBox(height: 24),
+                  const Text(
+                    'DURAÇÃO DO TREINO',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        [
+                              {'label': 'Express (~20m)', 'val': 3},
+                              {'label': 'Padrão (~40m)', 'val': 5},
+                              {'label': 'Intenso (~60m)', 'val': 7},
+                            ]
+                            .map(
+                              (d) => ChoiceChip(
+                                label: Text(
+                                  d['label'] as String,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: quantidadeEx == d['val']
+                                        ? Colors.black
+                                        : Colors.white,
+                                  ),
+                                ),
+                                selected: quantidadeEx == d['val'],
+                                selectedColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                backgroundColor: AppColors.background,
+                                side: BorderSide(
+                                  color: quantidadeEx == d['val']
+                                      ? Theme.of(context).colorScheme.primary
+                                      : AppColors.border,
+                                ),
+                                onSelected: (val) => setStateModal(
+                                  () => quantidadeEx = d['val'] as int,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                  ),
+
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        List<Exercise> pool = provider.allExercises.toList();
+
+                        if (musculoFoco != 'Full Body') {
+                          pool = pool.where((e) {
+                            String m = e.muscle.toLowerCase();
+                            if (musculoFoco == 'Peito' && m.contains('peito'))
+                              return true;
+                            if (musculoFoco == 'Costas' &&
+                                (m.contains('costas') || m.contains('dorsal')))
+                              return true;
+                            if (musculoFoco == 'Pernas' &&
+                                (m.contains('perna') ||
+                                    m.contains('quadríceps') ||
+                                    m.contains('glúteo') ||
+                                    m.contains('isquio') ||
+                                    m.contains('panturrilha')))
+                              return true;
+                            if (musculoFoco == 'Ombros' && m.contains('ombro'))
+                              return true;
+                            if (musculoFoco == 'Braços' &&
+                                (m.contains('bíceps') ||
+                                    m.contains('tríceps') ||
+                                    m.contains('antebraço')))
+                              return true;
+                            return false;
+                          }).toList();
+                        }
+
+                        if (pool.isEmpty) pool = provider.allExercises.toList();
+
+                        pool.shuffle();
+                        final selectedExercises = pool
+                            .take(quantidadeEx)
+                            .toList();
+
+                        final routine = WorkoutRoutine(
+                          id: 'dinamico_${DateTime.now().millisecondsSinceEpoch}',
+                          name: 'Treino Dinâmico: $musculoFoco',
+                          focus: 'Gerado Aleatoriamente',
+                          groupName: 'Treinos Rápidos',
+                          exercises: List<Exercise>.from(selectedExercises),
+                        );
+
+                        Navigator.pop(ctx);
+                        provider.startRoutine(routine);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkoutSessionScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.bolt),
+                      label: const Text(
+                        'GERAR E INICIAR TREINO',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -285,12 +438,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final agora = DateTime.now();
     final umaSemanaAtras = agora.subtract(const Duration(days: 7));
-    final treinosNaSemana = history.where((item) => item.date.isAfter(umaSemanaAtras)).length;
+    final treinosNaSemana = history
+        .where((item) => item.date.isAfter(umaSemanaAtras))
+        .length;
     final exerciciosNaSemana = history
         .where((item) => item.date.isAfter(umaSemanaAtras))
         .fold(0, (sum, item) => sum + item.totalExercises);
 
-    final rotinaDoDia = provider.nextRoutineToTrain ?? (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
+    final rotinaDoDia =
+        provider.nextRoutineToTrain ??
+        (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
 
     return PopScope(
       canPop: false,
@@ -300,17 +457,39 @@ class _HomeScreenState extends State<HomeScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.surface,
-            title: const Text('Sair do App?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-            content: const Text('Deseja realmente fechar o aplicativo?', style: TextStyle(color: AppColors.textSecondary)),
+            title: const Text(
+              'Sair do App?',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            content: const Text(
+              'Deseja realmente fechar o aplicativo?',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child:  Text('Cancelar', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                child: Text(
+                  'Cancelar',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                ),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Sair',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -342,12 +521,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.fitness_center, color: Colors.black, size: 16),
+                    child: const Icon(
+                      Icons.fitness_center,
+                      color: Colors.black,
+                      size: 16,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              const Text('PULSE', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 2.0, color: Colors.white)),
+              const Text(
+                'PULSE',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.0,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -379,7 +570,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             color: Colors.red,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.background, width: 2),
+                            border: Border.all(
+                              color: AppColors.background,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -398,17 +592,31 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   _obterSaudacao(userName),
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
                 ),
                 const SizedBox(height: 4),
-                const Text('Pronto para mais um treino?',
-                    style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+                const Text(
+                  'Pronto para mais um treino?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 20),
 
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -428,7 +636,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const WorkoutSessionScreen(),
+                        ),
                       );
                     },
                     child: Container(
@@ -440,7 +650,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.orangeAccent, width: 1.5),
+                        border: Border.all(
+                          color: Colors.orangeAccent,
+                          width: 1.5,
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -449,23 +662,41 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orangeAccent.withValues(alpha: 0.2),
+                                    color: Colors.orangeAccent.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Text('SESSÃO EM ANDAMENTO',
-                                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.orangeAccent, letterSpacing: 0.5)),
+                                  child: const Text(
+                                    'SESSÃO EM ANDAMENTO',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.orangeAccent,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
                                   'Continuar ${provider.activeRoutineName}',
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                                 const SizedBox(height: 6),
                                 const Text(
                                   'Não deixe seu descanso passar!',
-                                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -474,10 +705,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: Colors.orangeAccent.withValues(alpha: 0.15),
+                              color: Colors.orangeAccent.withValues(
+                                alpha: 0.15,
+                              ),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.play_arrow, color: Colors.orangeAccent, size: 30),
+                            child: const Icon(
+                              Icons.play_arrow,
+                              color: Colors.orangeAccent,
+                              size: 30,
+                            ),
                           ),
                         ],
                       ),
@@ -489,7 +726,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: rotinaDoDia)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              RoutineDetailScreen(routine: rotinaDoDia),
+                        ),
                       );
                     },
                     child: Container(
@@ -510,26 +750,44 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                      provider.activeProgramName.isNotEmpty
-                                          ? 'PROGRAMA: ${provider.activeProgramName.toUpperCase()}'
-                                          : 'PLANO ATUAL (TOQUE PARA VER)',
-                                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5)),
+                                    provider.activeProgramName.isNotEmpty
+                                        ? 'PROGRAMA: ${provider.activeProgramName.toUpperCase()}'
+                                        : 'PLANO ATUAL (TOQUE PARA VER)',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
                                   rotinaDoDia.name,
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   'Foco: ${rotinaDoDia.focus}',
-                                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -538,23 +796,40 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 30),
+                            child: Icon(
+                              Icons.fitness_center,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 30,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text('O SEU TREINO DE HOJE É', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                  const Text(
+                    'O SEU TREINO DE HOJE É',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => RoutineDetailScreen(routine: rotinaDoDia)),
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              RoutineDetailScreen(routine: rotinaDoDia),
+                        ),
                       );
                     },
                     child: Container(
@@ -565,10 +840,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: Text(
                               rotinaDoDia.name,
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
-                          Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.primary, size: 28),
+                          Icon(
+                            Icons.chevron_right,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 28,
+                          ),
                         ],
                       ),
                     ),
@@ -579,26 +861,39 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         provider.startRoutine(rotinaDoDia);
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkoutSessionScreen(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         elevation: 0,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Text('INICIAR TREINO', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                          Text(
+                            'INICIAR TREINO',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                           SizedBox(width: 8),
                           Icon(Icons.play_arrow, size: 20),
                         ],
                       ),
                     ),
                   ),
-
                 ] else ...[
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -609,51 +904,81 @@ class _HomeScreenState extends State<HomeScreen> {
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5), width: 1.5),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary, size: 22),
+                            Icon(
+                              Icons.help_outline,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 22,
+                            ),
                             const SizedBox(width: 10),
-                            Text('PRECISA DE AJUDA?',
-                                style: TextStyle(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
-                                    letterSpacing: 0.5)),
+                            Text(
+                              'PRECISA DE AJUDA?',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
                         const Text(
                           'Não sabe por onde começar?',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         const Text(
                           'Fique tranquilo! Preparamos um catálogo com fichas prontas para iniciantes, intermediários e avançados.\n\nEscolha o seu nível e importe uma ficha para iniciar sua jornada.',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 14, height: 1.4),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 0,
                             ),
                             icon: const Icon(Icons.search, size: 20),
-                            label: const Text('EXPLORAR CATÁLOGO',
-                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                            label: const Text(
+                              'EXPLORAR CATÁLOGO',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const WorkoutPlanScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const WorkoutPlanScreen(),
+                                ),
                               );
                             },
                           ),
@@ -670,12 +995,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), AppColors.surface],
+                        colors: [
+                          Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.15),
+                          AppColors.surface,
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -683,11 +1017,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('TREINO DINÂMICO ⚡', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary, letterSpacing: 0.5)),
+                              Text(
+                                'TREINO DINÂMICO ⚡',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                               const SizedBox(height: 6),
-                              const Text('Sem tempo para planejar?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                              const Text(
+                                'Sem tempo para planejar?',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
                               const SizedBox(height: 4),
-                              const Text('Nós geramos um treino aleatório para você agora mesmo.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3)),
+                              const Text(
+                                'Nós geramos um treino aleatório para você agora mesmo.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  height: 1.3,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -696,13 +1052,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)
-                              ]
+                            color: Theme.of(context).colorScheme.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
                           ),
-                          child: const Icon(Icons.shuffle, color: Colors.black, size: 24),
+                          child: const Icon(
+                            Icons.shuffle,
+                            color: Colors.black,
+                            size: 24,
+                          ),
                         ),
                       ],
                     ),
@@ -714,24 +1080,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('RESUMO SEMANAL',
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 0.5)),
+                    const Text(
+                      'RESUMO SEMANAL',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const ProgressCalendarScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const ProgressCalendarScreen(),
+                          ),
                         );
                       },
-                      child: Text('HISTÓRICO DE TREINOS 📅',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w800)),
+                      child: Text(
+                        'HISTÓRICO DE TREINOS 📅',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -740,30 +1114,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     Expanded(
-                        child: _SummaryStat(
-                            icon: Icons.fitness_center,
-                            value: '$treinosNaSemana',
-                            label: 'Concluídos')),
+                      child: _SummaryStat(
+                        icon: Icons.fitness_center,
+                        value: '$treinosNaSemana',
+                        label: 'Concluídos',
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
-                        child: _SummaryStat(
-                            icon: Icons.local_fire_department,
-                            value: treinosNaSemana >= 3 ? 'Excelente' : 'Em dia',
-                            label: 'Ritmo')),
+                      child: _SummaryStat(
+                        icon: Icons.local_fire_department,
+                        value: treinosNaSemana >= 3 ? 'Excelente' : 'Em dia',
+                        label: 'Ritmo',
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
-                        child: _SummaryStat(
-                            icon: Icons.calendar_today,
-                            value: history.isNotEmpty
-                                ? '${DateTime.now().difference(history.first.date).inDays}d'
-                                : '-',
-                            label: 'Último treino')),
+                      child: _SummaryStat(
+                        icon: Icons.calendar_today,
+                        value: history.isNotEmpty
+                            ? '${DateTime.now().difference(history.first.date).inDays}d'
+                            : '-',
+                        label: 'Último treino',
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
-                        child: _SummaryStat(
-                            icon: Icons.checklist,
-                            value: '$exerciciosNaSemana',
-                            label: 'Exercícios')),
+                      child: _SummaryStat(
+                        icon: Icons.checklist,
+                        value: '$exerciciosNaSemana',
+                        label: 'Exercícios',
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -779,7 +1161,11 @@ class _SummaryStat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String label;
-  const _SummaryStat({required this.icon, required this.value, required this.label});
+  const _SummaryStat({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -794,11 +1180,19 @@ class _SummaryStat extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
