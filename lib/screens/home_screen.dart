@@ -192,15 +192,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Future<void> _iniciarTreinoDinamico({
+    required BuildContext screenContext,
+    required BuildContext sheetContext,
+    required WorkoutController provider,
+    required WorkoutRoutine routine,
+  }) async {
+    if (provider.isWorkoutActive) {
+      final shouldReplace = await showDialog<bool>(
+        context: screenContext,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: Theme.of(screenContext).colorScheme.surface,
+          title: const Text(
+            'Trocar Treino?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          ),
+          content: Text(
+            'Você tem um treino ("${provider.activeRoutineName}") em andamento. Deseja substituí-lo pelo treino dinâmico?',
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(screenContext).colorScheme.primary,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text(
+                'Trocar',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldReplace != true) {
+        return;
+      }
+    }
+
+    if (!screenContext.mounted || !sheetContext.mounted) {
+      return;
+    }
+
+    Navigator.pop(sheetContext);
+    provider.startRoutine(routine);
+
+    await Navigator.push(
+      screenContext,
+      MaterialPageRoute(builder: (_) => const WorkoutSessionScreen()),
+    );
+  }
+
   void _mostrarModalTreinoDinamico(
-    BuildContext context,
+    BuildContext screenContext,
     WorkoutController provider,
   ) {
     String musculoFoco = 'Full Body';
     int quantidadeEx = 5;
 
     showModalBottomSheet(
-      context: context,
+      context: screenContext,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
@@ -359,7 +419,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         List<Exercise> pool = provider.allExercises.toList();
 
                         if (musculoFoco != 'Full Body') {
@@ -412,13 +472,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           exercises: List<Exercise>.from(selectedExercises),
                         );
 
-                        Navigator.pop(ctx);
-                        provider.startRoutine(routine);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const WorkoutSessionScreen(),
-                          ),
+                        await _iniciarTreinoDinamico(
+                          screenContext: screenContext,
+                          sheetContext: ctx,
+                          provider: provider,
+                          routine: routine,
                         );
                       },
                       icon: const Icon(Icons.bolt),

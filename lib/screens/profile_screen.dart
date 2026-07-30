@@ -23,6 +23,12 @@ class ProfileScreen extends ConsumerWidget {
     };
 
     final history = workoutState.history;
+    final completedHistoryCount = history
+        .where((item) => !item.isIncomplete)
+        .length;
+    final incompleteHistoryCount = history
+        .where((item) => item.isIncomplete)
+        .length;
     final profile = settings.profile;
     final activeRoutine =
         workoutState.nextRoutineToTrain ??
@@ -77,13 +83,27 @@ class ProfileScreen extends ConsumerWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              Text(
-                '${history.length} concluídos',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$completedHistoryCount completos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (incompleteHistoryCount > 0)
+                    Text(
+                      '$incompleteHistoryCount incompletos',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.orangeAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -101,6 +121,14 @@ class ProfileScreen extends ConsumerWidget {
                 final formattedDate = DateFormat(
                   'dd/MM/yyyy',
                 ).format(item.date);
+                final isIncomplete = item.isIncomplete;
+                final statusColor = isIncomplete
+                    ? Colors.orangeAccent
+                    : Theme.of(context).colorScheme.primary;
+                final statusIcon = isIncomplete
+                    ? Icons.pending_actions_rounded
+                    : Icons.check_circle;
+                final statusLabel = isIncomplete ? 'INCOMPLETO' : 'CONCLUÍDO';
 
                 return Dismissible(
                   key: Key(item.id),
@@ -146,7 +174,9 @@ class ProfileScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.45),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -154,14 +184,12 @@ class ProfileScreen extends ConsumerWidget {
                               width: 42,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.15),
+                                color: statusColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
-                                Icons.check_circle,
-                                color: Theme.of(context).colorScheme.primary,
+                                statusIcon,
+                                color: statusColor,
                                 size: 22,
                               ),
                             ),
@@ -177,13 +205,42 @@ class ProfileScreen extends ConsumerWidget {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    formattedDate,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.textSecondary,
-                                    ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 7,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(
+                                            alpha: 0.14,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          statusLabel,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            color: statusColor,
+                                            letterSpacing: 0.4,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        formattedDate,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -196,9 +253,7 @@ class ProfileScreen extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
+                                    color: statusColor,
                                   ),
                                 ),
                                 const SizedBox(height: 3),

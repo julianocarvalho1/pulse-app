@@ -14,6 +14,14 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
     final dataFormatada = DateFormat(
       "dd/MM/yyyy 'às' HH:mm",
     ).format(workout.date);
+    final isIncomplete = workout.isIncomplete;
+    final statusColor = isIncomplete
+        ? Colors.orangeAccent
+        : Theme.of(context).colorScheme.primary;
+    final statusLabel = isIncomplete ? 'TREINO INCOMPLETO' : 'TREINO CONCLUÍDO';
+    final statusIcon = isIncomplete
+        ? Icons.pending_actions_rounded
+        : Icons.check_circle_rounded;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -49,23 +57,17 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: statusColor.withValues(alpha: 0.45)),
               ),
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.15),
+                      color: statusColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 32,
-                    ),
+                    child: Icon(statusIcon, color: statusColor, size: 32),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -82,6 +84,29 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

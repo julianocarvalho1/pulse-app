@@ -313,6 +313,96 @@ void main() {
     expect(repository.routines.single.exercises.last.reps, '3x 10');
   });
 
+  test(
+    'mantém biblioteca, histórico e sessão em estados independentes',
+    () async {
+      final repository = _FakeWorkoutRepository(
+        routines: <WorkoutRoutine>[routine],
+      );
+      final container = ProviderContainer(
+        overrides: [
+          workoutRepositoryProvider.overrideWithValue(repository),
+          workoutFeedbackServiceProvider.overrideWithValue(
+            _FakeWorkoutFeedbackService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final facade = container.read(workoutControllerProvider.notifier);
+      await facade.initialization;
+
+      final libraryBefore = container.read(workoutLibraryControllerProvider);
+      final historyBefore = container.read(workoutHistoryControllerProvider);
+
+      container
+          .read(workoutSessionControllerProvider.notifier)
+          .startRoutine(routine);
+
+      expect(
+        identical(
+          container.read(workoutLibraryControllerProvider),
+          libraryBefore,
+        ),
+        isTrue,
+      );
+      expect(
+        identical(
+          container.read(workoutHistoryControllerProvider),
+          historyBefore,
+        ),
+        isTrue,
+      );
+      expect(
+        container.read(workoutSessionControllerProvider).isWorkoutActive,
+        isTrue,
+      );
+    },
+  );
+
+  test('catálogo delega a importação somente para a biblioteca', () async {
+    final repository = _FakeWorkoutRepository();
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(workoutControllerProvider.notifier).initialization;
+
+    final historyBefore = container.read(workoutHistoryControllerProvider);
+    final sessionBefore = container.read(workoutSessionControllerProvider);
+    final program = container.read(workoutCatalogControllerProvider).first;
+
+    final imported = container
+        .read(workoutCatalogControllerProvider.notifier)
+        .importProgram(program);
+
+    expect(imported, isTrue);
+    expect(
+      container.read(workoutLibraryControllerProvider).routines,
+      hasLength(program.routines.length),
+    );
+    expect(
+      identical(
+        container.read(workoutHistoryControllerProvider),
+        historyBefore,
+      ),
+      isTrue,
+    );
+    expect(
+      identical(
+        container.read(workoutSessionControllerProvider),
+        sessionBefore,
+      ),
+      isTrue,
+    );
+  });
+
   test('mantém a duração do treino em um Notifier separado', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
