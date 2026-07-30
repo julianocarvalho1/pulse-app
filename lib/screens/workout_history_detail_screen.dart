@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../providers/workout_provider.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
+import '../features/workouts/domain/models/workout_set.dart';
 import '../theme/app_theme.dart';
 
 class WorkoutHistoryDetailScreen extends StatelessWidget {

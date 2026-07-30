@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../features/workouts/domain/models/exercise_log.dart';
+import '../features/workouts/domain/models/workout_set.dart';
 import '../providers/workout_provider.dart';
 import '../theme/app_theme.dart';
 import 'exercises_screen.dart';

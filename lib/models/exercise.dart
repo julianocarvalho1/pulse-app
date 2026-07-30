@@ -1,14 +1,10 @@
-class Exercise {
-  final String id;
-  final String name;
-  final String muscle;
-  final String description;
-  final String reps;
-  final String rest;
-  final bool isSuperset;
-  final String customNote; // NOVO: Campo de observação específico do exercício
+import 'dart:collection';
 
-  Exercise({
+import 'package:flutter/foundation.dart';
+
+@immutable
+class Exercise {
+  const Exercise({
     required this.id,
     required this.name,
     required this.muscle,
@@ -16,8 +12,39 @@ class Exercise {
     required this.reps,
     required this.rest,
     this.isSuperset = false,
-    this.customNote = '', // Padrão é vazio
+    this.customNote = '',
   });
+
+  final String id;
+  final String name;
+  final String muscle;
+  final String description;
+  final String reps;
+  final String rest;
+  final bool isSuperset;
+  final String customNote;
+
+  Exercise copyWith({
+    String? id,
+    String? name,
+    String? muscle,
+    String? description,
+    String? reps,
+    String? rest,
+    bool? isSuperset,
+    String? customNote,
+  }) {
+    return Exercise(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      muscle: muscle ?? this.muscle,
+      description: description ?? this.description,
+      reps: reps ?? this.reps,
+      rest: rest ?? this.rest,
+      isSuperset: isSuperset ?? this.isSuperset,
+      customNote: customNote ?? this.customNote,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -34,32 +61,51 @@ class Exercise {
 
   factory Exercise.fromMap(Map<String, dynamic> map) {
     return Exercise(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      muscle: map['muscle'] ?? '',
-      description: map['description'] ?? '',
-      reps: map['reps'] ?? '3x 10-12',
-      rest: map['rest'] ?? '60 seg',
-      isSuperset: map['isSuperset'] ?? false,
-      customNote: map['customNote'] ?? '',
+      id: map['id']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      muscle: map['muscle']?.toString() ?? '',
+      description: map['description']?.toString() ?? '',
+      reps: map['reps']?.toString() ?? '3x 10-12',
+      rest: map['rest']?.toString() ?? '60 seg',
+      isSuperset: map['isSuperset'] == true,
+      customNote: map['customNote']?.toString() ?? '',
     );
   }
 }
 
+@immutable
 class WorkoutRoutine {
-  final String id;
-  String name;
-  String focus;
-  String groupName;
-  List<Exercise> exercises;
-
   WorkoutRoutine({
     required this.id,
     required this.name,
     required this.focus,
     this.groupName = '',
-    required this.exercises,
-  });
+    required List<Exercise> exercises,
+  }) : exercises = UnmodifiableListView<Exercise>(
+         List<Exercise>.from(exercises),
+       );
+
+  final String id;
+  final String name;
+  final String focus;
+  final String groupName;
+  final List<Exercise> exercises;
+
+  WorkoutRoutine copyWith({
+    String? id,
+    String? name,
+    String? focus,
+    String? groupName,
+    List<Exercise>? exercises,
+  }) {
+    return WorkoutRoutine(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      focus: focus ?? this.focus,
+      groupName: groupName ?? this.groupName,
+      exercises: exercises ?? this.exercises,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -67,35 +113,89 @@ class WorkoutRoutine {
       'name': name,
       'focus': focus,
       'groupName': groupName,
-      'exercises': exercises.map((e) => e.toMap()).toList(),
+      'exercises': exercises.map((exercise) => exercise.toMap()).toList(),
     };
   }
 
   factory WorkoutRoutine.fromMap(Map<String, dynamic> map) {
+    final rawExercises = map['exercises'];
+
     return WorkoutRoutine(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      focus: map['focus'] ?? '',
-      groupName: map['groupName'] ?? '',
-      exercises: List<Exercise>.from(
-        (map['exercises'] ?? []).map((e) => Exercise.fromMap(e)),
-      ),
+      id: map['id']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      focus: map['focus']?.toString() ?? '',
+      groupName: map['groupName']?.toString() ?? '',
+      exercises: rawExercises is List
+          ? rawExercises
+                .whereType<Map>()
+                .map(
+                  (exercise) =>
+                      Exercise.fromMap(Map<String, dynamic>.from(exercise)),
+                )
+                .toList()
+          : const <Exercise>[],
     );
   }
 }
 
+@immutable
 class WorkoutProgram {
+  WorkoutProgram({
+    required this.id,
+    required this.name,
+    required this.focus,
+    required List<WorkoutRoutine> routines,
+  }) : routines = UnmodifiableListView<WorkoutRoutine>(
+         List<WorkoutRoutine>.from(routines),
+       );
+
   final String id;
   final String name;
   final String focus;
   final List<WorkoutRoutine> routines;
 
-  WorkoutProgram({
-    required this.id,
-    required this.name,
-    required this.focus,
-    required this.routines,
-  });
+  WorkoutProgram copyWith({
+    String? id,
+    String? name,
+    String? focus,
+    List<WorkoutRoutine>? routines,
+  }) {
+    return WorkoutProgram(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      focus: focus ?? this.focus,
+      routines: routines ?? this.routines,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'focus': focus,
+      'routines': routines.map((routine) => routine.toMap()).toList(),
+    };
+  }
+
+  factory WorkoutProgram.fromMap(Map<String, dynamic> map) {
+    final rawRoutines = map['routines'];
+
+    return WorkoutProgram(
+      id: map['id']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      focus: map['focus']?.toString() ?? '',
+      routines: rawRoutines is List
+          ? rawRoutines
+                .whereType<Map>()
+                .map(
+                  (routine) => WorkoutRoutine.fromMap(
+                    Map<String, dynamic>.from(routine),
+                  ),
+                )
+                .toList()
+          : const <WorkoutRoutine>[],
+    );
+  }
 }
 
 // ==========================================

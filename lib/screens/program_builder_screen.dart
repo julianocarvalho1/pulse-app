@@ -418,14 +418,21 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                     );
 
                     setState(() {
+                      final routine = _draftRoutines[routineIndex];
+
+                      final updatedExercises = List<Exercise>.from(
+                        routine.exercises,
+                      );
+
                       if (editIndex == null) {
-                        _draftRoutines[routineIndex].exercises.add(
-                          customizedEx,
-                        );
+                        updatedExercises.add(customizedEx);
                       } else {
-                        _draftRoutines[routineIndex].exercises[editIndex] =
-                            customizedEx;
+                        updatedExercises[editIndex] = customizedEx;
                       }
+
+                      _draftRoutines[routineIndex] = routine.copyWith(
+                        exercises: updatedExercises,
+                      );
                     });
 
                     Navigator.pop(ctx);
@@ -856,7 +863,13 @@ class _ProgramBuilderScreenState extends State<ProgramBuilderScreen> {
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    routine.exercises.removeAt(i);
+                                    final updatedExercises =
+                                        List<Exercise>.from(routine.exercises)
+                                          ..removeAt(i);
+
+                                    _draftRoutines[index] = routine.copyWith(
+                                      exercises: updatedExercises,
+                                    );
                                   });
                                 },
                               ),

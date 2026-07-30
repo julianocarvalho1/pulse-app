@@ -4,87 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_tts/flutter_tts.dart'; // NOVO IMPORT DA VOZ
+import '../features/workouts/data/mappers/legacy_workout_mapper.dart';
+import '../features/workouts/domain/models/exercise_log.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
+import '../features/workouts/domain/models/workout_session_status.dart';
 import '../models/exercise.dart';
-
-class ExerciseSet {
-  int reps;
-  double weight;
-  ExerciseSet({required this.reps, required this.weight});
-  Map<String, dynamic> toMap() => {'reps': reps, 'weight': weight};
-  factory ExerciseSet.fromMap(Map<String, dynamic> map) => ExerciseSet(
-    reps: map['reps'] ?? 0,
-    weight: (map['weight'] ?? 0).toDouble(),
-  );
-}
-
-class ExerciseLog {
-  final String exerciseId;
-  final String exerciseName;
-  final List<ExerciseSet> sets;
-  ExerciseLog({
-    required this.exerciseId,
-    required this.exerciseName,
-    required this.sets,
-  });
-  Map<String, dynamic> toMap() => {
-    'exerciseId': exerciseId,
-    'exerciseName': exerciseName,
-    'sets': sets.map((e) => e.toMap()).toList(),
-  };
-  factory ExerciseLog.fromMap(Map<String, dynamic> map) => ExerciseLog(
-    exerciseId: map['exerciseId'] ?? '',
-    exerciseName: map['exerciseName'] ?? '',
-    sets: map['sets'] != null
-        ? List<ExerciseSet>.from(map['sets'].map((x) => ExerciseSet.fromMap(x)))
-        : [],
-  );
-}
-
-class WorkoutHistoryItem {
-  final String id;
-  final String routineName;
-  final DateTime date;
-  final String duration;
-  final List<ExerciseLog> exercises;
-  final String notes;
-
-  WorkoutHistoryItem({
-    required this.id,
-    required this.routineName,
-    required this.date,
-    required this.duration,
-    required this.exercises,
-    this.notes = '',
-  });
-
-  int get totalExercises => exercises.length;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'routineName': routineName,
-      'date': date.toIso8601String(),
-      'duration': duration,
-      'exercises': exercises.map((e) => e.toMap()).toList(),
-      'notes': notes,
-    };
-  }
-
-  factory WorkoutHistoryItem.fromMap(Map<String, dynamic> map) {
-    return WorkoutHistoryItem(
-      id: map['id'] ?? '',
-      routineName: map['routineName'] ?? '',
-      date: DateTime.parse(map['date']),
-      duration: map['duration'] ?? '',
-      exercises: map['exercises'] != null
-          ? List<ExerciseLog>.from(
-              map['exercises'].map((x) => ExerciseLog.fromMap(x)),
-            )
-          : [],
-      notes: map['notes'] ?? '',
-    );
-  }
-}
 
 class WorkoutProvider extends ChangeNotifier {
   List<Exercise> _customExercises = [];
@@ -181,14 +105,15 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   void startRestTimer(String restString) {
-    if (restString.trim().isEmpty) return;
-    final text = restString.toLowerCase();
-    final match = RegExp(r'\d+').firstMatch(text);
-    if (match == null) return;
+    if (restString.trim().isEmpty) {
+      return;
+    }
 
-    int seconds = int.parse(match.group(0)!);
-    if (text.contains('min')) seconds *= 60;
-    if (seconds <= 0) return;
+    final seconds = LegacyWorkoutMapper.parseRestSeconds(restString);
+
+    if (seconds <= 0) {
+      return;
+    }
 
     _isResting = true;
     _restSeconds = seconds;
@@ -555,8 +480,9 @@ class WorkoutProvider extends ChangeNotifier {
         exercises: exercises,
       ),
     );
-    if (_activeProgramName.isEmpty && groupName.isNotEmpty)
+    if (_activeProgramName.isEmpty && groupName.isNotEmpty) {
       _activeProgramName = groupName;
+    }
     _saveData();
     notifyListeners();
   }
@@ -570,10 +496,12 @@ class WorkoutProvider extends ChangeNotifier {
   ) {
     final index = _myRoutines.indexWhere((routine) => routine.id == id);
     if (index >= 0) {
-      _myRoutines[index].name = newName;
-      _myRoutines[index].focus = newFocus;
-      _myRoutines[index].groupName = newGroupName;
-      _myRoutines[index].exercises = List.from(newExercises);
+      _myRoutines[index] = _myRoutines[index].copyWith(
+        name: newName,
+        focus: newFocus,
+        groupName: newGroupName,
+        exercises: newExercises,
+      );
       _saveData();
       notifyListeners();
     }
@@ -620,8 +548,9 @@ class WorkoutProvider extends ChangeNotifier {
     String routineName,
     String duration,
     List<ExerciseLog> exercises,
-    String notes,
-  ) {
+    String notes, {
+    required WorkoutSessionStatus status,
+  }) {
     _history.insert(
       0,
       WorkoutHistoryItem(
@@ -631,6 +560,7 @@ class WorkoutProvider extends ChangeNotifier {
         duration: duration,
         exercises: exercises,
         notes: notes,
+        status: status,
       ),
     );
     _saveData();
@@ -679,7 +609,15 @@ class WorkoutProvider extends ChangeNotifier {
     String notes = '',
   }) {
     if (logs.isNotEmpty) {
-      _saveToHistory(_activeRoutineName, duration, logs, notes);
+      _saveToHistory(
+        _activeRoutineName,
+        duration,
+        logs,
+        notes,
+        status: isIncomplete
+            ? WorkoutSessionStatus.incomplete
+            : WorkoutSessionStatus.completed,
+      );
     }
     _isWorkoutActive = false;
     _currentWorkoutExercises = [];
@@ -709,5 +647,14 @@ class WorkoutProvider extends ChangeNotifier {
 
     if (_isWorkoutActive) cancelWorkout();
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _globalTimer?.cancel();
+    _restTimer?.cancel();
+    workoutDuration.dispose();
+    _flutterTts.stop();
+    super.dispose();
   }
 }
