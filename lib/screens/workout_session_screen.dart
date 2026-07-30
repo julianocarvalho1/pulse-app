@@ -13,11 +13,13 @@ class SessionStateCache {
   static Map<int, List<bool>> setsStatus = {};
   static Map<int, List<String>> weights = {};
   static Map<int, List<String>> reps = {};
+  static String? sessionKey;
 
   static void clear() {
     setsStatus.clear();
     weights.clear();
     reps.clear();
+    sessionKey = null;
   }
 }
 
@@ -33,9 +35,13 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   final Map<int, List<TextEditingController>> _repsControllers = {};
   final TextEditingController _notesController = TextEditingController();
 
+  Timer? _sessionSaveDebounce;
+  bool _notesInitialized = false;
+
   @override
   void initState() {
     super.initState();
+    _notesController.addListener(_scheduleSessionSave);
   }
 
   @override
@@ -46,6 +52,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     for (var controllers in _repsControllers.values) {
       for (var c in controllers) c.dispose();
     }
+    _sessionSaveDebounce?.cancel();
     _notesController.dispose();
     super.dispose();
   }
@@ -398,16 +405,49 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
   }
 
   void _initializeSets() {
-    final exercises = context.read<WorkoutProvider>().currentWorkoutExercises;
+    final provider = context.read<WorkoutProvider>();
+    final exercises = provider.currentWorkoutExercises;
+    final restoredSession = provider.activeSession;
+    final currentSessionKey =
+        restoredSession?.startedAt.toIso8601String() ??
+        provider.activeRoutineName;
+
+    if (SessionStateCache.sessionKey != currentSessionKey) {
+      SessionStateCache.clear();
+      SessionStateCache.sessionKey = currentSessionKey;
+    }
+
+    if (!_notesInitialized) {
+      _notesInitialized = true;
+      _notesController.text = restoredSession?.notes ?? '';
+    }
+
     for (int i = 0; i < exercises.length; i++) {
+      final restoredExercise =
+          restoredSession != null &&
+              i < restoredSession.exercises.length &&
+              restoredSession.exercises[i].exercise.id == exercises[i].id
+          ? restoredSession.exercises[i]
+          : null;
+
       if (!SessionStateCache.setsStatus.containsKey(i)) {
-        int setsCount = _getSetsCount(exercises[i].reps);
-        SessionStateCache.setsStatus[i] = List.generate(
+        final setsCount =
+            restoredExercise?.sets.length ?? _getSetsCount(exercises[i].reps);
+
+        SessionStateCache.setsStatus[i] = List<bool>.generate(
           setsCount,
-          (_) => false,
+          (setIndex) => restoredExercise?.sets[setIndex].isCompleted ?? false,
         );
-        SessionStateCache.weights[i] = List.generate(setsCount, (_) => '');
-        SessionStateCache.reps[i] = List.generate(setsCount, (_) => '');
+
+        SessionStateCache.weights[i] = List<String>.generate(
+          setsCount,
+          (setIndex) => restoredExercise?.sets[setIndex].weightText ?? '',
+        );
+
+        SessionStateCache.reps[i] = List<String>.generate(
+          setsCount,
+          (setIndex) => restoredExercise?.sets[setIndex].repsText ?? '',
+        );
       }
 
       if (!_weightControllers.containsKey(i)) {
@@ -415,24 +455,55 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         _repsControllers[i] = [];
 
         for (int j = 0; j < SessionStateCache.setsStatus[i]!.length; j++) {
-          var wCtrl = TextEditingController(
+          final weightController = TextEditingController(
             text: SessionStateCache.weights[i]![j],
           );
-          wCtrl.addListener(() {
-            SessionStateCache.weights[i]![j] = wCtrl.text;
-          });
-          _weightControllers[i]!.add(wCtrl);
 
-          var rCtrl = TextEditingController(
+          weightController.addListener(() {
+            SessionStateCache.weights[i]![j] = weightController.text;
+            _scheduleSessionSave();
+          });
+
+          _weightControllers[i]!.add(weightController);
+
+          final repsController = TextEditingController(
             text: SessionStateCache.reps[i]![j],
           );
-          rCtrl.addListener(() {
-            SessionStateCache.reps[i]![j] = rCtrl.text;
+
+          repsController.addListener(() {
+            SessionStateCache.reps[i]![j] = repsController.text;
+            _scheduleSessionSave();
           });
-          _repsControllers[i]!.add(rCtrl);
+
+          _repsControllers[i]!.add(repsController);
         }
       }
     }
+  }
+
+  void _scheduleSessionSave() {
+    if (!mounted) {
+      return;
+    }
+
+    _sessionSaveDebounce?.cancel();
+    _sessionSaveDebounce = Timer(
+      const Duration(milliseconds: 350),
+      _persistSessionNow,
+    );
+  }
+
+  void _persistSessionNow() {
+    if (!mounted) {
+      return;
+    }
+
+    context.read<WorkoutProvider>().saveActiveSessionProgress(
+      setsStatus: SessionStateCache.setsStatus,
+      weights: SessionStateCache.weights,
+      reps: SessionStateCache.reps,
+      notes: _notesController.text,
+    );
   }
 
   String _formatTime(int totalSeconds) {
@@ -613,6 +684,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
         actions: [
           TextButton(
             onPressed: () {
+              _sessionSaveDebounce?.cancel();
+              _persistSessionNow();
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
@@ -1576,6 +1649,7 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
                                                               );
                                                         }
                                                       });
+                                                      _scheduleSessionSave();
                                                     },
                                                   ),
                                                 ),

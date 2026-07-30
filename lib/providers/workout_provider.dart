@@ -1,16 +1,29 @@
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_tts/flutter_tts.dart'; // NOVO IMPORT DA VOZ
+
 import '../features/workouts/data/mappers/legacy_workout_mapper.dart';
+import '../features/workouts/data/repositories/workout_repository_impl.dart';
+import '../features/workouts/domain/models/active_workout_session.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
 import '../features/workouts/domain/models/workout_session_status.dart';
+import '../features/workouts/domain/repositories/workout_repository.dart';
 import '../models/exercise.dart';
 
 class WorkoutProvider extends ChangeNotifier {
+  WorkoutProvider({WorkoutRepository? repository})
+    : _repository = repository ?? WorkoutRepositoryImpl() {
+    _initPreMadePrograms();
+    _initialize();
+    _configurarVoz();
+  }
+
+  final WorkoutRepository _repository;
+
   List<Exercise> _customExercises = [];
   List<WorkoutRoutine> _myRoutines = [];
   List<WorkoutHistoryItem> _history = [];
@@ -21,8 +34,10 @@ class WorkoutProvider extends ChangeNotifier {
   bool _isWorkoutActive = false;
   List<Exercise> _currentWorkoutExercises = [];
   String _activeRoutineName = 'Treino do Dia';
-
   String _activeProgramName = '';
+
+  ActiveWorkoutSession? _activeSession;
+
   final ValueNotifier<int> workoutDuration = ValueNotifier<int>(0);
   Timer? _globalTimer;
 
@@ -30,20 +45,47 @@ class WorkoutProvider extends ChangeNotifier {
   int _restSeconds = 0;
   Timer? _restTimer;
 
-  // Instância do motor de voz
   final FlutterTts _flutterTts = FlutterTts();
 
   bool get isResting => _isResting;
   int get restSeconds => _restSeconds;
+  List<Exercise> get allExercises => [...exerciseDatabase, ..._customExercises];
+  List<WorkoutRoutine> get myRoutines => _myRoutines;
+  List<WorkoutProgram> get preMadePrograms => _preMadePrograms;
+  List<WorkoutHistoryItem> get history => _history;
+  bool get isInitialized => _isInitialized;
+  bool get isWorkoutActive => _isWorkoutActive;
+  List<Exercise> get currentWorkoutExercises => _currentWorkoutExercises;
+  String get activeRoutineName => _activeRoutineName;
+  String get activeProgramName => _activeProgramName;
+  ActiveWorkoutSession? get activeSession => _activeSession;
 
-  WorkoutProvider() {
-    _initPreMadePrograms();
-    _initialize();
-    _configurarVoz();
-  }
   Future<void> _initialize() async {
     try {
-      await _loadData();
+      final preferences = await SharedPreferences.getInstance();
+
+      _vibrateAfterRest =
+          preferences.getBool('settings_vibrate_after_rest') ?? true;
+
+      await _repository.initialize();
+
+      _customExercises = await _repository.loadCustomExercises();
+      _myRoutines = await _repository.loadRoutines();
+      _history = await _repository.loadHistory();
+      _activeProgramName = await _repository.loadActiveProgramName();
+
+      _activeSession = await _repository.loadActiveSession();
+
+      final restoredSession = _activeSession;
+      if (restoredSession != null) {
+        _isWorkoutActive = true;
+        _activeRoutineName = restoredSession.routineName;
+        _currentWorkoutExercises = restoredSession.exercises
+            .map((activeExercise) => activeExercise.exercise)
+            .toList();
+
+        _startGlobalTimer(initialSeconds: restoredSession.elapsedSeconds);
+      }
     } catch (error, stackTrace) {
       debugPrint('Erro ao inicializar o WorkoutProvider: $error');
       debugPrintStack(stackTrace: stackTrace);
@@ -54,53 +96,61 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   Future<void> _configurarVoz() async {
-    await _flutterTts.setLanguage("pt-BR");
-    await _flutterTts.setSpeechRate(0.5); // Velocidade normal da voz
+    await _flutterTts.setLanguage('pt-BR');
+    await _flutterTts.setSpeechRate(0.5);
     await _flutterTts.setVolume(1.0);
   }
 
-  List<Exercise> get allExercises => [...exerciseDatabase, ..._customExercises];
-  List<WorkoutRoutine> get myRoutines => _myRoutines;
-  List<WorkoutProgram> get preMadePrograms => _preMadePrograms;
-  List<WorkoutHistoryItem> get history => _history;
-  bool get isInitialized => _isInitialized;
-  bool get isWorkoutActive => _isWorkoutActive;
-  List<Exercise> get currentWorkoutExercises => _currentWorkoutExercises;
-  String get activeRoutineName => _activeRoutineName;
-  String get activeProgramName => _activeProgramName;
-
   void setActiveProgram(String programName) {
     _activeProgramName = programName;
-    _saveData();
+    _persist(
+      () => _repository.saveActiveProgramName(programName),
+      'salvar programa ativo',
+    );
     notifyListeners();
   }
 
   WorkoutRoutine? get nextRoutineToTrain {
-    if (_activeProgramName.isEmpty) return null;
+    if (_activeProgramName.isEmpty) {
+      return null;
+    }
+
     final programRoutines = _myRoutines
-        .where((r) => r.groupName == _activeProgramName)
+        .where((routine) => routine.groupName == _activeProgramName)
         .toList();
-    if (programRoutines.isEmpty) return null;
+
+    if (programRoutines.isEmpty) {
+      return null;
+    }
+
     programRoutines.sort(
       (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
 
     WorkoutHistoryItem? lastProgramWorkout;
-    for (var session in _history) {
-      if (programRoutines.any((r) => r.name == session.routineName)) {
+
+    for (final session in _history) {
+      if (programRoutines.any(
+        (routine) => routine.name == session.routineName,
+      )) {
         lastProgramWorkout = session;
         break;
       }
     }
 
-    if (lastProgramWorkout == null) return programRoutines.first;
+    if (lastProgramWorkout == null) {
+      return programRoutines.first;
+    }
 
-    int lastIndex = programRoutines.indexWhere(
-      (r) => r.name == lastProgramWorkout!.routineName,
+    final lastIndex = programRoutines.indexWhere(
+      (routine) => routine.name == lastProgramWorkout!.routineName,
     );
-    if (lastIndex == -1) return programRoutines.first;
 
-    int nextIndex = (lastIndex + 1) % programRoutines.length;
+    if (lastIndex == -1) {
+      return programRoutines.first;
+    }
+
+    final nextIndex = (lastIndex + 1) % programRoutines.length;
     return programRoutines[nextIndex];
   }
 
@@ -123,11 +173,13 @@ class WorkoutProvider extends ChangeNotifier {
       if (_restSeconds > 0) {
         _restSeconds--;
         notifyListeners();
-      } else {
-        stopRestTimer();
-        _playAlarm();
+        return;
       }
+
+      stopRestTimer();
+      _playAlarm();
     });
+
     notifyListeners();
   }
 
@@ -138,23 +190,22 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==========================================================
-  // NOVO SISTEMA DE ALARME: INTELIGÊNCIA ARTIFICIAL FALANDO
-  // ==========================================================
   Future<void> _playAlarm() async {
     try {
-      // Fala a frase em português
-      await _flutterTts.speak("Descanso finalizado. Bora pra cima!");
-    } catch (e) {
-      debugPrint('Erro na voz: $e');
+      await _flutterTts.speak('Descanso finalizado. Bora pra cima!');
+    } catch (error) {
+      debugPrint('Erro na voz: $error');
     }
 
-    if (_vibrateAfterRest) {
-      for (int i = 0; i < 4; i++) {
-        Future.delayed(Duration(milliseconds: i * 600), () {
-          HapticFeedback.heavyImpact();
-        });
-      }
+    if (!_vibrateAfterRest) {
+      return;
+    }
+
+    for (var index = 0; index < 4; index++) {
+      Future.delayed(
+        Duration(milliseconds: index * 600),
+        HapticFeedback.heavyImpact,
+      );
     }
   }
 
@@ -381,69 +432,6 @@ class WorkoutProvider extends ChangeNotifier {
     ];
   }
 
-  Future<void> _loadData() async {
-    final prefs = await SharedPreferences.getInstance();
-    _activeProgramName = prefs.getString('active_program') ?? '';
-    _vibrateAfterRest = prefs.getBool('settings_vibrate_after_rest') ?? true;
-
-    try {
-      final customExStr = prefs.getString('custom_exercises');
-      if (customExStr != null && customExStr.isNotEmpty) {
-        final List decoded = jsonDecode(customExStr);
-        _customExercises = decoded
-            .map((e) => Exercise.fromMap(e as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('Erro ao carregar customExercises: $e');
-    }
-
-    try {
-      final routinesStr = prefs.getString('my_routines');
-      if (routinesStr != null &&
-          routinesStr != '[]' &&
-          routinesStr.isNotEmpty) {
-        final List decoded = jsonDecode(routinesStr);
-        _myRoutines = decoded
-            .map((e) => WorkoutRoutine.fromMap(e as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('Erro ao carregar myRoutines: $e');
-    }
-
-    try {
-      final historyStr = prefs.getString('workout_history');
-      if (historyStr != null && historyStr.isNotEmpty) {
-        final List decoded = jsonDecode(historyStr);
-        _history = decoded
-            .map((e) => WorkoutHistoryItem.fromMap(e as Map<String, dynamic>))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('Erro ao carregar workout_history: $e');
-    }
-
-    notifyListeners();
-  }
-
-  Future<void> _saveData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('active_program', _activeProgramName);
-    await prefs.setString(
-      'custom_exercises',
-      jsonEncode(_customExercises.map((e) => e.toMap()).toList()),
-    );
-    await prefs.setString(
-      'my_routines',
-      jsonEncode(_myRoutines.map((e) => e.toMap()).toList()),
-    );
-    await prefs.setString(
-      'workout_history',
-      jsonEncode(_history.map((e) => e.toMap()).toList()),
-    );
-  }
-
   void setVibrateAfterRest(bool enabled) {
     _vibrateAfterRest = enabled;
   }
@@ -459,7 +447,12 @@ class WorkoutProvider extends ChangeNotifier {
         rest: '60 seg',
       ),
     );
-    _saveData();
+
+    _persist(
+      () => _repository.saveCustomExercises(_customExercises),
+      'salvar exercício personalizado',
+    );
+
     notifyListeners();
   }
 
@@ -469,8 +462,9 @@ class WorkoutProvider extends ChangeNotifier {
     String groupName,
     List<Exercise> exercises,
   ) {
-    String uniqueId =
+    final uniqueId =
         '${DateTime.now().millisecondsSinceEpoch}_${name.hashCode}_${exercises.length}';
+
     _myRoutines.add(
       WorkoutRoutine(
         id: uniqueId,
@@ -480,10 +474,17 @@ class WorkoutProvider extends ChangeNotifier {
         exercises: exercises,
       ),
     );
+
     if (_activeProgramName.isEmpty && groupName.isNotEmpty) {
       _activeProgramName = groupName;
+
+      _persist(
+        () => _repository.saveActiveProgramName(_activeProgramName),
+        'salvar programa ativo',
+      );
     }
-    _saveData();
+
+    _saveRoutines();
     notifyListeners();
   }
 
@@ -495,38 +496,54 @@ class WorkoutProvider extends ChangeNotifier {
     List<Exercise> newExercises,
   ) {
     final index = _myRoutines.indexWhere((routine) => routine.id == id);
-    if (index >= 0) {
-      _myRoutines[index] = _myRoutines[index].copyWith(
-        name: newName,
-        focus: newFocus,
-        groupName: newGroupName,
-        exercises: newExercises,
-      );
-      _saveData();
-      notifyListeners();
+
+    if (index < 0) {
+      return;
     }
+
+    _myRoutines[index] = _myRoutines[index].copyWith(
+      name: newName,
+      focus: newFocus,
+      groupName: newGroupName,
+      exercises: newExercises,
+    );
+
+    _saveRoutines();
+    notifyListeners();
   }
 
   void deleteRoutine(String id) {
     _myRoutines.removeWhere((routine) => routine.id == id);
-    _saveData();
+
+    _saveRoutines();
     notifyListeners();
   }
 
   void importProgram(WorkoutProgram program) {
-    for (var routine in program.routines) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    for (var index = 0; index < program.routines.length; index++) {
+      final routine = program.routines[index];
+
       _myRoutines.add(
         WorkoutRoutine(
-          id: DateTime.now().millisecondsSinceEpoch.toString() + routine.id,
+          id: '${timestamp + index}_${routine.id}',
           name: routine.name,
           focus: routine.focus,
           groupName: program.name,
-          exercises: List.from(routine.exercises),
+          exercises: List<Exercise>.from(routine.exercises),
         ),
       );
     }
+
     _activeProgramName = program.name;
-    _saveData();
+    _saveRoutines();
+
+    _persist(
+      () => _repository.saveActiveProgramName(_activeProgramName),
+      'salvar programa importado',
+    );
+
     notifyListeners();
   }
 
@@ -537,10 +554,11 @@ class WorkoutProvider extends ChangeNotifier {
         name: routine.name,
         focus: routine.focus,
         groupName: '',
-        exercises: List.from(routine.exercises),
+        exercises: List<Exercise>.from(routine.exercises),
       ),
     );
-    _saveData();
+
+    _saveRoutines();
     notifyListeners();
   }
 
@@ -563,43 +581,151 @@ class WorkoutProvider extends ChangeNotifier {
         status: status,
       ),
     );
-    _saveData();
+
+    _persist(() => _repository.saveHistory(_history), 'salvar histórico');
+
     notifyListeners();
   }
 
   void deleteHistoryItem(String id) {
     _history.removeWhere((item) => item.id == id);
-    _saveData();
+
+    _persist(
+      () => _repository.saveHistory(_history),
+      'excluir item do histórico',
+    );
+
     notifyListeners();
   }
 
   void startWorkout() {
-    _isWorkoutActive = true;
-    _activeRoutineName = 'Treino Livre';
-    _currentWorkoutExercises = [];
-    _startGlobalTimer();
-    notifyListeners();
+    _beginWorkout(routineName: 'Treino Livre', exercises: const <Exercise>[]);
   }
 
   void startRoutine(WorkoutRoutine routine) {
+    _beginWorkout(routineName: routine.name, exercises: routine.exercises);
+  }
+
+  void _beginWorkout({
+    required String routineName,
+    required List<Exercise> exercises,
+  }) {
     _isWorkoutActive = true;
-    _activeRoutineName = routine.name;
-    _currentWorkoutExercises = List.from(routine.exercises);
+    _activeRoutineName = routineName;
+    _currentWorkoutExercises = List<Exercise>.from(exercises);
+
+    final startedAt = DateTime.now();
+
+    _activeSession = ActiveWorkoutSession(
+      id: 'active',
+      routineName: routineName,
+      startedAt: startedAt,
+      elapsedSeconds: 0,
+      exercises: _buildActiveExercises(_currentWorkoutExercises),
+    );
+
     _startGlobalTimer();
+
+    _persistActiveSession();
     notifyListeners();
   }
 
-  void _startGlobalTimer() {
-    workoutDuration.value = 0;
+  void _startGlobalTimer({int initialSeconds = 0}) {
+    workoutDuration.value = initialSeconds;
     _globalTimer?.cancel();
+
     _globalTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       workoutDuration.value++;
+
+      if (workoutDuration.value % 10 == 0) {
+        final session = _activeSession;
+
+        if (session != null) {
+          _activeSession = session.copyWith(
+            elapsedSeconds: workoutDuration.value,
+          );
+
+          _persistActiveSession();
+        }
+      }
     });
   }
 
   void addExerciseToWorkout(Exercise exercise) {
     _currentWorkoutExercises.add(exercise);
+
+    final session = _activeSession;
+    if (session != null) {
+      _activeSession = session.copyWith(
+        exercises: [...session.exercises, _buildActiveExercise(exercise)],
+      );
+
+      _persistActiveSession();
+    }
+
     notifyListeners();
+  }
+
+  void saveActiveSessionProgress({
+    required Map<int, List<bool>> setsStatus,
+    required Map<int, List<String>> weights,
+    required Map<int, List<String>> reps,
+    required String notes,
+  }) {
+    final session = _activeSession;
+
+    if (session == null) {
+      return;
+    }
+
+    final updatedExercises = <ActiveWorkoutExercise>[];
+
+    for (
+      var exerciseIndex = 0;
+      exerciseIndex < _currentWorkoutExercises.length;
+      exerciseIndex++
+    ) {
+      final exercise = _currentWorkoutExercises[exerciseIndex];
+      final completedValues = setsStatus[exerciseIndex] ?? const <bool>[];
+      final weightValues = weights[exerciseIndex] ?? const <String>[];
+      final repsValues = reps[exerciseIndex] ?? const <String>[];
+
+      final expectedCount = [
+        completedValues.length,
+        weightValues.length,
+        repsValues.length,
+        LegacyWorkoutMapper.parseExerciseConfig(
+          reps: exercise.reps,
+          rest: exercise.rest,
+        ).seriesCount,
+      ].reduce((a, b) => a > b ? a : b);
+
+      final activeSets = List<ActiveWorkoutSet>.generate(
+        expectedCount,
+        (setIndex) => ActiveWorkoutSet(
+          setNumber: setIndex + 1,
+          weightText: setIndex < weightValues.length
+              ? weightValues[setIndex]
+              : '',
+          repsText: setIndex < repsValues.length ? repsValues[setIndex] : '',
+          isCompleted: setIndex < completedValues.length
+              ? completedValues[setIndex]
+              : false,
+        ),
+      );
+
+      updatedExercises.add(
+        ActiveWorkoutExercise(exercise: exercise, sets: activeSets),
+      );
+    }
+
+    _activeSession = session.copyWith(
+      elapsedSeconds: workoutDuration.value,
+      notes: notes,
+      exercises: updatedExercises,
+    );
+
+    _persistActiveSession();
   }
 
   void finishWorkout(
@@ -619,34 +745,98 @@ class WorkoutProvider extends ChangeNotifier {
             : WorkoutSessionStatus.completed,
       );
     }
-    _isWorkoutActive = false;
-    _currentWorkoutExercises = [];
-    _globalTimer?.cancel();
-    stopRestTimer();
-    notifyListeners();
+
+    _endActiveWorkout();
   }
 
   void cancelWorkout() {
+    _endActiveWorkout();
+  }
+
+  void _endActiveWorkout() {
     _isWorkoutActive = false;
     _currentWorkoutExercises = [];
+    _activeSession = null;
     _globalTimer?.cancel();
+    workoutDuration.value = 0;
+
+    _persist(_repository.clearActiveSession, 'limpar sessão ativa');
+
     stopRestTimer();
     notifyListeners();
   }
 
   Future<void> factoryReset() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    final preferences = await SharedPreferences.getInstance();
+
+    await preferences.clear();
+    await _repository.clearAll();
 
     _myRoutines.clear();
     _history.clear();
     _customExercises.clear();
-
     _activeProgramName = '';
     _vibrateAfterRest = true;
+    _isWorkoutActive = false;
+    _currentWorkoutExercises = [];
+    _activeSession = null;
 
-    if (_isWorkoutActive) cancelWorkout();
+    _globalTimer?.cancel();
+    workoutDuration.value = 0;
+    _restTimer?.cancel();
+    _isResting = false;
+    _restSeconds = 0;
+
     notifyListeners();
+  }
+
+  List<ActiveWorkoutExercise> _buildActiveExercises(List<Exercise> exercises) {
+    return exercises.map(_buildActiveExercise).toList();
+  }
+
+  ActiveWorkoutExercise _buildActiveExercise(Exercise exercise) {
+    final config = LegacyWorkoutMapper.parseExerciseConfig(
+      reps: exercise.reps,
+      rest: exercise.rest,
+    );
+
+    return ActiveWorkoutExercise(
+      exercise: exercise,
+      sets: List<ActiveWorkoutSet>.generate(
+        config.seriesCount,
+        (index) => ActiveWorkoutSet(setNumber: index + 1),
+      ),
+    );
+  }
+
+  void _saveRoutines() {
+    _persist(() => _repository.saveRoutines(_myRoutines), 'salvar fichas');
+  }
+
+  void _persistActiveSession() {
+    final session = _activeSession;
+
+    if (session == null) {
+      return;
+    }
+
+    _persist(
+      () => _repository.saveActiveSession(session),
+      'salvar sessão ativa',
+    );
+  }
+
+  void _persist(Future<void> Function() operation, String label) {
+    unawaited(
+      (() async {
+        try {
+          await operation();
+        } catch (error, stackTrace) {
+          debugPrint('Erro ao $label: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        }
+      })(),
+    );
   }
 
   @override

@@ -1,8 +1,11 @@
 import '../../../../models/exercise.dart';
+import '../models/active_workout_session.dart';
 import '../models/exercise_log.dart';
 import '../models/workout_history_item.dart';
 
 abstract interface class WorkoutRepository {
+  Future<void> initialize();
+
   Future<List<Exercise>> loadCustomExercises();
 
   Future<List<WorkoutRoutine>> loadRoutines();
@@ -26,6 +29,12 @@ abstract interface class WorkoutRepository {
     required String notes,
     required bool isIncomplete,
   });
+
+  Future<ActiveWorkoutSession?> loadActiveSession();
+
+  Future<void> saveActiveSession(ActiveWorkoutSession session);
+
+  Future<void> clearActiveSession();
 
   Future<void> clearAll();
 }

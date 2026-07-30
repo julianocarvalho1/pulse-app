@@ -1,0 +1,105 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse/core/database/pulse_database.dart';
+import 'package:pulse/features/workouts/data/services/workout_local_service.dart';
+import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
+import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
+import 'package:pulse/features/workouts/domain/models/workout_set.dart';
+import 'package:pulse/models/exercise.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+void main() {
+  late PulseDatabase database;
+  late WorkoutLocalService service;
+
+  setUp(() async {
+    sqfliteFfiInit();
+
+    database = PulseDatabase(
+      databaseFactoryOverride: databaseFactoryFfi,
+      databasePathOverride: inMemoryDatabasePath,
+    );
+
+    service = WorkoutLocalService(database);
+    await service.initialize();
+  });
+
+  tearDown(() async {
+    await database.close();
+  });
+
+  test('persists routines, history and active session', () async {
+    const exercise = Exercise(
+      id: 'p1',
+      name: 'Supino reto',
+      muscle: 'Peito',
+      description: 'Controle a descida.',
+      reps: '3x 8-10',
+      rest: '90 seg',
+    );
+
+    final routine = WorkoutRoutine(
+      id: 'routine-a',
+      name: 'Treino A',
+      focus: 'Peito',
+      groupName: 'Hipertrofia',
+      exercises: const [exercise],
+    );
+
+    await service.saveRoutines([routine]);
+
+    final loadedRoutines = await service.loadRoutines();
+
+    expect(loadedRoutines, hasLength(1));
+    expect(loadedRoutines.single.exercises.single.id, 'p1');
+
+    final historyItem = WorkoutHistoryItem(
+      id: 'history-1',
+      routineName: 'Treino A',
+      date: DateTime(2026, 7, 29),
+      duration: '42:00',
+      exercises: [
+        ExerciseLog(
+          exerciseId: 'p1',
+          exerciseName: 'Supino reto',
+          sets: const [ExerciseSet(reps: 10, weight: 20)],
+        ),
+      ],
+    );
+
+    await service.saveHistory([historyItem]);
+
+    final loadedHistory = await service.loadHistory();
+
+    expect(loadedHistory.single.totalVolume, 200);
+    expect(loadedHistory.single.exercises.single.sets.single.reps, 10);
+
+    final activeSession = ActiveWorkoutSession(
+      id: 'active',
+      routineName: 'Treino A',
+      startedAt: DateTime(2026, 7, 29, 21),
+      elapsedSeconds: 80,
+      exercises: [
+        ActiveWorkoutExercise(
+          exercise: exercise,
+          sets: const [
+            ActiveWorkoutSet(
+              setNumber: 1,
+              weightText: '20',
+              repsText: '10',
+              isCompleted: true,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await service.saveActiveSession(activeSession);
+
+    final restoredSession = await service.loadActiveSession();
+
+    expect(restoredSession, isNotNull);
+    expect(restoredSession!.elapsedSeconds, 80);
+    expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
+  });
+}
