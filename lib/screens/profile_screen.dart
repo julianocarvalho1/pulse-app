@@ -14,19 +14,20 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final workoutProvider = ref.watch(workoutControllerProvider);
+    final workoutState = ref.watch(workoutControllerProvider);
+    final workoutController = ref.read(workoutControllerProvider.notifier);
     final settingsAsync = ref.watch(settingsControllerProvider);
     final settings = switch (settingsAsync) {
       AsyncData<PulseSettings>(:final value) => value,
       _ => PulseSettings.defaults(),
     };
 
-    final history = workoutProvider.history;
+    final history = workoutState.history;
     final profile = settings.profile;
     final activeRoutine =
-        workoutProvider.nextRoutineToTrain ??
-        (workoutProvider.myRoutines.isNotEmpty
-            ? workoutProvider.myRoutines.first
+        workoutState.nextRoutineToTrain ??
+        (workoutState.myRoutines.isNotEmpty
+            ? workoutState.myRoutines.first
             : null);
     final currentFocus = activeRoutine?.focus ?? 'Mantenha a consistência';
 
@@ -118,7 +119,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   onDismissed: (_) {
-                    workoutProvider.deleteHistoryItem(item.id);
+                    workoutController.deleteHistoryItem(item.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Treino excluído do histórico.'),

@@ -54,19 +54,19 @@ class _AuthGateState extends ConsumerState<AuthGate>
 
   @override
   Widget build(BuildContext context) {
-    final workoutProvider = ref.watch(workoutControllerProvider);
-
+    final workoutState = ref.watch(workoutControllerProvider);
+    final workoutController = ref.read(workoutControllerProvider.notifier);
     final authAsync = ref.watch(authControllerProvider);
 
-    if (!workoutProvider.isInitialized) {
+    if (!workoutState.isInitialized) {
       return const _PulseBootstrapScreen();
     }
 
-    if (workoutProvider.initializationError != null) {
+    if (workoutState.initializationError != null) {
       return _InitializationErrorView(
         icon: Icons.storage_rounded,
         title: 'Não foi possível carregar seus treinos.',
-        onRetry: workoutProvider.reload,
+        onRetry: workoutController.reload,
       );
     }
 

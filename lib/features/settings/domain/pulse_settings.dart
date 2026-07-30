@@ -40,14 +40,14 @@ class UserProfile {
 class PulseSettings {
   const PulseSettings({
     required this.themeColorValue,
-    required this.vibrateAfterRest,
+    required this.voiceAfterRest,
     required this.inactivityReminder,
     required this.measurementSystem,
     required this.profile,
   });
 
   final int themeColorValue;
-  final bool vibrateAfterRest;
+  final bool voiceAfterRest;
   final bool inactivityReminder;
   final MeasurementSystem measurementSystem;
   final UserProfile profile;
@@ -55,7 +55,7 @@ class PulseSettings {
   factory PulseSettings.defaults() {
     return const PulseSettings(
       themeColorValue: 0xFF00E676,
-      vibrateAfterRest: true,
+      voiceAfterRest: true,
       inactivityReminder: true,
       measurementSystem: MeasurementSystem.metric,
       profile: UserProfile(name: 'Atleta', weightKg: 0, heightCm: 0, age: 0),
@@ -64,14 +64,14 @@ class PulseSettings {
 
   PulseSettings copyWith({
     int? themeColorValue,
-    bool? vibrateAfterRest,
+    bool? voiceAfterRest,
     bool? inactivityReminder,
     MeasurementSystem? measurementSystem,
     UserProfile? profile,
   }) {
     return PulseSettings(
       themeColorValue: themeColorValue ?? this.themeColorValue,
-      vibrateAfterRest: vibrateAfterRest ?? this.vibrateAfterRest,
+      voiceAfterRest: voiceAfterRest ?? this.voiceAfterRest,
       inactivityReminder: inactivityReminder ?? this.inactivityReminder,
       measurementSystem: measurementSystem ?? this.measurementSystem,
       profile: profile ?? this.profile,

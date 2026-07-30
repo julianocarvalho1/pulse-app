@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show ChangeNotifierProvider;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../models/exercise.dart';
@@ -31,56 +30,77 @@ final workoutFeedbackServiceProvider = Provider<WorkoutFeedbackService>((ref) {
   return service;
 });
 
-final workoutControllerProvider = ChangeNotifierProvider<WorkoutController>((
-  ref,
-) {
-  return WorkoutController(
-    repository: ref.watch(workoutRepositoryProvider),
-    feedbackService: ref.watch(workoutFeedbackServiceProvider),
-  );
-});
+final workoutDurationProvider =
+    NotifierProvider<WorkoutDurationController, int>(
+      WorkoutDurationController.new,
+    );
 
-class WorkoutController extends ChangeNotifier {
-  WorkoutController({
-    required WorkoutRepository repository,
-    required WorkoutFeedbackService feedbackService,
-  }) : _repository = repository,
-       _feedbackService = feedbackService,
-       _state = WorkoutState.initial(
-         preMadePrograms: buildPreMadeWorkoutPrograms(),
-       ) {
-    unawaited(_configureFeedback());
-    _initializationFuture = _initialize();
+final workoutControllerProvider =
+    NotifierProvider<WorkoutController, WorkoutState>(WorkoutController.new);
+
+class WorkoutDurationController extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void setSeconds(int seconds) {
+    state = seconds < 0 ? 0 : seconds;
   }
 
-  final WorkoutRepository _repository;
-  final WorkoutFeedbackService _feedbackService;
+  void increment() {
+    state++;
+  }
 
-  WorkoutState _state;
+  void reset() {
+    state = 0;
+  }
+}
+
+class WorkoutController extends Notifier<WorkoutState> {
   late Future<void> _initializationFuture;
   bool _disposed = false;
 
-  final ValueNotifier<int> workoutDuration = ValueNotifier<int>(0);
   Timer? _globalTimer;
   Timer? _restTimer;
+  ActiveWorkoutSession? _activeSessionSnapshot;
 
-  WorkoutState get state => _state;
+  WorkoutRepository get _repository => ref.read(workoutRepositoryProvider);
+
+  WorkoutFeedbackService get _feedbackService =>
+      ref.read(workoutFeedbackServiceProvider);
+
   Future<void> get initialization => _initializationFuture;
 
-  bool get isResting => _state.isResting;
-  int get restSeconds => _state.restSeconds;
-  List<Exercise> get allExercises => _state.allExercises;
-  List<WorkoutRoutine> get myRoutines => _state.myRoutines;
-  List<WorkoutProgram> get preMadePrograms => _state.preMadePrograms;
-  List<WorkoutHistoryItem> get history => _state.history;
-  bool get isInitialized => _state.isInitialized;
-  Object? get initializationError => _state.initializationError;
-  bool get isWorkoutActive => _state.isWorkoutActive;
-  List<Exercise> get currentWorkoutExercises => _state.currentWorkoutExercises;
-  String get activeRoutineName => _state.activeRoutineName;
-  String get activeProgramName => _state.activeProgramName;
-  ActiveWorkoutSession? get activeSession => _state.activeSession;
-  WorkoutRoutine? get nextRoutineToTrain => _state.nextRoutineToTrain;
+  bool get isResting => state.isResting;
+  int get restSeconds => state.restSeconds;
+  List<Exercise> get allExercises => state.allExercises;
+  List<WorkoutRoutine> get myRoutines => state.myRoutines;
+  List<WorkoutProgram> get preMadePrograms => state.preMadePrograms;
+  List<WorkoutHistoryItem> get history => state.history;
+  bool get isInitialized => state.isInitialized;
+  Object? get initializationError => state.initializationError;
+  bool get isWorkoutActive => state.isWorkoutActive;
+  List<Exercise> get currentWorkoutExercises => state.currentWorkoutExercises;
+  String get activeRoutineName => state.activeRoutineName;
+  String get activeProgramName => state.activeProgramName;
+  ActiveWorkoutSession? get activeSession =>
+      _activeSessionSnapshot ?? state.activeSession;
+  WorkoutRoutine? get nextRoutineToTrain => state.nextRoutineToTrain;
+
+  @override
+  WorkoutState build() {
+    _disposed = false;
+
+    ref.onDispose(() {
+      _disposed = true;
+      _globalTimer?.cancel();
+      _restTimer?.cancel();
+    });
+
+    unawaited(_configureFeedback());
+    _initializationFuture = Future<void>.microtask(_initialize);
+
+    return WorkoutState.initial(preMadePrograms: buildPreMadeWorkoutPrograms());
+  }
 
   Future<void> _configureFeedback() async {
     try {
@@ -91,12 +111,18 @@ class WorkoutController extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _setState(_state.copyWith(isInitialized: false, initializationError: null));
+    _globalTimer?.cancel();
+    ref.read(workoutDurationProvider.notifier).reset();
+    _activeSessionSnapshot = null;
+
+    _setState(state.copyWith(isInitialized: false, initializationError: null));
 
     try {
       final preferences = await SharedPreferences.getInstance();
-      final vibrateAfterRest =
-          preferences.getBool('settings_vibrate_after_rest') ?? true;
+      final voiceAfterRest =
+          preferences.getBool('settings_voice_after_rest') ??
+          preferences.getBool('settings_vibrate_after_rest') ??
+          true;
 
       await _repository.initialize();
 
@@ -106,12 +132,18 @@ class WorkoutController extends ChangeNotifier {
       final activeProgramName = await _repository.loadActiveProgramName();
       final restoredSession = await _repository.loadActiveSession();
 
+      if (_disposed) {
+        return;
+      }
+
+      _activeSessionSnapshot = restoredSession;
+
       _setState(
-        _state.copyWith(
+        state.copyWith(
           customExercises: customExercises,
           myRoutines: routines,
           history: history,
-          vibrateAfterRest: vibrateAfterRest,
+          voiceAfterRest: voiceAfterRest,
           isWorkoutActive: restoredSession != null,
           currentWorkoutExercises:
               restoredSession?.exercises
@@ -132,9 +164,13 @@ class WorkoutController extends ChangeNotifier {
       debugPrint('Erro ao inicializar os treinos: $error');
       debugPrintStack(stackTrace: stackTrace);
 
-      _setState(_state.copyWith(initializationError: error));
+      if (!_disposed) {
+        _setState(state.copyWith(initializationError: error));
+      }
     } finally {
-      _setState(_state.copyWith(isInitialized: true));
+      if (!_disposed) {
+        _setState(state.copyWith(isInitialized: true));
+      }
     }
   }
 
@@ -145,7 +181,7 @@ class WorkoutController extends ChangeNotifier {
   }
 
   void setActiveProgram(String programName) {
-    _setState(_state.copyWith(activeProgramName: programName));
+    _setState(state.copyWith(activeProgramName: programName));
 
     _persist(
       () => _repository.saveActiveProgramName(programName),
@@ -165,11 +201,16 @@ class WorkoutController extends ChangeNotifier {
     }
 
     _restTimer?.cancel();
-    _setState(_state.copyWith(isResting: true, restSeconds: seconds));
+    _setState(state.copyWith(isResting: true, restSeconds: seconds));
 
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_state.restSeconds > 0) {
-        _setState(_state.copyWith(restSeconds: _state.restSeconds - 1));
+      if (_disposed) {
+        timer.cancel();
+        return;
+      }
+
+      if (state.restSeconds > 0) {
+        _setState(state.copyWith(restSeconds: state.restSeconds - 1));
         return;
       }
 
@@ -181,23 +222,23 @@ class WorkoutController extends ChangeNotifier {
   void stopRestTimer() {
     _restTimer?.cancel();
 
-    if (!_state.isResting && _state.restSeconds == 0) {
+    if (!state.isResting && state.restSeconds == 0) {
       return;
     }
 
-    _setState(_state.copyWith(isResting: false, restSeconds: 0));
+    _setState(state.copyWith(isResting: false, restSeconds: 0));
   }
 
   Future<void> _playAlarm() async {
-    await _feedbackService.playRestFinished(vibrate: _state.vibrateAfterRest);
+    await _feedbackService.playRestFinished(enabled: state.voiceAfterRest);
   }
 
-  void setVibrateAfterRest(bool enabled) {
-    if (_state.vibrateAfterRest == enabled) {
+  void setVoiceAfterRest(bool enabled) {
+    if (state.voiceAfterRest == enabled) {
       return;
     }
 
-    _setState(_state.copyWith(vibrateAfterRest: enabled));
+    _setState(state.copyWith(voiceAfterRest: enabled));
   }
 
   void createCustomExercise(String name, String muscle) {
@@ -210,9 +251,9 @@ class WorkoutController extends ChangeNotifier {
       rest: '60 seg',
     );
 
-    final updatedExercises = <Exercise>[..._state.customExercises, exercise];
+    final updatedExercises = <Exercise>[...state.customExercises, exercise];
 
-    _setState(_state.copyWith(customExercises: updatedExercises));
+    _setState(state.copyWith(customExercises: updatedExercises));
 
     _persist(
       () => _repository.saveCustomExercises(updatedExercises),
@@ -237,9 +278,9 @@ class WorkoutController extends ChangeNotifier {
       exercises: exercises,
     );
 
-    final updatedRoutines = <WorkoutRoutine>[..._state.myRoutines, routine];
+    final updatedRoutines = <WorkoutRoutine>[...state.myRoutines, routine];
 
-    var activeProgramName = _state.activeProgramName;
+    var activeProgramName = state.activeProgramName;
 
     if (activeProgramName.isEmpty && groupName.isNotEmpty) {
       activeProgramName = groupName;
@@ -251,7 +292,7 @@ class WorkoutController extends ChangeNotifier {
     }
 
     _setState(
-      _state.copyWith(
+      state.copyWith(
         myRoutines: updatedRoutines,
         activeProgramName: activeProgramName,
       ),
@@ -267,13 +308,13 @@ class WorkoutController extends ChangeNotifier {
     String newGroupName,
     List<Exercise> newExercises,
   ) {
-    final index = _state.myRoutines.indexWhere((routine) => routine.id == id);
+    final index = state.myRoutines.indexWhere((routine) => routine.id == id);
 
     if (index < 0) {
       return;
     }
 
-    final updatedRoutines = List<WorkoutRoutine>.from(_state.myRoutines);
+    final updatedRoutines = List<WorkoutRoutine>.from(state.myRoutines);
     updatedRoutines[index] = updatedRoutines[index].copyWith(
       name: newName,
       focus: newFocus,
@@ -281,21 +322,21 @@ class WorkoutController extends ChangeNotifier {
       exercises: newExercises,
     );
 
-    _setState(_state.copyWith(myRoutines: updatedRoutines));
+    _setState(state.copyWith(myRoutines: updatedRoutines));
 
     _persist(() => _repository.saveRoutines(updatedRoutines), 'salvar fichas');
   }
 
   void deleteRoutine(String id) {
-    final updatedRoutines = _state.myRoutines
+    final updatedRoutines = state.myRoutines
         .where((routine) => routine.id != id)
         .toList();
 
-    if (updatedRoutines.length == _state.myRoutines.length) {
+    if (updatedRoutines.length == state.myRoutines.length) {
       return;
     }
 
-    _setState(_state.copyWith(myRoutines: updatedRoutines));
+    _setState(state.copyWith(myRoutines: updatedRoutines));
 
     _persist(() => _repository.saveRoutines(updatedRoutines), 'salvar fichas');
   }
@@ -319,12 +360,12 @@ class WorkoutController extends ChangeNotifier {
     }
 
     final updatedRoutines = <WorkoutRoutine>[
-      ..._state.myRoutines,
+      ...state.myRoutines,
       ...importedRoutines,
     ];
 
     _setState(
-      _state.copyWith(
+      state.copyWith(
         myRoutines: updatedRoutines,
         activeProgramName: program.name,
       ),
@@ -351,11 +392,11 @@ class WorkoutController extends ChangeNotifier {
     );
 
     final updatedRoutines = <WorkoutRoutine>[
-      ..._state.myRoutines,
+      ...state.myRoutines,
       importedRoutine,
     ];
 
-    _setState(_state.copyWith(myRoutines: updatedRoutines));
+    _setState(state.copyWith(myRoutines: updatedRoutines));
 
     _persist(
       () => _repository.saveRoutines(updatedRoutines),
@@ -380,23 +421,23 @@ class WorkoutController extends ChangeNotifier {
       status: status,
     );
 
-    final updatedHistory = <WorkoutHistoryItem>[item, ..._state.history];
+    final updatedHistory = <WorkoutHistoryItem>[item, ...state.history];
 
-    _setState(_state.copyWith(history: updatedHistory));
+    _setState(state.copyWith(history: updatedHistory));
 
     _persist(() => _repository.saveHistory(updatedHistory), 'salvar histórico');
   }
 
   void deleteHistoryItem(String id) {
-    final updatedHistory = _state.history
+    final updatedHistory = state.history
         .where((item) => item.id != id)
         .toList();
 
-    if (updatedHistory.length == _state.history.length) {
+    if (updatedHistory.length == state.history.length) {
       return;
     }
 
-    _setState(_state.copyWith(history: updatedHistory));
+    _setState(state.copyWith(history: updatedHistory));
 
     _persist(
       () => _repository.saveHistory(updatedHistory),
@@ -425,8 +466,10 @@ class WorkoutController extends ChangeNotifier {
       exercises: _buildActiveExercises(workoutExercises),
     );
 
+    _activeSessionSnapshot = session;
+
     _setState(
-      _state.copyWith(
+      state.copyWith(
         isWorkoutActive: true,
         activeRoutineName: routineName,
         currentWorkoutExercises: workoutExercises,
@@ -439,30 +482,30 @@ class WorkoutController extends ChangeNotifier {
   }
 
   void _startGlobalTimer({int initialSeconds = 0}) {
-    workoutDuration.value = initialSeconds;
+    final durationController = ref.read(workoutDurationProvider.notifier);
+    durationController.setSeconds(initialSeconds);
+
     _globalTimer?.cancel();
 
     _globalTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      workoutDuration.value++;
-
-      if (workoutDuration.value % 10 != 0) {
+      if (_disposed) {
+        timer.cancel();
         return;
       }
 
-      final session = _state.activeSession;
+      durationController.increment();
 
+      final elapsedSeconds = ref.read(workoutDurationProvider);
+      if (elapsedSeconds % 10 != 0) {
+        return;
+      }
+
+      final session = _activeSessionSnapshot ?? state.activeSession;
       if (session == null) {
         return;
       }
 
-      _setState(
-        _state.copyWith(
-          activeSession: session.copyWith(
-            elapsedSeconds: workoutDuration.value,
-          ),
-        ),
-        notify: false,
-      );
+      _activeSessionSnapshot = session.copyWith(elapsedSeconds: elapsedSeconds);
 
       _persistActiveSession();
     });
@@ -470,11 +513,11 @@ class WorkoutController extends ChangeNotifier {
 
   void addExerciseToWorkout(Exercise exercise) {
     final updatedExercises = <Exercise>[
-      ..._state.currentWorkoutExercises,
+      ...state.currentWorkoutExercises,
       exercise,
     ];
 
-    final session = _state.activeSession;
+    final session = _activeSessionSnapshot ?? state.activeSession;
     final updatedSession = session?.copyWith(
       exercises: <ActiveWorkoutExercise>[
         ...session.exercises,
@@ -482,8 +525,10 @@ class WorkoutController extends ChangeNotifier {
       ],
     );
 
+    _activeSessionSnapshot = updatedSession;
+
     _setState(
-      _state.copyWith(
+      state.copyWith(
         currentWorkoutExercises: updatedExercises,
         activeSession: updatedSession,
       ),
@@ -498,7 +543,7 @@ class WorkoutController extends ChangeNotifier {
     required Map<int, List<String>> reps,
     required String notes,
   }) {
-    final session = _state.activeSession;
+    final session = _activeSessionSnapshot ?? state.activeSession;
 
     if (session == null) {
       return;
@@ -508,10 +553,10 @@ class WorkoutController extends ChangeNotifier {
 
     for (
       var exerciseIndex = 0;
-      exerciseIndex < _state.currentWorkoutExercises.length;
+      exerciseIndex < state.currentWorkoutExercises.length;
       exerciseIndex++
     ) {
-      final exercise = _state.currentWorkoutExercises[exerciseIndex];
+      final exercise = state.currentWorkoutExercises[exerciseIndex];
       final completedValues = setsStatus[exerciseIndex] ?? const <bool>[];
       final weightValues = weights[exerciseIndex] ?? const <String>[];
       final repsValues = reps[exerciseIndex] ?? const <String>[];
@@ -545,15 +590,10 @@ class WorkoutController extends ChangeNotifier {
       );
     }
 
-    _setState(
-      _state.copyWith(
-        activeSession: session.copyWith(
-          elapsedSeconds: workoutDuration.value,
-          notes: notes,
-          exercises: updatedExercises,
-        ),
-      ),
-      notify: false,
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      notes: notes,
+      exercises: updatedExercises,
     );
 
     _persistActiveSession();
@@ -567,7 +607,7 @@ class WorkoutController extends ChangeNotifier {
   }) {
     if (logs.isNotEmpty) {
       _saveToHistory(
-        _state.activeRoutineName,
+        state.activeRoutineName,
         duration,
         logs,
         notes,
@@ -586,11 +626,12 @@ class WorkoutController extends ChangeNotifier {
 
   void _endActiveWorkout() {
     _globalTimer?.cancel();
-    workoutDuration.value = 0;
     _restTimer?.cancel();
+    _activeSessionSnapshot = null;
+    ref.read(workoutDurationProvider.notifier).reset();
 
     _setState(
-      _state.copyWith(
+      state.copyWith(
         isWorkoutActive: false,
         currentWorkoutExercises: const <Exercise>[],
         activeSession: null,
@@ -610,11 +651,12 @@ class WorkoutController extends ChangeNotifier {
 
     _globalTimer?.cancel();
     _restTimer?.cancel();
-    workoutDuration.value = 0;
+    _activeSessionSnapshot = null;
+    ref.read(workoutDurationProvider.notifier).reset();
 
     _setState(
       WorkoutState.initial(
-        preMadePrograms: _state.preMadePrograms,
+        preMadePrograms: state.preMadePrograms,
       ).copyWith(isInitialized: true),
     );
   }
@@ -639,7 +681,7 @@ class WorkoutController extends ChangeNotifier {
   }
 
   void _persistActiveSession() {
-    final session = _state.activeSession;
+    final session = _activeSessionSnapshot ?? state.activeSession;
 
     if (session == null) {
       return;
@@ -664,24 +706,11 @@ class WorkoutController extends ChangeNotifier {
     );
   }
 
-  void _setState(WorkoutState next, {bool notify = true}) {
+  void _setState(WorkoutState next) {
     if (_disposed) {
       return;
     }
 
-    _state = next;
-
-    if (notify) {
-      notifyListeners();
-    }
-  }
-
-  @override
-  void dispose() {
-    _disposed = true;
-    _globalTimer?.cancel();
-    _restTimer?.cancel();
-    workoutDuration.dispose();
-    super.dispose();
+    state = next;
   }
 }

@@ -1,12 +1,9 @@
-import 'dart:async';
-
-import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 abstract interface class WorkoutFeedbackService {
   Future<void> configure();
 
-  Future<void> playRestFinished({required bool vibrate});
+  Future<void> playRestFinished({required bool enabled});
 
   Future<void> dispose();
 }
@@ -25,25 +22,16 @@ class DeviceWorkoutFeedbackService implements WorkoutFeedbackService {
   }
 
   @override
-  Future<void> playRestFinished({required bool vibrate}) async {
+  Future<void> playRestFinished({required bool enabled}) async {
+    if (!enabled) {
+      return;
+    }
+
     try {
       await _flutterTts.speak('Descanso finalizado. Bora pra cima!');
     } catch (_) {
       // O alerta visual e o cronômetro continuam funcionando mesmo
       // quando o mecanismo de voz não estiver disponível.
-    }
-
-    if (!vibrate) {
-      return;
-    }
-
-    for (var index = 0; index < 4; index++) {
-      unawaited(
-        Future<void>.delayed(
-          Duration(milliseconds: index * 600),
-          HapticFeedback.heavyImpact,
-        ),
-      );
     }
   }
 

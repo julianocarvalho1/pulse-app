@@ -406,12 +406,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   }
 
   void _initializeSets() {
-    final provider = ref.read(workoutControllerProvider);
-    final exercises = provider.currentWorkoutExercises;
+    final workoutState = ref.read(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
+    final exercises = workoutState.currentWorkoutExercises;
     final restoredSession = provider.activeSession;
     final currentSessionKey =
         restoredSession?.startedAt.toIso8601String() ??
-        provider.activeRoutineName;
+        workoutState.activeRoutineName;
 
     if (SessionStateCache.sessionKey != currentSessionKey) {
       SessionStateCache.clear();
@@ -500,7 +501,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     }
 
     ref
-        .read(workoutControllerProvider)
+        .read(workoutControllerProvider.notifier)
         .saveActiveSessionProgress(
           setsStatus: SessionStateCache.setsStatus,
           weights: SessionStateCache.weights,
@@ -823,7 +824,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               ),
               onPressed: () {
                 provider.finishWorkout(
-                  _formatTime(provider.workoutDuration.value),
+                  _formatTime(ref.read(workoutDurationProvider)),
                   isIncomplete: true,
                   logs: workoutLogs,
                   notes: _notesController.text,
@@ -906,7 +907,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             ),
             onPressed: () {
               provider.finishWorkout(
-                _formatTime(provider.workoutDuration.value),
+                _formatTime(ref.read(workoutDurationProvider)),
                 isIncomplete: false,
                 logs: workoutLogs,
                 notes: _notesController.text,
@@ -978,8 +979,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
-    final exercises = provider.currentWorkoutExercises;
+    final workoutState = ref.watch(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
+    final exercises = workoutState.currentWorkoutExercises;
     _initializeSets();
 
     return PopScope(
@@ -998,7 +1000,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             onPressed: () => _confirmExit(provider),
           ),
           title: Text(
-            provider.activeRoutineName,
+            workoutState.activeRoutineName,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           actions: [
@@ -1035,9 +1037,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  ValueListenableBuilder<int>(
-                    valueListenable: provider.workoutDuration,
-                    builder: (context, duration, child) {
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final duration = ref.watch(workoutDurationProvider);
                       return Text(
                         _formatTime(duration),
                         style: TextStyle(
@@ -1078,6 +1080,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                       ),
                     )
                   : ListView.builder(
+                      key: ValueKey<String>(
+                        'workout-list-${workoutState.activeSession?.startedAt.millisecondsSinceEpoch ?? workoutState.activeRoutineName}',
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
@@ -1088,46 +1093,37 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         final ex = exercises[index];
                         final sets = SessionStateCache.setsStatus[index]!;
 
-                        final bool isLinked =
+                        final bool startsSuperset =
                             ex.isSuperset && index < exercises.length - 1;
-                        final bool isPreviousLinked =
+                        final bool continuesSuperset =
                             index > 0 && exercises[index - 1].isSuperset;
 
                         return Container(
-                          margin: EdgeInsets.only(bottom: isLinked ? 0 : 14),
+                          key: ValueKey<String>(
+                            '${workoutState.activeRoutineName}-${ex.id}-$index',
+                          ),
+                          margin: const EdgeInsets.only(bottom: 14),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(isPreviousLinked ? 0 : 14),
-                              bottom: Radius.circular(isLinked ? 0 : 14),
-                            ),
-                            border: Border(
-                              top: BorderSide(
-                                color: isPreviousLinked
-                                    ? Colors.transparent
-                                    : AppColors.border,
-                              ),
-                              left: const BorderSide(color: AppColors.border),
-                              right: const BorderSide(color: AppColors.border),
-                              bottom: BorderSide(
-                                color: isLinked
-                                    ? Colors.transparent
-                                    : AppColors.border,
-                              ),
-                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (isPreviousLinked)
+                              if (startsSuperset || continuesSuperset)
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 4,
+                                    horizontal: 10,
+                                    vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.primary
                                         .withValues(alpha: 0.15),
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(13),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1140,14 +1136,19 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ).colorScheme.primary,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'BI-SET (FAÇA JUNTO COM O ACIMA)',
-                                        style: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
+                                      Flexible(
+                                        child: Text(
+                                          startsSuperset
+                                              ? 'BI-SET — FAÇA COM O PRÓXIMO EXERCÍCIO'
+                                              : 'BI-SET — CONTINUAÇÃO DO EXERCÍCIO ANTERIOR',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -1155,11 +1156,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                 ),
 
                               InkWell(
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(
-                                    isPreviousLinked ? 0 : 14,
-                                  ),
-                                ),
+                                borderRadius: BorderRadius.circular(14),
                                 onTap: () {
                                   final details = _getDetailedInfo(ex.id);
                                   showDialog(
@@ -1679,7 +1676,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               ),
               child: Column(
                 children: [
-                  if (provider.isResting)
+                  if (workoutState.isResting)
                     Container(
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 12),
@@ -1714,7 +1711,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             ],
                           ),
                           Text(
-                            _formatTime(provider.restSeconds),
+                            _formatTime(workoutState.restSeconds),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,

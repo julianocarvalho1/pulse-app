@@ -521,9 +521,10 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
+    final workoutState = ref.watch(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
 
-    final allExercises = provider.allExercises.where((ex) {
+    final allExercises = workoutState.allExercises.where((ex) {
       return ex.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           ex.muscle.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();

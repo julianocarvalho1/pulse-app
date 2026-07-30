@@ -191,26 +191,26 @@ class _SettingsContent extends ConsumerWidget {
                 SwitchListTile(
                   activeThumbColor: Theme.of(context).colorScheme.primary,
                   title: const Text(
-                    'Vibrar ao fim do descanso',
+                    'Aviso por voz ao fim do descanso',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text(
-                    'Avisa quando é hora de iniciar a próxima série.',
+                    'Fala quando é hora de iniciar a próxima série.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
-                  value: settings.vibrateAfterRest,
+                  value: settings.voiceAfterRest,
                   onChanged: (value) async {
                     await ref
                         .read(settingsControllerProvider.notifier)
-                        .setVibrateAfterRest(value);
+                        .setVoiceAfterRest(value);
 
                     if (context.mounted) {
                       ref
-                          .read(workoutControllerProvider)
-                          .setVibrateAfterRest(value);
+                          .read(workoutControllerProvider.notifier)
+                          .setVoiceAfterRest(value);
                     }
                   },
                 ),
@@ -423,7 +423,7 @@ class _SettingsContent extends ConsumerWidget {
       return;
     }
 
-    await ref.read(workoutControllerProvider).factoryReset();
+    await ref.read(workoutControllerProvider.notifier).factoryReset();
     await ref
         .read(settingsControllerProvider.notifier)
         .resetToDefaults(clearStorage: false);

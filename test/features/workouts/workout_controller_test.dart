@@ -50,15 +50,17 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    final controller = container.read(workoutControllerProvider);
+    final controller = container.read(workoutControllerProvider.notifier);
     await controller.initialization;
 
-    expect(controller.isInitialized, isTrue);
-    expect(controller.initializationError, isNull);
-    expect(controller.myRoutines, hasLength(1));
-    expect(controller.activeProgramName, 'ABC');
-    expect(controller.nextRoutineToTrain?.id, routine.id);
-    expect(controller.state.vibrateAfterRest, isFalse);
+    final workoutState = container.read(workoutControllerProvider);
+
+    expect(workoutState.isInitialized, isTrue);
+    expect(workoutState.initializationError, isNull);
+    expect(workoutState.myRoutines, hasLength(1));
+    expect(workoutState.activeProgramName, 'ABC');
+    expect(workoutState.nextRoutineToTrain?.id, routine.id);
+    expect(workoutState.voiceAfterRest, isFalse);
     expect(feedbackService.configureCalls, 1);
   });
 
@@ -76,7 +78,7 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    final controller = container.read(workoutControllerProvider);
+    final controller = container.read(workoutControllerProvider.notifier);
     await controller.initialization;
 
     controller.startRoutine(routine);
@@ -95,8 +97,10 @@ void main() {
 
     await Future<void>.delayed(Duration.zero);
 
-    expect(controller.isWorkoutActive, isTrue);
-    expect(controller.activeRoutineName, routine.name);
+    final activeState = container.read(workoutControllerProvider);
+
+    expect(activeState.isWorkoutActive, isTrue);
+    expect(activeState.activeRoutineName, routine.name);
     expect(controller.activeSession?.notes, 'Sessão de teste');
     expect(
       controller.activeSession?.exercises.first.sets.first.isCompleted,
@@ -111,9 +115,57 @@ void main() {
     controller.cancelWorkout();
     await Future<void>.delayed(Duration.zero);
 
-    expect(controller.isWorkoutActive, isFalse);
+    final finishedState = container.read(workoutControllerProvider);
+
+    expect(finishedState.isWorkoutActive, isFalse);
     expect(controller.activeSession, isNull);
     expect(repository.clearActiveSessionCalls, greaterThanOrEqualTo(1));
+  });
+
+  test('publica um novo estado imutável ao criar exercício', () async {
+    final repository = _FakeWorkoutRepository();
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    final previousState = container.read(workoutControllerProvider);
+
+    controller.createCustomExercise('Remada baixa', 'Costas');
+    await Future<void>.delayed(Duration.zero);
+
+    final nextState = container.read(workoutControllerProvider);
+
+    expect(identical(previousState, nextState), isFalse);
+    expect(nextState.customExercises, hasLength(1));
+    expect(nextState.customExercises.single.name, 'Remada baixa');
+    expect(repository.customExercises, hasLength(1));
+  });
+
+  test('mantém a duração do treino em um Notifier separado', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final durationController = container.read(workoutDurationProvider.notifier);
+
+    expect(container.read(workoutDurationProvider), 0);
+
+    durationController.setSeconds(15);
+    durationController.increment();
+
+    expect(container.read(workoutDurationProvider), 16);
+
+    durationController.reset();
+
+    expect(container.read(workoutDurationProvider), 0);
   });
 }
 
@@ -129,7 +181,7 @@ class _FakeWorkoutFeedbackService implements WorkoutFeedbackService {
   Future<void> dispose() async {}
 
   @override
-  Future<void> playRestFinished({required bool vibrate}) async {}
+  Future<void> playRestFinished({required bool enabled}) async {}
 }
 
 class _FakeWorkoutRepository implements WorkoutRepository {

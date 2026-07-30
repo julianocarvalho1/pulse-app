@@ -16,7 +16,7 @@ class WorkoutState {
     required List<WorkoutHistoryItem> history,
     required List<WorkoutProgram> preMadePrograms,
     required this.isInitialized,
-    required this.vibrateAfterRest,
+    required this.voiceAfterRest,
     required this.isWorkoutActive,
     required List<Exercise> currentWorkoutExercises,
     required this.activeRoutineName,
@@ -50,7 +50,7 @@ class WorkoutState {
       history: const <WorkoutHistoryItem>[],
       preMadePrograms: preMadePrograms,
       isInitialized: false,
-      vibrateAfterRest: true,
+      voiceAfterRest: true,
       isWorkoutActive: false,
       currentWorkoutExercises: const <Exercise>[],
       activeRoutineName: 'Treino do Dia',
@@ -66,7 +66,7 @@ class WorkoutState {
   final List<WorkoutHistoryItem> history;
   final List<WorkoutProgram> preMadePrograms;
   final bool isInitialized;
-  final bool vibrateAfterRest;
+  final bool voiceAfterRest;
   final bool isWorkoutActive;
   final List<Exercise> currentWorkoutExercises;
   final String activeRoutineName;
@@ -132,7 +132,7 @@ class WorkoutState {
     List<WorkoutHistoryItem>? history,
     List<WorkoutProgram>? preMadePrograms,
     bool? isInitialized,
-    bool? vibrateAfterRest,
+    bool? voiceAfterRest,
     bool? isWorkoutActive,
     List<Exercise>? currentWorkoutExercises,
     String? activeRoutineName,
@@ -148,7 +148,7 @@ class WorkoutState {
       history: history ?? this.history,
       preMadePrograms: preMadePrograms ?? this.preMadePrograms,
       isInitialized: isInitialized ?? this.isInitialized,
-      vibrateAfterRest: vibrateAfterRest ?? this.vibrateAfterRest,
+      voiceAfterRest: voiceAfterRest ?? this.voiceAfterRest,
       isWorkoutActive: isWorkoutActive ?? this.isWorkoutActive,
       currentWorkoutExercises:
           currentWorkoutExercises ?? this.currentWorkoutExercises,

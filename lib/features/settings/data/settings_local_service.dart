@@ -4,7 +4,9 @@ import '../domain/pulse_settings.dart';
 
 class SettingsLocalService {
   static const String _themeColorKey = 'theme_color';
-  static const String _vibrateAfterRestKey = 'settings_vibrate_after_rest';
+  static const String _voiceAfterRestKey = 'settings_voice_after_rest';
+  static const String _legacyVibrateAfterRestKey =
+      'settings_vibrate_after_rest';
   static const String _inactivityReminderKey = 'settings_inactivity_reminder';
   static const String _measurementSystemKey = 'settings_measurement_system';
   static const String _userNameKey = 'user_name';
@@ -26,9 +28,10 @@ class SettingsLocalService {
     return PulseSettings(
       themeColorValue:
           preferences.getInt(_themeColorKey) ?? defaults.themeColorValue,
-      vibrateAfterRest:
-          preferences.getBool(_vibrateAfterRestKey) ??
-          defaults.vibrateAfterRest,
+      voiceAfterRest:
+          preferences.getBool(_voiceAfterRestKey) ??
+          preferences.getBool(_legacyVibrateAfterRestKey) ??
+          defaults.voiceAfterRest,
       inactivityReminder:
           preferences.getBool(_inactivityReminderKey) ??
           defaults.inactivityReminder,
@@ -47,7 +50,7 @@ class SettingsLocalService {
 
     await Future.wait([
       preferences.setInt(_themeColorKey, settings.themeColorValue),
-      preferences.setBool(_vibrateAfterRestKey, settings.vibrateAfterRest),
+      preferences.setBool(_voiceAfterRestKey, settings.voiceAfterRest),
       preferences.setBool(_inactivityReminderKey, settings.inactivityReminder),
       preferences.setString(
         _measurementSystemKey,
@@ -58,6 +61,8 @@ class SettingsLocalService {
       preferences.setDouble(_userHeightKey, settings.profile.heightCm),
       preferences.setInt(_userAgeKey, settings.profile.age),
     ]);
+
+    await preferences.remove(_legacyVibrateAfterRestKey);
   }
 
   Future<void> clearAll() async {

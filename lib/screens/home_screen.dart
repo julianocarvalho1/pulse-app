@@ -433,8 +433,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
-    final history = provider.history;
+    final workoutState = ref.watch(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
+    final history = workoutState.history;
     final settingsAsync = ref.watch(settingsControllerProvider);
     final userName = settingsAsync.when(
       data: (settings) => settings.profile.displayName,

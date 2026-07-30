@@ -11,9 +11,10 @@ class WorkoutPlanScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final provider = ref.watch(workoutControllerProvider);
-    final myRoutines = provider.myRoutines;
-    final preMadePrograms = provider.preMadePrograms;
+    final workoutState = ref.watch(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
+    final myRoutines = workoutState.myRoutines;
+    final preMadePrograms = workoutState.preMadePrograms;
 
     return DefaultTabController(
       length: 2,

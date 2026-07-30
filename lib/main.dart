@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/settings/domain/pulse_settings.dart';
 import 'features/settings/presentation/providers/settings_controller.dart';
-import 'features/workouts/presentation/providers/workout_controller.dart';
 import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
@@ -31,7 +30,6 @@ class PulseApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(workoutControllerProvider);
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     final settings = switch (settingsAsync) {

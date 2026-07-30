@@ -96,8 +96,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   }
 
   Widget _buildConsistencia(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
-    final history = provider.history;
+    final workoutState = ref.watch(workoutControllerProvider);
+    final history = workoutState.history;
     final now = DateTime.now();
 
     final treinosEsteMes = history
@@ -929,7 +929,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
           ),
           onDismissed: (direction) {
-            ref.read(workoutControllerProvider).deleteHistoryItem(item.id);
+            ref
+                .read(workoutControllerProvider.notifier)
+                .deleteHistoryItem(item.id);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Treino excluído do histórico!'),

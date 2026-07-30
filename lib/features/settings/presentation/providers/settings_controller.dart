@@ -30,13 +30,13 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
     await _persist(current.copyWith(themeColorValue: colorValue));
   }
 
-  Future<void> setVibrateAfterRest(bool enabled) async {
+  Future<void> setVoiceAfterRest(bool enabled) async {
     final current = _currentValue;
     if (current == null) {
       return;
     }
 
-    await _persist(current.copyWith(vibrateAfterRest: enabled));
+    await _persist(current.copyWith(voiceAfterRest: enabled));
   }
 
   Future<void> setInactivityReminder(bool enabled) async {

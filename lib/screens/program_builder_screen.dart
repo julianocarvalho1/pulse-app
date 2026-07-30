@@ -140,7 +140,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                     : customMuscleCtrl.text.trim();
 
                 ref
-                    .read(workoutControllerProvider)
+                    .read(workoutControllerProvider.notifier)
                     .createCustomExercise(name, muscle);
                 Navigator.pop(ctx);
 
@@ -641,7 +641,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
   }
 
   void _saveProgram() {
-    final provider = ref.read(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
 
     for (var routine in _draftRoutines) {
       provider.createRoutine(

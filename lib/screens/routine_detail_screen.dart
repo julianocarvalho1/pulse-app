@@ -318,7 +318,8 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
+    final workoutState = ref.watch(workoutControllerProvider);
+    final provider = ref.read(workoutControllerProvider.notifier);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -591,14 +592,14 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
             ),
             onPressed: () => _handleStartRoutine(context, provider),
             icon: Icon(
-              provider.isWorkoutActive &&
-                      provider.activeRoutineName == widget.routine.name
+              workoutState.isWorkoutActive &&
+                      workoutState.activeRoutineName == widget.routine.name
                   ? Icons.play_circle_filled
                   : Icons.play_arrow,
             ),
             label: Text(
-              provider.isWorkoutActive &&
-                      provider.activeRoutineName == widget.routine.name
+              workoutState.isWorkoutActive &&
+                      workoutState.activeRoutineName == widget.routine.name
                   ? 'CONTINUAR TREINO INICIADO'
                   : 'INICIAR ESTE TREINO',
               style: const TextStyle(

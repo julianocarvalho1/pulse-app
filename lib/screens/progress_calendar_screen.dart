@@ -36,8 +36,8 @@ class _ProgressCalendarScreenState
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(workoutControllerProvider);
-    final history = provider.history;
+    final workoutState = ref.watch(workoutControllerProvider);
+    final history = workoutState.history;
 
     int daysInMonth = _getDaysInMonth(_currentMonth.year, _currentMonth.month);
     int firstWeekday = _getFirstWeekday(

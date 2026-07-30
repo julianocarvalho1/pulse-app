@@ -915,7 +915,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          final provider = ref.read(workoutControllerProvider);
+                          final provider = ref.read(
+                            workoutControllerProvider.notifier,
+                          );
 
                           if (widget.isSelecting) {
                             _showExerciseConfigDialog(
