@@ -30,6 +30,8 @@ abstract interface class WorkoutRepository {
     required bool isIncomplete,
   });
 
+  Future<void> finalizeWorkout(WorkoutHistoryItem item);
+
   Future<ActiveWorkoutSession?> loadActiveSession();
 
   Future<void> saveActiveSession(ActiveWorkoutSession session);

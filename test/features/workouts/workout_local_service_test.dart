@@ -102,4 +102,56 @@ void main() {
     expect(restoredSession!.elapsedSeconds, 80);
     expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
   });
+
+  test('finaliza histórico e remove sessão ativa na mesma transação', () async {
+    const exercise = Exercise(
+      id: 'p1',
+      name: 'Supino reto',
+      muscle: 'Peito',
+      description: '',
+      reps: '1x 10',
+      rest: '60 seg',
+    );
+
+    final activeSession = ActiveWorkoutSession(
+      id: 'active',
+      routineName: 'Treino A',
+      startedAt: DateTime(2026, 7, 30, 10),
+      elapsedSeconds: 45,
+      exercises: <ActiveWorkoutExercise>[
+        ActiveWorkoutExercise(
+          exercise: exercise,
+          sets: const <ActiveWorkoutSet>[
+            ActiveWorkoutSet(
+              setNumber: 1,
+              weightText: '20',
+              repsText: '10',
+              isCompleted: true,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final historyItem = WorkoutHistoryItem(
+      id: 'history-finalized',
+      routineName: 'Treino A',
+      date: DateTime(2026, 7, 30, 10, 1),
+      duration: '00:45',
+      exercises: <ExerciseLog>[
+        ExerciseLog(
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          sets: const <ExerciseSet>[ExerciseSet(reps: 10, weight: 20)],
+        ),
+      ],
+    );
+
+    await service.saveActiveSession(activeSession);
+    await service.finalizeWorkout(historyItem);
+
+    expect(await service.loadActiveSession(), isNull);
+    final history = await service.loadHistory();
+    expect(history.single.id, historyItem.id);
+  });
 }

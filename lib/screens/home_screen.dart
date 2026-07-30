@@ -244,7 +244,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     Navigator.pop(sheetContext);
-    provider.startRoutine(routine);
+    provider.startRoutine(routine, replaceActive: true);
 
     await Navigator.push(
       screenContext,
@@ -963,7 +963,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            provider.startRoutine(rotinaDoDia);
+                            final started = provider.startRoutine(rotinaDoDia);
+
+                            if (!started &&
+                                provider.activeRoutineName !=
+                                    rotinaDoDia.name) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Você já está treinando ${provider.activeRoutineName}. Abra a ficha para confirmar a troca.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(

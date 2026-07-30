@@ -32,12 +32,14 @@ class WorkoutBootstrapController extends AsyncNotifier<void> {
 
   Future<void> factoryReset() async {
     final preferences = await SharedPreferences.getInstance();
+    await ref
+        .read(workoutSessionControllerProvider.notifier)
+        .prepareForFactoryReset();
     await preferences.clear();
     await _repository.clearAll();
 
     ref.read(workoutLibraryControllerProvider.notifier).reset();
     ref.read(workoutHistoryControllerProvider.notifier).reset();
-    ref.read(workoutSessionControllerProvider.notifier).reset();
     state = const AsyncData<void>(null);
   }
 

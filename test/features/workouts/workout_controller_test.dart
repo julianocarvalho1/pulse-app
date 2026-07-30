@@ -113,8 +113,7 @@ void main() {
     );
     expect(repository.savedActiveSession, isNotNull);
 
-    controller.cancelWorkout();
-    await Future<void>.delayed(Duration.zero);
+    await controller.cancelWorkout();
 
     final finishedState = container.read(workoutControllerProvider);
 
@@ -508,6 +507,21 @@ class _FakeWorkoutRepository implements WorkoutRepository {
     required String notes,
     required bool isIncomplete,
   }) async {}
+
+  @override
+  Future<void> finalizeWorkout(WorkoutHistoryItem item) async {
+    final existingIndex = history.indexWhere(
+      (historyItem) => historyItem.id == item.id,
+    );
+
+    if (existingIndex >= 0) {
+      history[existingIndex] = item;
+    } else {
+      history.add(item);
+    }
+
+    activeSession = null;
+  }
 
   @override
   Future<void> saveActiveSession(ActiveWorkoutSession session) async {

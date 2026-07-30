@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,15 +27,16 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
     state = WorkoutHistoryState.initial();
   }
 
-  void addWorkout({
+  Future<WorkoutHistoryItem> addWorkout({
+    required String id,
     required String routineName,
     required String duration,
     required List<ExerciseLog> exercises,
     required String notes,
     required WorkoutSessionStatus status,
-  }) {
+  }) async {
     final item = WorkoutHistoryItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: id,
       routineName: routineName.isEmpty ? 'Treino Avulso' : routineName,
       date: DateTime.now(),
       duration: duration,
@@ -46,35 +45,41 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
       status: status,
     );
 
-    final updated = <WorkoutHistoryItem>[item, ...state.items];
+    final previous = state.items;
+    final updated = <WorkoutHistoryItem>[
+      item,
+      ...previous.where((existing) => existing.id != id),
+    ];
     state = state.copyWith(items: updated);
-    _persist(() => _repository.saveHistory(updated), 'salvar histórico');
+
+    try {
+      await _repository.saveHistory(updated);
+      return item;
+    } catch (error, stackTrace) {
+      state = state.copyWith(items: previous);
+      debugPrint('Erro ao salvar histórico: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 
-  void deleteHistoryItem(String id) {
-    final updated = state.items.where((item) => item.id != id).toList();
+  Future<void> deleteHistoryItem(String id) async {
+    final previous = state.items;
+    final updated = previous.where((item) => item.id != id).toList();
 
-    if (updated.length == state.items.length) {
+    if (updated.length == previous.length) {
       return;
     }
 
     state = state.copyWith(items: updated);
-    _persist(
-      () => _repository.saveHistory(updated),
-      'excluir item do histórico',
-    );
-  }
 
-  void _persist(Future<void> Function() operation, String label) {
-    unawaited(
-      (() async {
-        try {
-          await operation();
-        } catch (error, stackTrace) {
-          debugPrint('Erro ao $label: $error');
-          debugPrintStack(stackTrace: stackTrace);
-        }
-      })(),
-    );
+    try {
+      await _repository.saveHistory(updated);
+    } catch (error, stackTrace) {
+      state = state.copyWith(items: previous);
+      debugPrint('Erro ao excluir item do histórico: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
   }
 }

@@ -17,19 +17,21 @@ class WorkoutSessionState {
     required this.activeSession,
     required this.isResting,
     required this.restSeconds,
+    required this.isFinishing,
   }) : exercises = UnmodifiableListView<Exercise>(
          List<Exercise>.from(exercises),
        );
 
-  factory WorkoutSessionState.initial() {
+  factory WorkoutSessionState.initial({bool voiceAfterRest = true}) {
     return WorkoutSessionState(
-      voiceAfterRest: true,
+      voiceAfterRest: voiceAfterRest,
       isWorkoutActive: false,
       exercises: const <Exercise>[],
       routineName: 'Treino do Dia',
       activeSession: null,
       isResting: false,
       restSeconds: 0,
+      isFinishing: false,
     );
   }
 
@@ -40,6 +42,7 @@ class WorkoutSessionState {
   final ActiveWorkoutSession? activeSession;
   final bool isResting;
   final int restSeconds;
+  final bool isFinishing;
 
   WorkoutSessionState copyWith({
     bool? voiceAfterRest,
@@ -49,6 +52,7 @@ class WorkoutSessionState {
     Object? activeSession = _unsetSessionValue,
     bool? isResting,
     int? restSeconds,
+    bool? isFinishing,
   }) {
     return WorkoutSessionState(
       voiceAfterRest: voiceAfterRest ?? this.voiceAfterRest,
@@ -60,6 +64,7 @@ class WorkoutSessionState {
           : activeSession as ActiveWorkoutSession?,
       isResting: isResting ?? this.isResting,
       restSeconds: restSeconds ?? this.restSeconds,
+      isFinishing: isFinishing ?? this.isFinishing,
     );
   }
 }

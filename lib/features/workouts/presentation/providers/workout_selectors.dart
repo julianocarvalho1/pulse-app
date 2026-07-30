@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
 import '../../domain/models/active_workout_session.dart';
+import '../../domain/models/exercise_progression_suggestion.dart';
+import '../../domain/services/workout_progression_service.dart';
 import '../../domain/models/workout_history_item.dart';
 import 'workout_history_controller.dart';
 import 'workout_library_controller.dart';
@@ -63,3 +65,12 @@ final nextRoutineToTrainProvider = Provider<WorkoutRoutine?>((ref) {
 
   return routines[(lastIndex + 1) % routines.length];
 });
+
+final exerciseProgressionProvider =
+    Provider.family<ExerciseProgressionSuggestion, Exercise>((ref, exercise) {
+      final history = ref.watch(workoutHistoryControllerProvider).items;
+      return const WorkoutProgressionService().buildSuggestion(
+        exercise: exercise,
+        history: history,
+      );
+    });

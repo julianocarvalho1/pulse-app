@@ -24,6 +24,7 @@ class WorkoutState {
     required this.activeSession,
     required this.isResting,
     required this.restSeconds,
+    required this.isFinishing,
     this.initializationError,
   }) : customExercises = UnmodifiableListView<Exercise>(
          List<Exercise>.from(customExercises),
@@ -58,6 +59,7 @@ class WorkoutState {
       activeSession: null,
       isResting: false,
       restSeconds: 0,
+      isFinishing: false,
     );
   }
 
@@ -74,6 +76,7 @@ class WorkoutState {
   final ActiveWorkoutSession? activeSession;
   final bool isResting;
   final int restSeconds;
+  final bool isFinishing;
   final Object? initializationError;
 
   List<Exercise> get allExercises => List<Exercise>.unmodifiable(<Exercise>[
@@ -140,6 +143,7 @@ class WorkoutState {
     Object? activeSession = _unsetWorkoutStateValue,
     bool? isResting,
     int? restSeconds,
+    bool? isFinishing,
     Object? initializationError = _unsetWorkoutStateValue,
   }) {
     return WorkoutState(
@@ -159,6 +163,7 @@ class WorkoutState {
           : activeSession as ActiveWorkoutSession?,
       isResting: isResting ?? this.isResting,
       restSeconds: restSeconds ?? this.restSeconds,
+      isFinishing: isFinishing ?? this.isFinishing,
       initializationError:
           identical(initializationError, _unsetWorkoutStateValue)
           ? this.initializationError

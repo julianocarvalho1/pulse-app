@@ -73,6 +73,7 @@ class WorkoutController extends Notifier<WorkoutState> {
       activeSession: session.activeSession,
       isResting: session.isResting,
       restSeconds: session.restSeconds,
+      isFinishing: session.isFinishing,
       initializationError: switch (bootstrap) {
         AsyncError<void>(:final error) => error,
         _ => null,
@@ -143,8 +144,10 @@ class WorkoutController extends Notifier<WorkoutState> {
     ref.read(workoutCatalogControllerProvider.notifier).importRoutine(routine);
   }
 
-  void deleteHistoryItem(String id) {
-    ref.read(workoutHistoryControllerProvider.notifier).deleteHistoryItem(id);
+  Future<void> deleteHistoryItem(String id) {
+    return ref
+        .read(workoutHistoryControllerProvider.notifier)
+        .deleteHistoryItem(id);
   }
 
   void startRestTimer(String restString) {
@@ -163,12 +166,16 @@ class WorkoutController extends Notifier<WorkoutState> {
         .setVoiceAfterRest(enabled);
   }
 
-  void startWorkout() {
-    ref.read(workoutSessionControllerProvider.notifier).startWorkout();
+  bool startWorkout({bool replaceActive = false}) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .startWorkout(replaceActive: replaceActive);
   }
 
-  void startRoutine(WorkoutRoutine routine) {
-    ref.read(workoutSessionControllerProvider.notifier).startRoutine(routine);
+  bool startRoutine(WorkoutRoutine routine, {bool replaceActive = false}) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .startRoutine(routine, replaceActive: replaceActive);
   }
 
   void addExerciseToWorkout(Exercise exercise) {
@@ -193,13 +200,13 @@ class WorkoutController extends Notifier<WorkoutState> {
         );
   }
 
-  void finishWorkout(
+  Future<bool> finishWorkout(
     String duration, {
     required bool isIncomplete,
     required List<ExerciseLog> logs,
     String notes = '',
   }) {
-    ref
+    return ref
         .read(workoutSessionControllerProvider.notifier)
         .finishWorkout(
           duration,
@@ -209,7 +216,17 @@ class WorkoutController extends Notifier<WorkoutState> {
         );
   }
 
-  void cancelWorkout() {
-    ref.read(workoutSessionControllerProvider.notifier).cancelWorkout();
+  Future<void> cancelWorkout() {
+    return ref.read(workoutSessionControllerProvider.notifier).cancelWorkout();
+  }
+
+  RestStartOutcome startRestAfterSet(int exerciseIndex, {int? setIndex}) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .startRestAfterSet(exerciseIndex, setIndex: setIndex);
+  }
+
+  void addRestSeconds(int seconds) {
+    ref.read(workoutSessionControllerProvider.notifier).addRestSeconds(seconds);
   }
 }

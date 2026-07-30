@@ -217,6 +217,15 @@ class WorkoutLocalService {
     });
   }
 
+  Future<void> finalizeWorkout(WorkoutHistoryItem item) async {
+    final db = await _pulseDatabase.database;
+
+    await db.transaction((transaction) async {
+      await _insertHistoryItem(transaction, item);
+      await transaction.delete('active_session');
+    });
+  }
+
   Future<String> loadActiveProgramName() async {
     final db = await _pulseDatabase.database;
     final rows = await db.query(

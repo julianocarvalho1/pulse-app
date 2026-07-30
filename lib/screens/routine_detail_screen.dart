@@ -474,7 +474,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 foregroundColor: Colors.black,
               ),
               onPressed: () {
-                provider.startRoutine(routine);
+                provider.startRoutine(routine, replaceActive: true);
                 Navigator.pop(ctx);
                 Navigator.pushReplacement(
                   context,

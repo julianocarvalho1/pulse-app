@@ -83,9 +83,9 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
     required String notes,
     required bool isIncomplete,
   }) {
-    return _localService.insertHistoryItem(
+    return _localService.finalizeWorkout(
       WorkoutHistoryItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
         routineName: routineName.isEmpty ? 'Treino Avulso' : routineName,
         date: DateTime.now(),
         duration: duration,
@@ -96,6 +96,11 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
             : WorkoutSessionStatus.completed,
       ),
     );
+  }
+
+  @override
+  Future<void> finalizeWorkout(WorkoutHistoryItem item) {
+    return _localService.finalizeWorkout(item);
   }
 
   @override

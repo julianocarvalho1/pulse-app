@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
+import '../models/exercise.dart';
 import '../theme/app_theme.dart';
 import 'exercises_screen.dart';
 
@@ -37,6 +38,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   Timer? _sessionSaveDebounce;
   bool _notesInitialized = false;
+  bool _isSubmittingFinish = false;
 
   @override
   void initState() {
@@ -520,18 +522,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  String _getLastWeight(String exerciseId) {
-    final history = ref.read(workoutControllerProvider).history;
-    for (var session in history) {
-      for (var ex in session.exercises) {
-        if (ex.exerciseId == exerciseId && ex.sets.isNotEmpty) {
-          return '${ex.sets.first.weight} kg';
-        }
-      }
-    }
-    return '-';
-  }
-
   void _showMusicSelector() {
     showModalBottomSheet(
       context: context,
@@ -707,9 +697,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
-              provider.cancelWorkout();
+            onPressed: () async {
+              await provider.cancelWorkout();
               SessionStateCache.clear();
+
+              if (!ctx.mounted || !mounted) {
+                return;
+              }
+
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
@@ -727,70 +722,199 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     if (SessionStateCache.setsStatus.isEmpty) {
       return false;
     }
-    for (var sets in SessionStateCache.setsStatus.values) {
+
+    for (final sets in SessionStateCache.setsStatus.values) {
       if (sets.contains(false)) {
         return false;
       }
     }
+
     return true;
   }
 
-  // ==========================================================
-  // NOVO SISTEMA DE FINALIZAÇÃO (Pop-up com Campo de Anotações)
-  // ==========================================================
-  void _confirmFinish(WorkoutController provider) {
-    List<ExerciseLog> workoutLogs = [];
+  int _completedSetsCount() {
+    return SessionStateCache.setsStatus.values.fold<int>(
+      0,
+      (total, sets) => total + sets.where((isCompleted) => isCompleted).length,
+    );
+  }
+
+  List<ExerciseLog> _buildWorkoutLogs(WorkoutController provider) {
+    final workoutLogs = <ExerciseLog>[];
     final exercises = provider.currentWorkoutExercises;
 
-    for (int i = 0; i < exercises.length; i++) {
-      List<ExerciseSet> setsCompleted = [];
+    for (
+      var exerciseIndex = 0;
+      exerciseIndex < exercises.length;
+      exerciseIndex++
+    ) {
+      final setsCompleted = <ExerciseSet>[];
+      final statuses =
+          SessionStateCache.setsStatus[exerciseIndex] ?? const <bool>[];
 
-      for (int j = 0; j < SessionStateCache.setsStatus[i]!.length; j++) {
-        if (SessionStateCache.setsStatus[i]![j]) {
-          double weight =
-              double.tryParse(
-                _weightControllers[i]![j].text.replaceAll(',', '.'),
-              ) ??
-              0.0;
-          int reps = int.tryParse(_repsControllers[i]![j].text) ?? 0;
-
-          if (reps == 0) {
-            String target = _getSmartTarget(exercises[i].reps, j);
-            final match = RegExp(r'\d+').firstMatch(target);
-            if (match != null) {
-              reps = int.parse(match.group(0)!);
-            }
-          }
-          setsCompleted.add(ExerciseSet(reps: reps, weight: weight));
+      for (var setIndex = 0; setIndex < statuses.length; setIndex++) {
+        if (!statuses[setIndex]) {
+          continue;
         }
+
+        final weight =
+            double.tryParse(
+              _weightControllers[exerciseIndex]![setIndex].text.replaceAll(
+                ',',
+                '.',
+              ),
+            ) ??
+            0;
+        var reps =
+            int.tryParse(_repsControllers[exerciseIndex]![setIndex].text) ?? 0;
+
+        if (reps == 0) {
+          final target = _getSmartTarget(
+            exercises[exerciseIndex].reps,
+            setIndex,
+          );
+          final match = RegExp(r'\d+').firstMatch(target);
+          reps = match == null ? 0 : int.parse(match.group(0)!);
+        }
+
+        setsCompleted.add(ExerciseSet(reps: reps, weight: weight));
       }
 
       if (setsCompleted.isNotEmpty) {
         workoutLogs.add(
           ExerciseLog(
-            exerciseId: exercises[i].id,
-            exerciseName: exercises[i].name,
+            exerciseId: exercises[exerciseIndex].id,
+            exerciseName: exercises[exerciseIndex].name,
             sets: setsCompleted,
           ),
         );
       }
     }
 
+    return workoutLogs;
+  }
+
+  void _showNoCompletedSetsDialog(WorkoutController provider) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text(
+          'Nenhuma série concluída',
+          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+        ),
+        content: const Text(
+          'Para salvar no histórico, conclua pelo menos uma série. Você pode continuar o treino ou descartá-lo.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Continuar treino',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              await provider.cancelWorkout();
+              SessionStateCache.clear();
+
+              if (!dialogContext.mounted || !mounted) {
+                return;
+              }
+
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Descartar',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _finishAndClose({
+    required BuildContext dialogContext,
+    required WorkoutController provider,
+    required List<ExerciseLog> logs,
+    required bool isIncomplete,
+  }) async {
+    if (_isSubmittingFinish) {
+      return;
+    }
+
+    _isSubmittingFinish = true;
+    final saved = await provider.finishWorkout(
+      _formatTime(ref.read(workoutDurationProvider)),
+      isIncomplete: isIncomplete,
+      logs: logs,
+      notes: _notesController.text,
+    );
+
+    if (!dialogContext.mounted || !mounted) {
+      return;
+    }
+
+    if (!saved) {
+      _isSubmittingFinish = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível salvar o treino. Tente novamente.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    SessionStateCache.clear();
+    Navigator.pop(dialogContext);
+    Navigator.pop(context);
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          isIncomplete
+              ? 'Treino salvo como incompleto.'
+              : 'Treino concluído e salvo com sucesso!',
+        ),
+        backgroundColor: isIncomplete
+            ? Colors.orange
+            : Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  void _confirmFinish(WorkoutController provider) {
+    _persistSessionNow();
+
+    final workoutLogs = _buildWorkoutLogs(provider);
+    final completedSets = _completedSetsCount();
+
+    if (workoutLogs.isEmpty || completedSets == 0) {
+      _showNoCompletedSetsDialog(provider);
+      return;
+    }
+
     if (!_allSetsCompleted()) {
-      showDialog(
+      showDialog<void>(
         context: context,
-        builder: (ctx) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
           title: const Text(
-            'Calma lá!',
+            'Salvar treino incompleto?',
             style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Notei que você não marcou todas as séries. Vai desistir no meio do caminho ou esqueceu de marcar?',
-                style: TextStyle(color: AppColors.textSecondary),
+              Text(
+                '$completedSets séries foram concluídas. As séries pendentes ficarão identificadas no histórico.',
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -798,7 +922,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'Anotações sobre a falha/desistência (Opcional)',
+                  hintText: 'Anotação sobre o treino (opcional)',
                   hintStyle: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -821,36 +945,27 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(
-                'Voltar',
+                'Continuar treino',
                 style: TextStyle(color: Theme.of(context).colorScheme.primary),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.black,
               ),
-              onPressed: () {
-                provider.finishWorkout(
-                  _formatTime(ref.read(workoutDurationProvider)),
-                  isIncomplete: true,
-                  logs: workoutLogs,
-                  notes: _notesController.text,
-                );
-                SessionStateCache.clear();
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Ficha salva como incompleta no histórico.'),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              },
+              onPressed: ref.read(workoutControllerProvider).isFinishing
+                  ? null
+                  : () => _finishAndClose(
+                      dialogContext: dialogContext,
+                      provider: provider,
+                      logs: workoutLogs,
+                      isIncomplete: true,
+                    ),
               child: const Text(
-                'Arregar e Salvar',
+                'Salvar como incompleto',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -860,19 +975,19 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       return;
     }
 
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: const Text(
-          'Finalizar Treino?',
+          'Finalizar treino?',
           style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Excelente trabalho! Deseja encerrar a sessão e salvar no histórico?',
+              'Todas as séries foram concluídas. Confirme para salvar a sessão no histórico.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
@@ -881,7 +996,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 13),
               maxLines: 2,
               decoration: InputDecoration(
-                hintText: 'Como foi o treino? (Opcional)',
+                hintText: 'Como foi o treino? (opcional)',
                 hintStyle: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -904,7 +1019,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text(
               'Cancelar',
               style: TextStyle(color: AppColors.textSecondary),
@@ -915,26 +1030,16 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.black,
             ),
-            onPressed: () {
-              provider.finishWorkout(
-                _formatTime(ref.read(workoutDurationProvider)),
-                isIncomplete: false,
-                logs: workoutLogs,
-                notes: _notesController.text,
-              );
-              SessionStateCache.clear();
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Treino concluído e salvo com sucesso!'),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            },
+            onPressed: ref.read(workoutControllerProvider).isFinishing
+                ? null
+                : () => _finishAndClose(
+                    dialogContext: dialogContext,
+                    provider: provider,
+                    logs: workoutLogs,
+                    isIncomplete: false,
+                  ),
             child: const Text(
-              'Salvar Treino',
+              'Salvar treino',
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
@@ -987,9 +1092,87 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     );
   }
 
+  void _handleSetChanged({
+    required WorkoutController provider,
+    required List<Exercise> exercises,
+    required int exerciseIndex,
+    required int setIndex,
+    required bool isCompleted,
+  }) {
+    setState(() {
+      SessionStateCache.setsStatus[exerciseIndex]![setIndex] = isCompleted;
+
+      if (!isCompleted) {
+        return;
+      }
+
+      final repsController = _repsControllers[exerciseIndex]![setIndex];
+      if (repsController.text.trim().isEmpty) {
+        final smartTarget = _getSmartTarget(
+          exercises[exerciseIndex].reps,
+          setIndex,
+        );
+        final match = RegExp(r'\d+').firstMatch(smartTarget);
+        if (match != null) {
+          repsController.text = match.group(0)!;
+        }
+      }
+
+      if (setIndex > 0) {
+        final weightController = _weightControllers[exerciseIndex]![setIndex];
+        final previousWeight = _weightControllers[exerciseIndex]![setIndex - 1]
+            .text
+            .trim();
+        if (weightController.text.trim().isEmpty && previousWeight.isNotEmpty) {
+          weightController.text = previousWeight;
+        }
+      }
+    });
+
+    _sessionSaveDebounce?.cancel();
+    _persistSessionNow();
+
+    if (!isCompleted) {
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    final outcome = provider.startRestAfterSet(
+      exerciseIndex,
+      setIndex: setIndex,
+    );
+
+    if (outcome == RestStartOutcome.skippedForSuperset &&
+        exerciseIndex + 1 < exercises.length) {
+      final nextExerciseName = exercises[exerciseIndex + 1].name;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Bi-set: siga direto para $nextExerciseName, sem descanso.',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+    } else if (outcome == RestStartOutcome.waitingForSupersetPair) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Conclua a mesma série do primeiro exercício do bi-set antes do descanso.',
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
+    final sessionProgress = ref.watch(workoutSessionProgressProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
     final exercises = workoutState.currentWorkoutExercises;
     _initializeSets();
@@ -1063,6 +1246,47 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${sessionProgress.completedSets}/${sessionProgress.totalSets} séries',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              '${sessionProgress.percentage}%',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            value: sessionProgress.fraction,
+                            minHeight: 7,
+                            backgroundColor: AppColors.border,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1111,6 +1335,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             index > 0 && exercises[index - 1].isSuperset;
                         final bool isSupersetPair =
                             startsSuperset || continuesSuperset;
+                        final progression = ref.watch(
+                          exerciseProgressionProvider(ex),
+                        );
 
                         return Container(
                           key: ValueKey<String>(
@@ -1498,14 +1725,25 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ],
 
                                         Text(
-                                          'Última carga: ${_getLastWeight(ex.id)}',
+                                          'Último: ${progression.lastPerformance}',
                                           style: TextStyle(
                                             color: Theme.of(
                                               context,
                                             ).colorScheme.primary,
                                             fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          progression.nextTarget,
+                                          style: const TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),
@@ -1669,21 +1907,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                           ),
                                                     ),
                                                     onChanged: (val) {
-                                                      setState(() {
-                                                        SessionStateCache
-                                                                .setsStatus[index]![setIndex] =
-                                                            val ?? false;
-                                                        if (val == true) {
-                                                          FocusScope.of(
-                                                            context,
-                                                          ).unfocus();
-                                                          provider
-                                                              .startRestTimer(
-                                                                ex.rest,
-                                                              );
-                                                        }
-                                                      });
-                                                      _scheduleSessionSave();
+                                                      _handleSetChanged(
+                                                        provider: provider,
+                                                        exercises: exercises,
+                                                        exerciseIndex: index,
+                                                        setIndex: setIndex,
+                                                        isCompleted:
+                                                            val ?? false,
+                                                      );
                                                     },
                                                   ),
                                                 ),
@@ -1744,14 +1975,36 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                               ),
                             ],
                           ),
-                          Text(
-                            _formatTime(workoutState.restSeconds),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () => provider.addRestSeconds(-15),
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(36, 32),
+                                  padding: EdgeInsets.zero,
+                                  foregroundColor: AppColors.textSecondary,
+                                ),
+                                child: const Text('-15'),
+                              ),
+                              Text(
+                                _formatTime(workoutState.restSeconds),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => provider.addRestSeconds(15),
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(36, 32),
+                                  padding: EdgeInsets.zero,
+                                  foregroundColor: AppColors.textSecondary,
+                                ),
+                                child: const Text('+15'),
+                              ),
+                            ],
                           ),
                           IconButton(
                             icon: const Icon(
@@ -1797,10 +2050,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () => _confirmFinish(provider),
-                      child: const Text(
-                        'FINALIZAR E SALVAR',
-                        style: TextStyle(
+                      onPressed: workoutState.isFinishing
+                          ? null
+                          : () => _confirmFinish(provider),
+                      child: Text(
+                        workoutState.isFinishing
+                            ? 'SALVANDO...'
+                            : 'FINALIZAR E SALVAR',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.0,

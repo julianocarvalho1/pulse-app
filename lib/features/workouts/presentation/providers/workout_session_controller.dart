@@ -8,6 +8,7 @@ import '../../data/mappers/legacy_workout_mapper.dart';
 import '../../data/services/workout_feedback_service.dart';
 import '../../domain/models/active_workout_session.dart';
 import '../../domain/models/exercise_log.dart';
+import '../../domain/models/workout_session_progress.dart';
 import '../../domain/models/workout_session_status.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../state/workout_session_state.dart';
@@ -23,6 +24,20 @@ final workoutSessionControllerProvider =
     NotifierProvider<WorkoutSessionController, WorkoutSessionState>(
       WorkoutSessionController.new,
     );
+
+final workoutSessionProgressProvider = Provider<WorkoutSessionProgress>((ref) {
+  final session = ref.watch(
+    workoutSessionControllerProvider.select((state) => state.activeSession),
+  );
+  return WorkoutSessionProgress.fromSession(session);
+});
+
+enum RestStartOutcome {
+  started,
+  skippedForSuperset,
+  waitingForSupersetPair,
+  unavailable,
+}
 
 class WorkoutDurationController extends Notifier<int> {
   @override
@@ -46,6 +61,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   Timer? _globalTimer;
   Timer? _restTimer;
   ActiveWorkoutSession? _activeSessionSnapshot;
+  Future<void> _persistenceQueue = Future<void>.value();
 
   WorkoutRepository get _repository => ref.read(workoutRepositoryProvider);
 
@@ -93,6 +109,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       activeSession: session,
       isResting: false,
       restSeconds: 0,
+      isFinishing: false,
     );
 
     if (session != null) {
@@ -101,20 +118,87 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   }
 
   void reset() {
+    final voiceAfterRest = state.voiceAfterRest;
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _activeSessionSnapshot = null;
+    ref.read(workoutDurationProvider.notifier).reset();
+    state = WorkoutSessionState.initial(voiceAfterRest: voiceAfterRest);
+  }
+
+  Future<void> prepareForFactoryReset() async {
+    _globalTimer?.cancel();
+    _restTimer?.cancel();
+    await _persistenceQueue;
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
     state = WorkoutSessionState.initial();
   }
 
   void startRestTimer(String restString) {
-    if (restString.trim().isEmpty) {
-      return;
+    final seconds = LegacyWorkoutMapper.parseRestSeconds(restString);
+    _startRestWithSeconds(seconds);
+  }
+
+  RestStartOutcome startRestAfterSet(int exerciseIndex, {int? setIndex}) {
+    if (exerciseIndex < 0 || exerciseIndex >= state.exercises.length) {
+      return RestStartOutcome.unavailable;
     }
 
-    final seconds = LegacyWorkoutMapper.parseRestSeconds(restString);
+    final session = activeSession;
 
+    bool isPairSetCompleted(int pairedExerciseIndex) {
+      return session != null &&
+          setIndex != null &&
+          pairedExerciseIndex >= 0 &&
+          pairedExerciseIndex < session.exercises.length &&
+          setIndex < session.exercises[pairedExerciseIndex].sets.length &&
+          session.exercises[pairedExerciseIndex].sets[setIndex].isCompleted;
+    }
+
+    final exercise = state.exercises[exerciseIndex];
+    final startsSuperset =
+        exercise.isSuperset && exerciseIndex < state.exercises.length - 1;
+    final continuesSuperset =
+        exerciseIndex > 0 && state.exercises[exerciseIndex - 1].isSuperset;
+
+    var restText = exercise.rest;
+
+    if (startsSuperset) {
+      final nextExerciseIndex = exerciseIndex + 1;
+
+      if (!isPairSetCompleted(nextExerciseIndex)) {
+        stopRestTimer();
+        return RestStartOutcome.skippedForSuperset;
+      }
+
+      final nextExerciseRest = state.exercises[nextExerciseIndex].rest;
+      if (nextExerciseRest.trim().isNotEmpty) {
+        restText = nextExerciseRest;
+      }
+    } else if (continuesSuperset) {
+      final previousExerciseIndex = exerciseIndex - 1;
+
+      if (!isPairSetCompleted(previousExerciseIndex)) {
+        stopRestTimer();
+        return RestStartOutcome.waitingForSupersetPair;
+      }
+
+      if (restText.trim().isEmpty) {
+        restText = state.exercises[previousExerciseIndex].rest;
+      }
+    }
+
+    final seconds = LegacyWorkoutMapper.parseRestSeconds(restText);
+    if (seconds <= 0) {
+      return RestStartOutcome.unavailable;
+    }
+
+    _startRestWithSeconds(seconds);
+    return RestStartOutcome.started;
+  }
+
+  void _startRestWithSeconds(int seconds) {
     if (seconds <= 0) {
       return;
     }
@@ -128,14 +212,23 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
         return;
       }
 
-      if (state.restSeconds > 0) {
-        state = state.copyWith(restSeconds: state.restSeconds - 1);
+      if (state.restSeconds <= 1) {
+        stopRestTimer();
+        unawaited(_playAlarm());
         return;
       }
 
-      stopRestTimer();
-      unawaited(_playAlarm());
+      state = state.copyWith(restSeconds: state.restSeconds - 1);
     });
+  }
+
+  void addRestSeconds(int seconds) {
+    if (!state.isResting || seconds == 0) {
+      return;
+    }
+
+    final nextValue = (state.restSeconds + seconds).clamp(1, 3600).toInt();
+    state = state.copyWith(restSeconds: nextValue);
   }
 
   void stopRestTimer() {
@@ -160,23 +253,40 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     state = state.copyWith(voiceAfterRest: enabled);
   }
 
-  void startWorkout() {
-    _beginWorkout(routineName: 'Treino Livre', exercises: const <Exercise>[]);
+  bool startWorkout({bool replaceActive = false}) {
+    return _beginWorkout(
+      routineName: 'Treino Livre',
+      exercises: const <Exercise>[],
+      replaceActive: replaceActive,
+    );
   }
 
-  void startRoutine(WorkoutRoutine routine) {
-    _beginWorkout(routineName: routine.name, exercises: routine.exercises);
+  bool startRoutine(WorkoutRoutine routine, {bool replaceActive = false}) {
+    return _beginWorkout(
+      routineName: routine.name,
+      exercises: routine.exercises,
+      replaceActive: replaceActive,
+    );
   }
 
-  void _beginWorkout({
+  bool _beginWorkout({
     required String routineName,
     required List<Exercise> exercises,
+    required bool replaceActive,
   }) {
+    if (state.isWorkoutActive && !replaceActive) {
+      return false;
+    }
+
+    _globalTimer?.cancel();
+    _restTimer?.cancel();
+
+    final now = DateTime.now();
     final workoutExercises = List<Exercise>.from(exercises);
     final session = ActiveWorkoutSession(
-      id: 'active',
+      id: 'session-${now.millisecondsSinceEpoch}',
       routineName: routineName,
-      startedAt: DateTime.now(),
+      startedAt: now,
       elapsedSeconds: 0,
       exercises: _buildActiveExercises(workoutExercises),
     );
@@ -187,10 +297,14 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       routineName: routineName,
       exercises: workoutExercises,
       activeSession: session,
+      isResting: false,
+      restSeconds: 0,
+      isFinishing: false,
     );
 
     _startGlobalTimer();
-    _persistActiveSession();
+    unawaited(_persistActiveSession());
+    return true;
   }
 
   void _startGlobalTimer({int initialSeconds = 0}) {
@@ -217,7 +331,8 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       }
 
       _activeSessionSnapshot = session.copyWith(elapsedSeconds: elapsedSeconds);
-      _persistActiveSession();
+      state = state.copyWith(activeSession: _activeSessionSnapshot);
+      unawaited(_persistActiveSession());
     });
   }
 
@@ -236,7 +351,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       exercises: updatedExercises,
       activeSession: updatedSession,
     );
-    _persistActiveSession();
+    unawaited(_persistActiveSession());
   }
 
   void saveActiveSessionProgress({
@@ -298,51 +413,63 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       exercises: updatedExercises,
     );
     state = state.copyWith(activeSession: _activeSessionSnapshot);
-    _persistActiveSession();
+    unawaited(_persistActiveSession());
   }
 
-  void finishWorkout(
+  Future<bool> finishWorkout(
     String duration, {
     required bool isIncomplete,
     required List<ExerciseLog> logs,
     String notes = '',
-  }) {
-    if (logs.isNotEmpty) {
-      ref
+  }) async {
+    final session = activeSession;
+
+    if (session == null || state.isFinishing || logs.isEmpty) {
+      return false;
+    }
+
+    state = state.copyWith(isFinishing: true);
+    final progress = WorkoutSessionProgress.fromSession(session);
+    final effectiveIncomplete = isIncomplete || !progress.isComplete;
+
+    try {
+      await ref
           .read(workoutHistoryControllerProvider.notifier)
           .addWorkout(
+            id: session.startedAt.millisecondsSinceEpoch.toString(),
             routineName: state.routineName,
             duration: duration,
             exercises: logs,
             notes: notes,
-            status: isIncomplete
+            status: effectiveIncomplete
                 ? WorkoutSessionStatus.incomplete
                 : WorkoutSessionStatus.completed,
           );
+
+      await _endActiveWorkout();
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('Erro ao finalizar treino: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      state = state.copyWith(isFinishing: false);
+      return false;
     }
-
-    _endActiveWorkout();
   }
 
-  void cancelWorkout() {
-    _endActiveWorkout();
+  Future<void> cancelWorkout() {
+    return _endActiveWorkout();
   }
 
-  void _endActiveWorkout() {
+  Future<void> _endActiveWorkout() async {
+    final voiceAfterRest = state.voiceAfterRest;
     _globalTimer?.cancel();
     _restTimer?.cancel();
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
 
-    state = state.copyWith(
-      isWorkoutActive: false,
-      exercises: const <Exercise>[],
-      activeSession: null,
-      isResting: false,
-      restSeconds: 0,
-    );
-
-    _persist(_repository.clearActiveSession, 'limpar sessão ativa');
+    await _persistenceQueue;
+    await _repository.clearActiveSession();
+    state = WorkoutSessionState.initial(voiceAfterRest: voiceAfterRest);
   }
 
   List<ActiveWorkoutExercise> _buildActiveExercises(List<Exercise> exercises) {
@@ -364,29 +491,22 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     );
   }
 
-  void _persistActiveSession() {
+  Future<void> _persistActiveSession() {
     final session = activeSession;
 
     if (session == null) {
-      return;
+      return Future<void>.value();
     }
 
-    _persist(
-      () => _repository.saveActiveSession(session),
-      'salvar sessão ativa',
-    );
-  }
+    _persistenceQueue = _persistenceQueue.then((_) async {
+      try {
+        await _repository.saveActiveSession(session);
+      } catch (error, stackTrace) {
+        debugPrint('Erro ao salvar sessão ativa: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+    });
 
-  void _persist(Future<void> Function() operation, String label) {
-    unawaited(
-      (() async {
-        try {
-          await operation();
-        } catch (error, stackTrace) {
-          debugPrint('Erro ao $label: $error');
-          debugPrintStack(stackTrace: stackTrace);
-        }
-      })(),
-    );
+    return _persistenceQueue;
   }
 }
