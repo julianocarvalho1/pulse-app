@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_set.dart';
@@ -47,11 +46,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   @override
   void dispose() {
-    for (var controllers in _weightControllers.values) {
-      for (var c in controllers) c.dispose();
+    for (final controllers in _weightControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
     }
-    for (var controllers in _repsControllers.values) {
-      for (var c in controllers) c.dispose();
+    for (final controllers in _repsControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
     }
     _sessionSaveDebounce?.cancel();
     _notesController.dispose();
@@ -116,8 +119,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         .replaceAll(RegExp(r'[úùû]'), 'u')
         .replaceAll('ç', 'c');
 
-    if (aliases.containsKey(nameForAlias))
+    if (aliases.containsKey(nameForAlias)) {
       return 'assets/images/${aliases[nameForAlias]}.gif';
+    }
 
     cleanName = cleanName.replaceAll('-', '_');
     cleanName = cleanName.replaceAll('/', '_');
@@ -720,9 +724,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   }
 
   bool _allSetsCompleted() {
-    if (SessionStateCache.setsStatus.isEmpty) return false;
+    if (SessionStateCache.setsStatus.isEmpty) {
+      return false;
+    }
     for (var sets in SessionStateCache.setsStatus.values) {
-      if (sets.contains(false)) return false;
+      if (sets.contains(false)) {
+        return false;
+      }
     }
     return true;
   }
@@ -749,7 +757,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           if (reps == 0) {
             String target = _getSmartTarget(exercises[i].reps, j);
             final match = RegExp(r'\d+').firstMatch(target);
-            if (match != null) reps = int.parse(match.group(0)!);
+            if (match != null) {
+              reps = int.parse(match.group(0)!);
+            }
           }
           setsCompleted.add(ExerciseSet(reps: reps, weight: weight));
         }
@@ -987,7 +997,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
+        if (didPop) {
+          return;
+        }
         _confirmExit(provider);
       },
       child: Scaffold(
@@ -1097,16 +1109,29 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             ex.isSuperset && index < exercises.length - 1;
                         final bool continuesSuperset =
                             index > 0 && exercises[index - 1].isSuperset;
+                        final bool isSupersetPair =
+                            startsSuperset || continuesSuperset;
 
                         return Container(
                           key: ValueKey<String>(
                             '${workoutState.activeRoutineName}-${ex.id}-$index',
                           ),
-                          margin: const EdgeInsets.only(bottom: 14),
+                          margin: EdgeInsets.only(
+                            bottom: startsSuperset ? 2 : 14,
+                          ),
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(continuesSuperset ? 4 : 14),
+                              bottom: Radius.circular(startsSuperset ? 4 : 14),
+                            ),
+                            border: Border.all(
+                              color: isSupersetPair
+                                  ? Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.55)
+                                  : AppColors.border,
+                              width: isSupersetPair ? 1.25 : 1,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1121,8 +1146,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).colorScheme.primary
                                         .withValues(alpha: 0.15),
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(13),
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(
+                                        continuesSuperset ? 3 : 13,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -1139,8 +1166,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       Flexible(
                                         child: Text(
                                           startsSuperset
-                                              ? 'BI-SET — FAÇA COM O PRÓXIMO EXERCÍCIO'
-                                              : 'BI-SET — CONTINUAÇÃO DO EXERCÍCIO ANTERIOR',
+                                              ? 'BI-SET 1/2 — FAÇA COM O PRÓXIMO'
+                                              : 'BI-SET 2/2 — CONTINUAÇÃO SEM PAUSA',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             color: Theme.of(
@@ -1156,7 +1183,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                 ),
 
                               InkWell(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(
+                                    continuesSuperset ? 4 : 14,
+                                  ),
+                                  bottom: Radius.circular(
+                                    startsSuperset ? 4 : 14,
+                                  ),
+                                ),
                                 onTap: () {
                                   final details = _getDetailedInfo(ex.id);
                                   showDialog(
@@ -1606,7 +1640,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 child: _buildInputForm(
                                                   context,
                                                   _repsControllers[index]![setIndex],
-                                                  '$smartTarget',
+                                                  smartTarget,
                                                   isReps: true,
                                                 ),
                                               ),

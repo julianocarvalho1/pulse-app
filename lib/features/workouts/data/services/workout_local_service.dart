@@ -433,7 +433,7 @@ class WorkoutLocalService {
       'rest': exercise.rest,
       'is_superset': exercise.isSuperset ? 1 : 0,
       'custom_note': exercise.customNote,
-      if (createdAt != null) 'created_at': createdAt,
+      'created_at': ?createdAt,
     };
   }
 

@@ -186,7 +186,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: workout.exercises.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final ex = workout.exercises[index];
 
@@ -290,7 +290,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                                     ],
                                   ),
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ),
                         ),

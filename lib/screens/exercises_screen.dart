@@ -87,15 +87,16 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final restCtrl = TextEditingController(text: ex.rest);
 
     String initialTechnique = 'Normal';
-    if (ex.isSuperset)
+    if (ex.isSuperset) {
       initialTechnique = 'Bi-Set';
-    else if (ex.customNote.contains('Drop-Set'))
+    } else if (ex.customNote.contains('Drop-Set')) {
       initialTechnique = 'Drop-Set';
-    else if (ex.customNote.contains('Rest-Pause'))
+    } else if (ex.customNote.contains('Rest-Pause')) {
       initialTechnique = 'Rest-Pause';
-    else if (ex.customNote.contains('Falha Muscular') ||
-        ex.customNote.contains('Ir até a Falha'))
+    } else if (ex.customNote.contains('Falha Muscular') ||
+        ex.customNote.contains('Ir até a Falha')) {
       initialTechnique = 'Até a Falha';
+    }
 
     String cleanNote = ex.customNote
         .replaceAll('Técnica: Drop-Set', '')
@@ -221,7 +222,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<String>(
-                    value: selectedTechnique,
+                    initialValue: selectedTechnique,
                     dropdownColor: Theme.of(context).colorScheme.surface,
                     icon: const Icon(
                       Icons.keyboard_arrow_down,

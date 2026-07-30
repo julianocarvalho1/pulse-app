@@ -369,15 +369,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     final restCtrl = TextEditingController(text: ex.rest);
 
     String initialTechnique = 'Normal';
-    if (ex.isSuperset)
+    if (ex.isSuperset) {
       initialTechnique = 'Bi-Set';
-    else if (ex.customNote.contains('Drop-Set'))
+    } else if (ex.customNote.contains('Drop-Set')) {
       initialTechnique = 'Drop-Set';
-    else if (ex.customNote.contains('Rest-Pause'))
+    } else if (ex.customNote.contains('Rest-Pause')) {
       initialTechnique = 'Rest-Pause';
-    else if (ex.customNote.contains('Falha Muscular') ||
-        ex.customNote.contains('Ir até a Falha'))
+    } else if (ex.customNote.contains('Falha Muscular') ||
+        ex.customNote.contains('Ir até a Falha')) {
       initialTechnique = 'Até a Falha';
+    }
 
     String cleanNote = ex.customNote
         .replaceAll('Técnica: Drop-Set', '')
@@ -502,7 +503,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<String>(
-                    value: selectedTechnique,
+                    initialValue: selectedTechnique,
                     dropdownColor: Theme.of(context).colorScheme.surface,
                     icon: const Icon(
                       Icons.keyboard_arrow_down,
@@ -739,7 +740,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     controller: scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: routines.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final routine = routines[index];
                       final folderText = routine.groupName.isNotEmpty

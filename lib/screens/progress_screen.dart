@@ -23,7 +23,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     'Desempenho',
   ];
 
-  Map<String, double> _medidas = {
+  final Map<String, double> _medidas = {
     'Peso': 0.0,
     'Ombros': 0.0,
     'Tórax': 0.0,
@@ -683,12 +683,20 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   List<double> _gerarDadosSimulados(String medida, String periodo) {
     double valorAtual = _medidas[medida] ?? 0.0;
-    if (valorAtual == 0.0) return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    if (valorAtual == 0.0) {
+      return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    }
 
     int pontos = 7;
-    if (periodo == '1 mês') pontos = 4;
-    if (periodo == '3 meses') pontos = 6;
-    if (periodo == '1 ano') pontos = 12;
+    if (periodo == '1 mês') {
+      pontos = 4;
+    }
+    if (periodo == '3 meses') {
+      pontos = 6;
+    }
+    if (periodo == '1 ano') {
+      pontos = 12;
+    }
 
     List<double> dados = [];
     for (int i = pontos - 1; i >= 0; i--) {
@@ -1175,7 +1183,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
       ],
     );
   }

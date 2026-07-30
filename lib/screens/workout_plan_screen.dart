@@ -172,9 +172,8 @@ class WorkoutPlanScreen extends ConsumerWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: currentExercises.length,
-                      onReorder: (oldIndex, newIndex) {
+                      onReorderItem: (oldIndex, newIndex) {
                         setStateModal(() {
-                          if (newIndex > oldIndex) newIndex -= 1;
                           final item = currentExercises.removeAt(oldIndex);
                           currentExercises.insert(newIndex, item);
                         });
@@ -559,7 +558,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
   Widget _buildCatalogTab(
     BuildContext context,
     WorkoutController provider,
-    List programs,
+    List<WorkoutProgram> programs,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
@@ -604,9 +603,11 @@ class WorkoutPlanScreen extends ConsumerWidget {
           Expanded(
             child: ListView.separated(
               itemCount: programs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              separatorBuilder: (_, _) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
                 final prog = programs[index];
+                final isImported = provider.isProgramImported(prog);
+
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -717,12 +718,15 @@ class WorkoutPlanScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Theme.of(
                                   context,
                                 ).colorScheme.primary,
                                 foregroundColor: Colors.black,
+                                disabledBackgroundColor: AppColors.surfaceLight,
+                                disabledForegroundColor:
+                                    AppColors.textSecondary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -730,23 +734,42 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                   vertical: 12,
                                 ),
                               ),
-                              onPressed: () {
-                                provider.importProgram(prog);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Programa ${prog.name} importado para Minhas Fichas!',
-                                    ),
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'Importar Grupo',
-                                style: TextStyle(fontWeight: FontWeight.w800),
+                              onPressed: isImported
+                                  ? null
+                                  : () {
+                                      final imported = provider.importProgram(
+                                        prog,
+                                      );
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            imported
+                                                ? 'Programa ${prog.name} importado para Minhas Fichas!'
+                                                : 'Este programa já está em Minhas Fichas.',
+                                          ),
+                                          backgroundColor: imported
+                                              ? Theme.of(
+                                                  context,
+                                                ).colorScheme.primary
+                                              : AppColors.surfaceLight,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    },
+                              icon: Icon(
+                                isImported
+                                    ? Icons.check_circle
+                                    : Icons.download_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                isImported ? 'Já Importado' : 'Importar Grupo',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
@@ -766,8 +789,9 @@ class WorkoutPlanScreen extends ConsumerWidget {
   void _showProgramDetails(
     BuildContext context,
     WorkoutController provider,
-    dynamic prog,
+    WorkoutProgram prog,
   ) {
+    final isImported = provider.isProgramImported(prog);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -843,31 +867,46 @@ class WorkoutPlanScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.black,
+                  disabledBackgroundColor: AppColors.surfaceLight,
+                  disabledForegroundColor: AppColors.textSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {
-                  provider.importProgram(prog);
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(
-                        'Programa importado! Vá para "Minhas Fichas" para iniciar o treino.',
-                      ),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Importar Este Grupo',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                onPressed: isImported
+                    ? null
+                    : () {
+                        final imported = provider.importProgram(prog);
+                        Navigator.pop(ctx);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              imported
+                                  ? 'Programa importado! Vá para "Minhas Fichas" para iniciar o treino.'
+                                  : 'Este programa já está em Minhas Fichas.',
+                            ),
+                            backgroundColor: imported
+                                ? Theme.of(context).colorScheme.primary
+                                : AppColors.surfaceLight,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                icon: Icon(
+                  isImported ? Icons.check_circle : Icons.download_rounded,
+                ),
+                label: Text(
+                  isImported ? 'Programa já importado' : 'Importar Este Grupo',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),

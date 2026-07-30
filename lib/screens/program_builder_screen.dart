@@ -182,13 +182,24 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
     );
 
     bool isDropset = ex.reps.toUpperCase().contains('DROPSET');
-    bool isBiset = ex.reps.toUpperCase().contains('BISET');
 
-    // Só podemos fazer bi-set se já existir um exercício antes dele
-    bool canBiset =
-        (editIndex != null && editIndex > 0) ||
-        (editIndex == null &&
-            _draftRoutines[routineIndex].exercises.isNotEmpty);
+    final draftExercises = _draftRoutines[routineIndex].exercises;
+    final currentIndex = editIndex ?? draftExercises.length;
+    final hasExerciseAbove = currentIndex > 0;
+    final continuesExistingBiset =
+        hasExerciseAbove && draftExercises[currentIndex - 1].isSuperset;
+    final previousAlreadyContinuesBiset =
+        currentIndex > 1 && draftExercises[currentIndex - 2].isSuperset;
+    final currentStartsBiset = editIndex != null && ex.isSuperset;
+    final hasLegacyBisetMarker = ex.reps.toUpperCase().contains('BISET');
+
+    bool isBiset = continuesExistingBiset || hasLegacyBisetMarker;
+
+    // Um bi-set é representado pelo exercício de cima apontando para este.
+    // Evita que o mesmo exercício participe de dois bi-sets ao mesmo tempo.
+    final bool canBiset =
+        hasExerciseAbove &&
+        (isBiset || (!previousAlreadyContinuesBiset && !currentStartsBiset));
 
     showDialog(
       context: context,
@@ -313,7 +324,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.orangeAccent.withOpacity(0.5),
+                            color: Colors.orangeAccent.withValues(alpha: 0.5),
                           ),
                         ),
                         child: SwitchListTile(
@@ -332,14 +343,15 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          activeColor: Colors.orangeAccent,
+                          activeThumbColor: Colors.orangeAccent,
                           value: isBiset,
                           onChanged: (val) {
                             setStateDialog(() {
                               isBiset = val;
-                              if (val)
-                                isDropset =
-                                    false; // Se for bi-set, desmarca dropset pra não confundir
+                              if (val) {
+                                // Evita combinar bi-set e dropset na mesma configuração.
+                                isDropset = false;
+                              }
                             });
                           },
                         ),
@@ -368,7 +380,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        activeColor: Theme.of(context).colorScheme.primary,
+                        activeThumbColor: Theme.of(context).colorScheme.primary,
                         value: isDropset,
                         onChanged: (val) {
                           setStateDialog(() {
@@ -402,19 +414,23 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                         !finalReps.toUpperCase().contains('DROPSET')) {
                       finalReps += ' + DROPSET';
                     }
-                    if (isBiset && !finalReps.toUpperCase().contains('BISET')) {
-                      finalReps += ' + BISET';
-                    }
+                    finalReps = finalReps
+                        .replaceAll(
+                          RegExp(r'\s*\+\s*BISET', caseSensitive: false),
+                          '',
+                        )
+                        .trim();
 
-                    final customizedEx = Exercise(
-                      id: ex.id,
-                      name: ex.name,
-                      muscle: ex.muscle,
+                    final customizedEx = ex.copyWith(
                       description: obsCtrl.text.trim(),
                       reps: finalReps,
                       rest: restCtrl.text.trim().isEmpty
                           ? ex.rest
                           : restCtrl.text.trim(),
+                      // Ao adicionar um exercício, ele começa sem apontar para
+                      // o próximo. A ligação com o exercício de cima é salva
+                      // no exercício anterior.
+                      isSuperset: editIndex == null ? false : ex.isSuperset,
                     );
 
                     setState(() {
@@ -423,6 +439,14 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                       final updatedExercises = List<Exercise>.from(
                         routine.exercises,
                       );
+                      final targetIndex = editIndex ?? updatedExercises.length;
+
+                      if (targetIndex > 0) {
+                        final previousExercise =
+                            updatedExercises[targetIndex - 1];
+                        updatedExercises[targetIndex - 1] = previousExercise
+                            .copyWith(isSuperset: isBiset);
+                      }
 
                       if (editIndex == null) {
                         updatedExercises.add(customizedEx);
@@ -592,7 +616,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                 vertical: 8,
                               ),
                               itemCount: allExercises.length,
-                              separatorBuilder: (_, __) =>
+                              separatorBuilder: (_, _) =>
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final ex = allExercises[index];
@@ -678,7 +702,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
       body: ListView.separated(
         padding: const EdgeInsets.all(20),
         itemCount: _draftRoutines.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 20),
+        separatorBuilder: (_, _) => const SizedBox(height: 20),
         itemBuilder: (context, index) {
           final routine = _draftRoutines[index];
 
@@ -697,7 +721,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primary.withOpacity(0.1),
+                    ).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
@@ -740,24 +764,32 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                     itemCount: routine.exercises.length,
                     itemBuilder: (ctx, i) {
                       final ex = routine.exercises[i];
-                      bool isDropset = ex.reps.toUpperCase().contains(
+                      final bool isDropset = ex.reps.toUpperCase().contains(
                         'DROPSET',
                       );
-                      bool isBiset = ex.reps.toUpperCase().contains('BISET');
+                      final bool startsBiset =
+                          ex.isSuperset && i < routine.exercises.length - 1;
+                      final bool continuesBiset =
+                          i > 0 && routine.exercises[i - 1].isSuperset;
+                      final bool isBiset = startsBiset || continuesBiset;
 
                       return Container(
-                        // Lógica visual do Bi-set (Gruda no de cima)
+                        margin: EdgeInsets.only(bottom: startsBiset ? 2 : 0),
                         decoration: BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(continuesBiset ? 2 : 10),
+                            bottom: Radius.circular(startsBiset ? 2 : 10),
+                          ),
                           border: isBiset
-                              ? Border(
-                                  left: BorderSide(
-                                    color: Colors.orangeAccent,
-                                    width: 4,
+                              ? Border.all(
+                                  color: Colors.orangeAccent.withValues(
+                                    alpha: 0.65,
                                   ),
+                                  width: 1.2,
                                 )
                               : null,
                           color: isBiset
-                              ? Colors.orangeAccent.withOpacity(0.05)
+                              ? Colors.orangeAccent.withValues(alpha: 0.05)
                               : Colors.transparent,
                         ),
                         child: ListTile(
@@ -804,9 +836,9 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                     color: Colors.orangeAccent,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
-                                    'BI-SET',
-                                    style: TextStyle(
+                                  child: Text(
+                                    startsBiset ? 'BI-SET 1/2' : 'BI-SET 2/2',
+                                    style: const TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
@@ -864,8 +896,29 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                 onPressed: () {
                                   setState(() {
                                     final updatedExercises =
-                                        List<Exercise>.from(routine.exercises)
-                                          ..removeAt(i);
+                                        List<Exercise>.from(routine.exercises);
+
+                                    // Se o removido era a segunda parte,
+                                    // desfaz a ligação no exercício anterior.
+                                    if (i > 0 &&
+                                        updatedExercises[i - 1].isSuperset) {
+                                      updatedExercises[i -
+                                          1] = updatedExercises[i - 1].copyWith(
+                                        isSuperset: false,
+                                      );
+                                    }
+
+                                    updatedExercises.removeAt(i);
+
+                                    // Nunca deixa o último exercício apontando
+                                    // para um próximo exercício inexistente.
+                                    if (updatedExercises.isNotEmpty &&
+                                        updatedExercises.last.isSuperset) {
+                                      updatedExercises[updatedExercises.length -
+                                          1] = updatedExercises.last.copyWith(
+                                        isSuperset: false,
+                                      );
+                                    }
 
                                     _draftRoutines[index] = routine.copyWith(
                                       exercises: updatedExercises,

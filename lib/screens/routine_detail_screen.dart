@@ -54,10 +54,14 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
     return 'assets/images/$cleanName.gif';
   }
 
-  void _openEditRoutineModal(BuildContext context, WorkoutController provider) {
-    final nameCtrl = TextEditingController(text: widget.routine.name);
-    final focusCtrl = TextEditingController(text: widget.routine.focus);
-    List<Exercise> currentExercises = List.from(widget.routine.exercises);
+  void _openEditRoutineModal(
+    BuildContext context,
+    WorkoutController provider,
+    WorkoutRoutine routine,
+  ) {
+    final nameCtrl = TextEditingController(text: routine.name);
+    final focusCtrl = TextEditingController(text: routine.focus);
+    List<Exercise> currentExercises = List.from(routine.exercises);
 
     showModalBottomSheet(
       context: context,
@@ -151,9 +155,8 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: currentExercises.length,
-                      onReorder: (oldIndex, newIndex) {
+                      onReorderItem: (oldIndex, newIndex) {
                         setStateModal(() {
-                          if (newIndex > oldIndex) newIndex -= 1;
                           final item = currentExercises.removeAt(oldIndex);
                           currentExercises.insert(newIndex, item);
                         });
@@ -221,14 +224,14 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                         ),
                         onPressed: () {
                           provider.updateRoutine(
-                            widget.routine.id,
+                            routine.id,
                             nameCtrl.text.trim().isEmpty
-                                ? widget.routine.name
+                                ? routine.name
                                 : nameCtrl.text.trim(),
                             focusCtrl.text.trim().isEmpty
-                                ? widget.routine.focus
+                                ? routine.focus
                                 : focusCtrl.text.trim(),
-                            widget.routine.groupName,
+                            routine.groupName,
                             currentExercises,
                           );
                           Navigator.pop(ctx);
@@ -259,9 +262,192 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
     );
   }
 
-  void _handleStartRoutine(BuildContext context, WorkoutController provider) {
+  Widget _buildRoutineExerciseCard(
+    BuildContext context,
+    WorkoutRoutine routine,
+    int index,
+  ) {
+    final exercise = routine.exercises[index];
+    final startsBiSet =
+        exercise.isSuperset && index < routine.exercises.length - 1;
+    final continuesBiSet = index > 0 && routine.exercises[index - 1].isSuperset;
+    final isBiSet = startsBiSet || continuesBiSet;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      key: ValueKey<String>('${routine.id}-${exercise.id}-$index'),
+      margin: EdgeInsets.only(bottom: startsBiSet ? 2 : 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(continuesBiSet ? 4 : 12),
+          bottom: Radius.circular(startsBiSet ? 4 : 12),
+        ),
+        border: Border.all(
+          color: isBiSet
+              ? primaryColor.withValues(alpha: 0.55)
+              : AppColors.border,
+          width: isBiSet ? 1.25 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isBiSet)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(continuesBiSet ? 3 : 11),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.link, size: 15, color: primaryColor),
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      startsBiSet
+                          ? 'BI-SET 1/2 — FAÇA COM O PRÓXIMO'
+                          : 'BI-SET 2/2 — CONTINUAÇÃO SEM PAUSA',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.asset(
+                      _getImagePath(exercise.name),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exercise.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (exercise.customNote.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.push_pin,
+                                size: 10,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  exercise.customNote,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.amber,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                      Text(
+                        'MÚSCULO: ${exercise.muscle.toUpperCase()}',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        children: [
+                          _ExerciseMetric(
+                            icon: Icons.repeat,
+                            label: exercise.reps,
+                          ),
+                          _ExerciseMetric(
+                            icon: Icons.timer_outlined,
+                            label: exercise.rest,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleStartRoutine(
+    BuildContext context,
+    WorkoutController provider,
+    WorkoutRoutine routine,
+  ) {
     if (provider.isWorkoutActive &&
-        provider.activeRoutineName != widget.routine.name) {
+        provider.activeRoutineName != routine.name) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -288,7 +474,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 foregroundColor: Colors.black,
               ),
               onPressed: () {
-                provider.startRoutine(widget.routine);
+                provider.startRoutine(routine);
                 Navigator.pop(ctx);
                 Navigator.pushReplacement(
                   context,
@@ -307,7 +493,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
       );
     } else {
       if (!provider.isWorkoutActive) {
-        provider.startRoutine(widget.routine);
+        provider.startRoutine(routine);
       }
       Navigator.push(
         context,
@@ -320,6 +506,10 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
+    final routine = workoutState.myRoutines.firstWhere(
+      (item) => item.id == widget.routine.id,
+      orElse: () => widget.routine,
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -336,7 +526,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               Icons.edit,
               color: Theme.of(context).colorScheme.primary,
             ),
-            onPressed: () => _openEditRoutineModal(context, provider),
+            onPressed: () => _openEditRoutineModal(context, provider, routine),
           ),
         ],
       ),
@@ -363,7 +553,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.routine.name,
+                    routine.name,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
@@ -382,7 +572,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.routine.focus,
+                    routine.focus,
                     style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -399,7 +589,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${widget.routine.exercises.length} Exercícios nesta ficha',
+                        '${routine.exercises.length} Exercícios nesta ficha',
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -422,154 +612,12 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ListView.separated(
+            ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: widget.routine.exercises.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemCount: routine.exercises.length,
               itemBuilder: (context, index) {
-                final ex = widget.routine.exercises[index];
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(9),
-                          child: Image.asset(
-                            _getImagePath(ex.name),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Center(
-                                  child: Text(
-                                    '${index + 1}',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ex.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-
-                            if (ex.customNote.isNotEmpty) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: Colors.amber.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.push_pin,
-                                      size: 10,
-                                      color: Colors.amber,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        ex.customNote,
-                                        style: const TextStyle(
-                                          color: Colors.amber,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                            ],
-
-                            Text(
-                              'MÚSCULO: ${ex.muscle.toUpperCase()}',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.repeat,
-                                  size: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  ex.reps,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Icon(
-                                  Icons.timer_outlined,
-                                  size: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  ex.rest,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                return _buildRoutineExerciseCard(context, routine, index);
               },
             ),
           ],
@@ -590,16 +638,16 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               ),
               elevation: 4,
             ),
-            onPressed: () => _handleStartRoutine(context, provider),
+            onPressed: () => _handleStartRoutine(context, provider, routine),
             icon: Icon(
               workoutState.isWorkoutActive &&
-                      workoutState.activeRoutineName == widget.routine.name
+                      workoutState.activeRoutineName == routine.name
                   ? Icons.play_circle_filled
                   : Icons.play_arrow,
             ),
             label: Text(
               workoutState.isWorkoutActive &&
-                      workoutState.activeRoutineName == widget.routine.name
+                      workoutState.activeRoutineName == routine.name
                   ? 'CONTINUAR TREINO INICIADO'
                   : 'INICIAR ESTE TREINO',
               style: const TextStyle(
@@ -611,6 +659,32 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ExerciseMetric extends StatelessWidget {
+  const _ExerciseMetric({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textSecondary),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

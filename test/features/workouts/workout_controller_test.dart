@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pulse/features/workouts/data/catalogs/pre_made_workout_catalog.dart';
 import 'package:pulse/features/workouts/data/services/workout_feedback_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
@@ -148,6 +149,168 @@ void main() {
     expect(nextState.customExercises, hasLength(1));
     expect(nextState.customExercises.single.name, 'Remada baixa');
     expect(repository.customExercises, hasLength(1));
+  });
+
+  test('não duplica um programa pronto já importado', () async {
+    final repository = _FakeWorkoutRepository();
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    final program = controller.preMadePrograms.first;
+
+    expect(controller.importProgram(program), isTrue);
+    final firstImportCount = container
+        .read(workoutControllerProvider)
+        .myRoutines
+        .length;
+
+    expect(controller.isProgramImported(program), isTrue);
+    expect(controller.importProgram(program), isFalse);
+    expect(
+      container.read(workoutControllerProvider).myRoutines.length,
+      firstImportCount,
+    );
+  });
+
+  test('reconhece importações antigas pelo identificador da ficha', () async {
+    final program = buildPreMadeWorkoutPrograms().first;
+    final legacyRoutines = program.routines
+        .map(
+          (item) => item.copyWith(
+            id: '1700000000000_${item.id}',
+            groupName: program.name,
+          ),
+        )
+        .toList();
+    final repository = _FakeWorkoutRepository(routines: legacyRoutines);
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    expect(controller.isProgramImported(program), isTrue);
+    expect(controller.importProgram(program), isFalse);
+    expect(
+      container.read(workoutControllerProvider).myRoutines,
+      hasLength(program.routines.length),
+    );
+  });
+
+  test('atualiza imediatamente a ficha após remover um exercício', () async {
+    const secondExercise = Exercise(
+      id: 'exercise-2',
+      name: 'Crucifixo',
+      muscle: 'Peito',
+      description: 'Teste',
+      reps: '3x 12',
+      rest: '45 seg',
+    );
+
+    final routineWithTwoExercises = routine.copyWith(
+      exercises: const <Exercise>[exercise, secondExercise],
+    );
+    final repository = _FakeWorkoutRepository(
+      routines: <WorkoutRoutine>[routineWithTwoExercises],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    controller.updateRoutine(
+      routineWithTwoExercises.id,
+      routineWithTwoExercises.name,
+      routineWithTwoExercises.focus,
+      routineWithTwoExercises.groupName,
+      const <Exercise>[exercise],
+    );
+
+    final updatedRoutine = container
+        .read(workoutControllerProvider)
+        .myRoutines
+        .single;
+
+    expect(updatedRoutine.exercises, hasLength(1));
+    expect(updatedRoutine.exercises.single.id, exercise.id);
+  });
+
+  test('migra bi-set criado pelo construtor antigo', () async {
+    const firstExercise = Exercise(
+      id: 'exercise-biset-1',
+      name: 'Supino reto',
+      muscle: 'Peito',
+      description: '',
+      reps: '3x 10',
+      rest: '0 seg',
+    );
+    const secondExercise = Exercise(
+      id: 'exercise-biset-2',
+      name: 'Remada baixa',
+      muscle: 'Costas',
+      description: '',
+      reps: '3x 10 + BISET',
+      rest: '60 seg',
+    );
+
+    final legacyRoutine = WorkoutRoutine(
+      id: 'legacy-biset',
+      name: 'Treino Bi-set',
+      focus: 'Superiores',
+      groupName: 'Teste',
+      exercises: const <Exercise>[firstExercise, secondExercise],
+    );
+    final repository = _FakeWorkoutRepository(
+      routines: <WorkoutRoutine>[legacyRoutine],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    final migratedRoutine = container
+        .read(workoutControllerProvider)
+        .myRoutines
+        .single;
+
+    expect(migratedRoutine.exercises.first.isSuperset, isTrue);
+    expect(migratedRoutine.exercises.last.isSuperset, isFalse);
+    expect(migratedRoutine.exercises.last.reps, '3x 10');
+    expect(repository.routines.single.exercises.first.isSuperset, isTrue);
+    expect(repository.routines.single.exercises.last.reps, '3x 10');
   });
 
   test('mantém a duração do treino em um Notifier separado', () {

@@ -9,13 +9,18 @@ import '../services/workout_legacy_migration_service.dart';
 import '../services/workout_local_service.dart';
 
 class WorkoutRepositoryImpl implements WorkoutRepository {
-  WorkoutRepositoryImpl({
+  factory WorkoutRepositoryImpl({
     PulseDatabase? database,
     WorkoutLocalService? localService,
     WorkoutLegacyMigrationService? migrationService,
-  }) : _localService =
-           localService ?? WorkoutLocalService(database ?? PulseDatabase()),
-       _migrationService = migrationService;
+  }) {
+    final resolvedLocalService =
+        localService ?? WorkoutLocalService(database ?? PulseDatabase());
+
+    return WorkoutRepositoryImpl._(resolvedLocalService, migrationService);
+  }
+
+  WorkoutRepositoryImpl._(this._localService, this._migrationService);
 
   final WorkoutLocalService _localService;
   final WorkoutLegacyMigrationService? _migrationService;

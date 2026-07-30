@@ -8,8 +8,13 @@ import '../../domain/models/workout_history_item.dart';
 import 'workout_local_service.dart';
 
 class WorkoutLegacyMigrationService {
-  WorkoutLegacyMigrationService({required WorkoutLocalService localService})
-    : _localService = localService;
+  factory WorkoutLegacyMigrationService({
+    required WorkoutLocalService localService,
+  }) {
+    return WorkoutLegacyMigrationService._(localService);
+  }
+
+  WorkoutLegacyMigrationService._(this._localService);
 
   static const String _migrationKey = 'workout_sqlite_migration_v1_completed';
 

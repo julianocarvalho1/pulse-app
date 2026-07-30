@@ -2,11 +2,14 @@ import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 
 class PulseDatabase {
-  PulseDatabase({
+  factory PulseDatabase({
     DatabaseFactory? databaseFactoryOverride,
     String? databasePathOverride,
-  }) : _databaseFactoryOverride = databaseFactoryOverride,
-       _databasePathOverride = databasePathOverride;
+  }) {
+    return PulseDatabase._(databaseFactoryOverride, databasePathOverride);
+  }
+
+  PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
   static const int databaseVersion = 1;
