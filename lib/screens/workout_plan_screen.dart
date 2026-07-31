@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/workout_generator/presentation/screens/workout_generator_screen.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
@@ -67,19 +68,82 @@ class WorkoutPlanScreen extends ConsumerWidget {
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CreateRoutineScreen()),
-            );
-          },
+          onPressed: () => _showCreateOptions(context),
           icon: const Icon(Icons.add),
           label: const Text(
-            'Nova ficha',
+            'Criar treino',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
       ),
+    );
+  }
+
+  void _showCreateOptions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            4,
+            20,
+            MediaQuery.viewPaddingOf(sheetContext).bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Criar treino',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Gere um programa completo ou monte uma ficha manualmente.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              _CreateOptionTile(
+                icon: Icons.auto_awesome_rounded,
+                title: 'Gerar programa inteligente',
+                subtitle: 'Objetivo, nível, dias, tempo e equipamentos.',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const WorkoutGeneratorScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _CreateOptionTile(
+                icon: Icons.edit_note_rounded,
+                title: 'Criar ficha manualmente',
+                subtitle: 'Escolha cada exercício e etapa de cardio.',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateRoutineScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -125,7 +189,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'Use o botão “Nova ficha” ou importe um programa pronto para começar.',
+                  'Use “Criar treino” para gerar um programa ou montar uma ficha manualmente.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -747,6 +811,73 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CreateOptionTile extends StatelessWidget {
+  const _CreateOptionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceLight,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
     );

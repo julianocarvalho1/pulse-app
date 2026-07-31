@@ -245,28 +245,30 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border)),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          16,
+          24,
+          MediaQuery.viewPaddingOf(context).bottom + 16,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: AppColors.onPrimary,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: AppColors.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: _nextStep,
-            child: const Text(
-              'AVANÇAR E MONTAR FICHAS',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-            ),
+          onPressed: _nextStep,
+          child: const Text(
+            'AVANÇAR E MONTAR FICHAS',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
         ),
       ),
