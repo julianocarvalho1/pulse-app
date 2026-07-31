@@ -81,7 +81,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               20,
-              20,
+              16,
               20,
               MediaQuery.paddingOf(context).bottom + 32,
             ),
@@ -111,8 +111,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     WorkoutProgressSummary summary,
   ) {
     final stats = summary.current;
-    final month = DateTime(DateTime.now().year, DateTime.now().month);
-    final calendar = ref.watch(workoutCalendarProvider(month));
     final weeklyVolume = summary.weeklyPoints
         .map((point) => point.volume)
         .toList();
@@ -120,10 +118,19 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _periodSelector(),
-        const SizedBox(height: 16),
-        _compactCalendar(context, month, calendar),
+        _progressSectionHeader(
+          title: 'CALENDÁRIO DE TREINOS',
+          subtitle: 'Toque em um dia para consultar as atividades registradas.',
+        ),
+        const SizedBox(height: 10),
+        const ConsistencyCalendarSection(),
         const SizedBox(height: 20),
+        _progressSectionHeader(
+          title: 'RESUMO DO PERÍODO',
+          subtitle: 'Frequência, tempo e evolução dos seus treinos.',
+          trailing: _periodDropdown(),
+        ),
+        const SizedBox(height: 10),
         if (stats.isEmpty)
           _emptyState(
             icon: Icons.insights_outlined,
@@ -427,8 +434,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _periodSelector(),
-        const SizedBox(height: 16),
+        _progressSectionHeader(
+          title: 'EVOLUÇÃO POR EXERCÍCIO',
+          subtitle: 'Compare cargas e sessões no período selecionado.',
+          trailing: _periodDropdown(),
+        ),
+        const SizedBox(height: 10),
         if (selected == null)
           _emptyState(
             icon: Icons.emoji_events_outlined,
@@ -442,16 +453,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  'EVOLUÇÃO POR EXERCÍCIO',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   key: ValueKey<String>(selected.exerciseKey),
                   initialValue: selected.exerciseKey,
@@ -613,177 +614,34 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _compactCalendar(
-    BuildContext context,
-    DateTime month,
-    Map<DateTime, WorkoutDaySummary> days,
-  ) {
-    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
-    final firstWeekday = DateTime(month.year, month.month, 1).weekday;
-    final offset = firstWeekday == 7 ? 0 : firstWeekday;
-    final cells = ((daysInMonth + offset) / 7).ceil() * 7;
-    final completed = days.values.fold<int>(
-      0,
-      (total, day) => total + day.completedCount,
-    );
-    final incomplete = days.values.fold<int>(
-      0,
-      (total, day) => total + day.incompleteCount,
-    );
-
-    return _sectionCard(
-      context,
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  _monthYearLabel(month),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const ProgressCalendarScreen(),
-                    ),
-                  );
-                },
-                child: const Text('VER CALENDÁRIO'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: <Widget>[
-              _legendDot(
-                Theme.of(context).colorScheme.primary,
-                '$completed concluídos',
-              ),
-              const SizedBox(width: 14),
-              _legendDot(Colors.orangeAccent, '$incomplete incompletos'),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const <String>['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-                .map(
-                  (label) => SizedBox(
-                    width: 30,
-                    child: Center(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            itemCount: cells,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-            ),
-            itemBuilder: (context, index) {
-              if (index < offset || index >= offset + daysInMonth) {
-                return const SizedBox.shrink();
-              }
-
-              final dayNumber = index - offset + 1;
-              final date = DateTime(month.year, month.month, dayNumber);
-              final day = days[date];
-              final isToday = DateUtils.isSameDay(date, DateTime.now());
-              return _calendarDay(context, dayNumber, day, isToday);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _calendarDay(
-    BuildContext context,
-    int dayNumber,
-    WorkoutDaySummary? day,
-    bool isToday,
-  ) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final hasCompleted = day?.hasCompleted ?? false;
-    final hasIncomplete = day?.hasIncomplete ?? false;
-    final background = hasCompleted
-        ? primary
-        : hasIncomplete
-        ? Colors.orangeAccent
-        : Colors.transparent;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: background,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isToday ? primary : Colors.transparent,
-          width: 1.5,
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          Text(
-            '$dayNumber',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: day == null && !isToday
-                  ? FontWeight.w400
-                  : FontWeight.w700,
-              color: day == null
-                  ? AppColors.textPrimary
-                  : hasCompleted
-                  ? AppColors.onPrimary
-                  : Colors.black87,
-            ),
-          ),
-          if (hasCompleted && hasIncomplete)
-            Positioned(
-              right: 1,
-              bottom: 1,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.orangeAccent,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _periodSelector() {
-    return Align(
-      alignment: Alignment.centerRight,
+    return Align(alignment: Alignment.centerRight, child: _periodDropdown());
+  }
+
+  Widget _periodDropdown() {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 38),
+      padding: const EdgeInsets.only(left: 12, right: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<ProgressPeriod>(
           value: _period,
+          isDense: true,
+          borderRadius: BorderRadius.circular(14),
           dropdownColor: AppColors.surfaceLight,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.textSecondary,
+          ),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
           items: ProgressPeriod.values.map((period) {
             return DropdownMenuItem<ProgressPeriod>(
               value: period,
@@ -800,6 +658,46 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _progressSectionHeader({
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              if (subtitle != null) ...<Widget>[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (trailing != null) ...<Widget>[const SizedBox(width: 12), trailing],
+      ],
     );
   }
 
@@ -1496,24 +1394,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _legendDot(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
-        ),
-      ],
-    );
-  }
-
   Widget _miniTag(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -1985,24 +1865,6 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     }
 
     return type.isWeight ? 'lbs' : 'in';
-  }
-
-  String _monthYearLabel(DateTime date) {
-    const months = <String>[
-      'JANEIRO',
-      'FEVEREIRO',
-      'MARÇO',
-      'ABRIL',
-      'MAIO',
-      'JUNHO',
-      'JULHO',
-      'AGOSTO',
-      'SETEMBRO',
-      'OUTUBRO',
-      'NOVEMBRO',
-      'DEZEMBRO',
-    ];
-    return '${months[date.month - 1]} ${date.year}';
   }
 
   String _formatDuration(int seconds) {

@@ -4,24 +4,138 @@ import 'package:intl/intl.dart';
 
 import '../features/progress/domain/models/workout_progress_summary.dart';
 import '../features/progress/presentation/providers/progress_providers.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
 import '../theme/app_theme.dart';
 import 'workout_history_detail_screen.dart';
 
-class ProgressCalendarScreen extends ConsumerStatefulWidget {
-  const ProgressCalendarScreen({super.key});
+/// Calendário completo exibido diretamente na aba Consistência.
+///
+/// Ele substitui a antiga tela separada de calendário para manter mês,
+/// seleção de dia e histórico diário no mesmo fluxo de progresso.
+class ConsistencyCalendarSection extends ConsumerStatefulWidget {
+  const ConsistencyCalendarSection({super.key});
 
   @override
-  ConsumerState<ProgressCalendarScreen> createState() =>
-      _ProgressCalendarScreenState();
+  ConsumerState<ConsistencyCalendarSection> createState() =>
+      _ConsistencyCalendarSectionState();
 }
 
-class _ProgressCalendarScreenState
-    extends ConsumerState<ProgressCalendarScreen> {
+class _ConsistencyCalendarSectionState
+    extends ConsumerState<ConsistencyCalendarSection> {
   DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime? _selectedDate;
 
   @override
   Widget build(BuildContext context) {
     final days = ref.watch(workoutCalendarProvider(_currentMonth));
+    final selectedDate = _effectiveSelectedDate(days);
+    final selectedDay = selectedDate == null ? null : days[selectedDate];
+    final completed = days.values.fold<int>(
+      0,
+      (total, day) => total + day.completedCount,
+    );
+    final incomplete = days.values.fold<int>(
+      0,
+      (total, day) => total + day.incompleteCount,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  IconButton(
+                    tooltip: 'Mês anterior',
+                    onPressed: () => _changeMonth(-1),
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  ),
+                  Expanded(
+                    child: Text(
+                      _monthYearLabel(_currentMonth),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Próximo mês',
+                    onPressed: _canGoNext ? () => _changeMonth(1) : null,
+                    icon: const Icon(Icons.chevron_right_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 7,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    _legend(
+                      Theme.of(context).colorScheme.primary,
+                      '$completed concluído${completed == 1 ? '' : 's'}',
+                    ),
+                    _legend(
+                      Colors.orangeAccent,
+                      '$incomplete incompleto${incomplete == 1 ? '' : 's'}',
+                    ),
+                    Text(
+                      '${days.length} dia${days.length == 1 ? '' : 's'} ativo${days.length == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  _WeekdayLabel('D'),
+                  _WeekdayLabel('S'),
+                  _WeekdayLabel('T'),
+                  _WeekdayLabel('Q'),
+                  _WeekdayLabel('Q'),
+                  _WeekdayLabel('S'),
+                  _WeekdayLabel('S'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              _calendarGrid(context, days: days, selectedDate: selectedDate),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _selectedDaySection(
+          context,
+          selectedDate: selectedDate,
+          selectedDay: selectedDay,
+        ),
+      ],
+    );
+  }
+
+  Widget _calendarGrid(
+    BuildContext context, {
+    required Map<DateTime, WorkoutDaySummary> days,
+    required DateTime? selectedDate,
+  }) {
     final daysInMonth = DateUtils.getDaysInMonth(
       _currentMonth.year,
       _currentMonth.month,
@@ -31,201 +145,48 @@ class _ProgressCalendarScreenState
       _currentMonth.month,
       1,
     ).weekday;
-    final offset = firstWeekday == 7 ? 0 : firstWeekday;
+    final offset = firstWeekday == DateTime.sunday ? 0 : firstWeekday;
     final cells = ((daysInMonth + offset) / 7).ceil() * 7;
-    final completed = days.values.fold<int>(
-      0,
-      (total, day) => total + day.completedCount,
-    );
-    final incomplete = days.values.fold<int>(
-      0,
-      (total, day) => total + day.incompleteCount,
-    );
-    final activeDays = days.length;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Calendário de Treinos',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-        ),
+    return GridView.builder(
+      itemCount: cells,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        mainAxisSpacing: 7,
+        crossAxisSpacing: 7,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(17),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(17),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      IconButton(
-                        tooltip: 'Mês anterior',
-                        onPressed: () => _changeMonth(-1),
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Expanded(
-                        child: Text(
-                          _monthYearLabel(_currentMonth),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Próximo mês',
-                        onPressed: _canGoNext ? () => _changeMonth(1) : null,
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: <Widget>[
-                      _legend(
-                        Theme.of(context).colorScheme.primary,
-                        'Concluído',
-                      ),
-                      const SizedBox(width: 14),
-                      _legend(Colors.orangeAccent, 'Incompleto'),
-                      const Spacer(),
-                      Text(
-                        '$activeDays dias ativos',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children:
-                        const <String>[
-                          'Dom',
-                          'Seg',
-                          'Ter',
-                          'Qua',
-                          'Qui',
-                          'Sex',
-                          'Sáb',
-                        ].map((label) {
-                          return SizedBox(
-                            width: 34,
-                            child: Center(
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                  const SizedBox(height: 10),
-                  GridView.builder(
-                    itemCount: cells,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                        ),
-                    itemBuilder: (context, index) {
-                      if (index < offset || index >= offset + daysInMonth) {
-                        return const SizedBox.shrink();
-                      }
+      itemBuilder: (context, index) {
+        if (index < offset || index >= offset + daysInMonth) {
+          return const SizedBox.shrink();
+        }
 
-                      final dayNumber = index - offset + 1;
-                      final date = DateTime(
-                        _currentMonth.year,
-                        _currentMonth.month,
-                        dayNumber,
-                      );
-                      final summary = days[date];
-                      return _dayCell(context, date: date, summary: summary);
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: _summaryCard(
-                    context,
-                    label: 'CONCLUÍDOS',
-                    value: completed,
-                    color: Theme.of(context).colorScheme.primary,
-                    icon: Icons.check_circle_outline,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _summaryCard(
-                    context,
-                    label: 'INCOMPLETOS',
-                    value: incomplete,
-                    color: Colors.orangeAccent,
-                    icon: Icons.pending_actions_outlined,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'TREINOS DO MÊS',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.6,
-              ),
-            ),
-            const SizedBox(height: 10),
-            if (days.isEmpty)
-              _emptyMonth()
-            else
-              ..._orderedDays(days).map((day) => _dayHistoryCard(context, day)),
-          ],
-        ),
-      ),
+        final dayNumber = index - offset + 1;
+        final date = DateTime(
+          _currentMonth.year,
+          _currentMonth.month,
+          dayNumber,
+        );
+        final summary = days[date];
+        final selected =
+            selectedDate != null && DateUtils.isSameDay(selectedDate, date);
+
+        return _dayCell(
+          context,
+          date: date,
+          summary: summary,
+          selected: selected,
+        );
+      },
     );
-  }
-
-  bool get _canGoNext {
-    final now = DateTime.now();
-    return _currentMonth.year < now.year ||
-        (_currentMonth.year == now.year && _currentMonth.month < now.month);
-  }
-
-  void _changeMonth(int delta) {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + delta);
-    });
   }
 
   Widget _dayCell(
     BuildContext context, {
     required DateTime date,
     required WorkoutDaySummary? summary,
+    required bool selected,
   }) {
     final hasCompleted = summary?.hasCompleted ?? false;
     final hasIncomplete = summary?.hasIncomplete ?? false;
@@ -236,21 +197,44 @@ class _ProgressCalendarScreenState
         : hasIncomplete
         ? Colors.orangeAccent
         : Colors.transparent;
+    final contentColor = summary == null
+        ? AppColors.textPrimary
+        : hasCompleted
+        ? AppColors.onPrimary
+        : Colors.black87;
 
     return Material(
       color: Colors.transparent,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: summary == null ? null : () => _showDay(context, summary),
-        child: Container(
+        onTap: () {
+          setState(() {
+            _selectedDate = date;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: background,
             shape: BoxShape.circle,
             border: Border.all(
-              color: isToday ? primary : Colors.transparent,
-              width: 1.7,
+              color: selected
+                  ? primary
+                  : isToday
+                  ? primary.withValues(alpha: 0.75)
+                  : Colors.transparent,
+              width: selected ? 2.5 : 1.5,
             ),
+            boxShadow: selected
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.22),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
           ),
           child: Stack(
             alignment: Alignment.center,
@@ -258,15 +242,11 @@ class _ProgressCalendarScreenState
               Text(
                 '${date.day}',
                 style: TextStyle(
-                  color: summary == null
-                      ? AppColors.textPrimary
-                      : hasCompleted
-                      ? AppColors.onPrimary
-                      : Colors.black87,
-                  fontWeight: summary == null && !isToday
+                  color: contentColor,
+                  fontWeight: summary == null && !selected && !isToday
                       ? FontWeight.w400
                       : FontWeight.w800,
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
               ),
               if (hasCompleted && hasIncomplete)
@@ -274,8 +254,8 @@ class _ProgressCalendarScreenState
                   right: 1,
                   bottom: 1,
                   child: Container(
-                    width: 9,
-                    height: 9,
+                    width: 8,
+                    height: 8,
                     decoration: const BoxDecoration(
                       color: Colors.orangeAccent,
                       shape: BoxShape.circle,
@@ -289,168 +269,242 @@ class _ProgressCalendarScreenState
     );
   }
 
-  Widget _summaryCard(
+  Widget _selectedDaySection(
     BuildContext context, {
-    required String label,
-    required int value,
-    required Color color,
-    required IconData icon,
+    required DateTime? selectedDate,
+    required WorkoutDaySummary? selectedDay,
   }) {
+    final effectiveDate = selectedDate ?? _currentMonth;
+
     return Container(
-      padding: const EdgeInsets.all(15),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, color: color, size: 25),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: <Widget>[
-              Text(
-                '$value',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${effectiveDate.day}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _fullDateLabel(effectiveDate),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      selectedDay == null
+                          ? 'Nenhuma atividade registrada'
+                          : '${selectedDay.total} atividade${selectedDay.total == 1 ? '' : 's'} registrada${selectedDay.total == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          if (selectedDay == null)
+            _emptySelectedDay()
+          else
+            ...selectedDay.items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _workoutItem(context, item),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _dayHistoryCard(BuildContext context, WorkoutDaySummary day) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: AppColors.border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ExpansionTile(
-          shape: const Border(),
-          collapsedShape: const Border(),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(11),
+  Widget _workoutItem(BuildContext context, WorkoutHistoryItem item) {
+    final incomplete = item.isIncomplete;
+    final isCardio = item.isCardioOnly;
+    final color = incomplete
+        ? Colors.orangeAccent
+        : Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: AppColors.surfaceLight,
+      borderRadius: BorderRadius.circular(13),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) => WorkoutHistoryDetailScreen(workout: item),
             ),
-            child: Center(
-              child: Text(
-                '${day.date.day}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 10, 11),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  isCardio
+                      ? Icons.directions_run_rounded
+                      : incomplete
+                      ? Icons.pending_actions_rounded
+                      : Icons.check_circle_rounded,
+                  color: color,
+                  size: 20,
                 ),
               ),
-            ),
-          ),
-          title: Text(
-            _fullDateLabel(day.date),
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-          subtitle: Text(
-            '${day.completedCount} concluídos • ${day.incompleteCount} incompletos',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-          ),
-          children: day.items.map((item) {
-            final incomplete = item.isIncomplete;
-            final isCardio = item.isCardioOnly;
-            final color = incomplete
-                ? Colors.orangeAccent
-                : Theme.of(context).colorScheme.primary;
-
-            return ListTile(
-              contentPadding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
-              leading: Icon(
-                isCardio
-                    ? Icons.directions_run_rounded
-                    : incomplete
-                    ? Icons.pending_actions_rounded
-                    : Icons.check_circle_rounded,
-                color: color,
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      item.routineName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _workoutSubtitle(item),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              title: Text(
-                item.routineName,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                isCardio
-                    ? '${DateFormat('HH:mm').format(item.date)} • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}'
-                    : '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  incomplete ? 'INCOMPLETO' : 'CONCLUÍDO',
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
                   ),
-                );
-              },
-            );
-          }).toList(),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _emptyMonth() {
+  Widget _emptySelectedDay() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
         children: <Widget>[
           Icon(
-            Icons.calendar_month_outlined,
-            color: AppColors.textSecondary,
-            size: 40,
+            Icons.event_available_outlined,
+            color: AppColors.textMuted,
+            size: 28,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
-            'Nenhum treino neste mês',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Os dias treinados aparecerão aqui após o registro no histórico.',
+            'Toque em outro dia para consultar o histórico.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              height: 1.4,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
         ],
       ),
     );
+  }
+
+  DateTime? _effectiveSelectedDate(Map<DateTime, WorkoutDaySummary> days) {
+    final selected = _selectedDate;
+    if (selected != null &&
+        selected.year == _currentMonth.year &&
+        selected.month == _currentMonth.month) {
+      return DateTime(selected.year, selected.month, selected.day);
+    }
+
+    if (days.isNotEmpty) {
+      final dates = days.keys.toList()..sort();
+      return dates.last;
+    }
+
+    final now = DateTime.now();
+    if (_currentMonth.year == now.year && _currentMonth.month == now.month) {
+      return DateTime(now.year, now.month, now.day);
+    }
+
+    return DateTime(_currentMonth.year, _currentMonth.month, 1);
+  }
+
+  bool get _canGoNext {
+    final now = DateTime.now();
+    return _currentMonth.year < now.year ||
+        (_currentMonth.year == now.year && _currentMonth.month < now.month);
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + delta);
+      _selectedDate = null;
+    });
   }
 
   Widget _legend(Color color, String label) {
@@ -458,17 +512,34 @@ class _ProgressCalendarScreenState
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Container(
-          width: 9,
-          height: 9,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 5),
         Text(
           label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
+  }
+
+  String _workoutSubtitle(WorkoutHistoryItem item) {
+    final time = DateFormat('HH:mm').format(item.date);
+    if (item.isCardioOnly && item.cardio.isNotEmpty) {
+      return '$time • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}';
+    }
+
+    if (item.cardio.isNotEmpty) {
+      return '$time • ${item.totalSets} séries • ${item.totalCardioMinutes} min de cardio';
+    }
+
+    return '$time • ${item.duration} • ${item.totalSets} séries';
   }
 
   String _monthYearLabel(DateTime date) {
@@ -515,78 +586,27 @@ class _ProgressCalendarScreenState
     ];
     return '${weekdays[date.weekday - 1]}, ${date.day} de ${months[date.month - 1]}';
   }
+}
 
-  List<WorkoutDaySummary> _orderedDays(Map<DateTime, WorkoutDaySummary> days) {
-    final result = days.values.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    return result;
-  }
+class _WeekdayLabel extends StatelessWidget {
+  const _WeekdayLabel(this.label);
 
-  Future<void> _showDay(BuildContext context, WorkoutDaySummary day) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      useSafeArea: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          top: false,
-          minimum: const EdgeInsets.only(bottom: 8),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  _fullDateLabel(day.date),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ...day.items.map((item) {
-                  final incomplete = item.isIncomplete;
-                  final isCardio = item.isCardioOnly;
-                  final color = incomplete
-                      ? Colors.orangeAccent
-                      : Theme.of(context).colorScheme.primary;
+  final String label;
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      isCardio
-                          ? Icons.directions_run_rounded
-                          : incomplete
-                          ? Icons.pending_actions_rounded
-                          : Icons.check_circle_rounded,
-                      color: color,
-                    ),
-                    title: Text(item.routineName),
-                    subtitle: Text(
-                      isCardio
-                          ? '${DateFormat('HH:mm').format(item.date)} • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}'
-                          : '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) =>
-                              WorkoutHistoryDetailScreen(workout: item),
-                        ),
-                      );
-                    },
-                  );
-                }),
-              ],
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 30,
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
