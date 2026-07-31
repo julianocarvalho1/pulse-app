@@ -12,6 +12,7 @@ import 'screens/profile_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/workout_plan_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/pulse_startup_splash.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,18 +51,20 @@ class _PulseAppState extends ConsumerState<PulseApp>
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsControllerProvider);
 
-    final settings = switch (settingsAsync) {
+    final loadedSettings = switch (settingsAsync) {
       AsyncData<PulseSettings>(:final value) => value,
-      _ => PulseSettings.defaults(),
+      _ => null,
     };
+    final settings = loadedSettings ?? PulseSettings.defaults();
 
     final platformBrightness =
         WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    final effectiveBrightness = _resolveBrightness(
-      settings.themeMode,
-      platformBrightness,
-    );
-    final materialThemeMode = _toMaterialThemeMode(settings.themeMode);
+    final effectiveBrightness = loadedSettings == null
+        ? platformBrightness
+        : _resolveBrightness(settings.themeMode, platformBrightness);
+    final materialThemeMode = loadedSettings == null
+        ? ThemeMode.system
+        : _toMaterialThemeMode(settings.themeMode);
     final selectedPalette = pulsePaletteForValue(settings.themeColorValue);
     final effectivePrimaryColor = selectedPalette.colorFor(effectiveBrightness);
 
@@ -80,7 +83,9 @@ class _PulseAppState extends ConsumerState<PulseApp>
         theme: buildPulseLightTheme(selectedPalette.lightPrimary),
         darkTheme: buildPulseDarkTheme(selectedPalette.darkPrimary),
         themeMode: materialThemeMode,
-        home: const AuthGate(child: OnboardingGate(child: MainNavigation())),
+        home: const PulseStartupSplash(
+          child: AuthGate(child: OnboardingGate(child: MainNavigation())),
+        ),
       ),
     );
   }
