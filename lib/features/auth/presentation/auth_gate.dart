@@ -139,7 +139,7 @@ class _PulseBootstrapScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               'PREPARANDO SEU TREINO',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -187,14 +187,14 @@ class _InitializationErrorView extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Tente novamente. Seus treinos não foram apagados.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -210,7 +210,7 @@ class _InitializationErrorView extends StatelessWidget {
                       onPressed: onRetry,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onPrimary,
                         minimumSize: const Size.fromHeight(54),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),

@@ -400,12 +400,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: AppColors.border),
             ),
-            title: const Text(
+            title: Text(
               'Configurar Exercício',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
@@ -426,20 +426,18 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
                   TextField(
                     controller: repsCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Séries e Repetições (ex: 3x 10-12)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -453,20 +451,18 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
                   TextField(
                     controller: restCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Tempo de Descanso (ex: 60 seg)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -505,25 +501,23 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: selectedTechnique,
                     dropdownColor: Theme.of(context).colorScheme.surface,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_down,
                       color: AppColors.textSecondary,
                     ),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Técnica / Método',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -559,17 +553,15 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
                   TextField(
                     controller: noteCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Observação Livre (Ex: Banco no 4)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -585,7 +577,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(
+                child: Text(
                   'Cancelar',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
@@ -593,7 +585,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                 ),
                 onPressed: () {
                   bool isSupersetFinal = selectedTechnique == 'Bi-Set';
@@ -720,16 +712,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Adicionar em qual ficha?',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: Icon(Icons.close, color: AppColors.textPrimary),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -751,7 +743,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                         tileColor: Theme.of(context).colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: AppColors.border),
                         ),
                         leading: Container(
                           width: 40,
@@ -770,10 +762,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                         ),
                         title: Text(
                           routine.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         subtitle: Text(
@@ -783,7 +775,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                             fontSize: 12,
                           ),
                         ),
-                        trailing: const Icon(
+                        trailing: Icon(
                           Icons.add_circle_outline,
                           color: AppColors.textSecondary,
                         ),
@@ -892,7 +884,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     _buildTabContent(),
 
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'SÉRIES E DESCANSO SUGERIDOS',
                       style: TextStyle(
                         fontSize: 12,
@@ -938,7 +930,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.primary,
-                          foregroundColor: Colors.black,
+                          foregroundColor: AppColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -994,7 +986,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? Colors.white : AppColors.textSecondary,
+            color: active ? AppColors.textPrimary : AppColors.textSecondary,
           ),
         ),
       ),
@@ -1021,10 +1013,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
       children: [
         Text(
           widget.exercise.description,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14.5,
             height: 1.4,
-            color: Colors.white70,
+            color: AppColors.textSecondary,
           ),
         ),
         const SizedBox(height: 20),
@@ -1074,7 +1066,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'MÚSCULOS TRABALHADOS',
           style: TextStyle(
             fontSize: 12,
@@ -1163,7 +1155,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: active ? Theme.of(context).colorScheme.primary : Colors.white,
+          color: active
+              ? Theme.of(context).colorScheme.primary
+              : AppColors.textPrimary,
         ),
       ),
     );

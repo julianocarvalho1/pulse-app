@@ -149,7 +149,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         const SizedBox(height: 2),
                         Text(
                           'Etapa ${_currentPage + 1} de $_pageCount',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
@@ -311,7 +311,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       child: Text(
                         '$value',
                         style: TextStyle(
-                          color: selected ? Colors.black : Colors.white,
+                          color: selected
+                              ? AppColors.onPrimary
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -380,7 +382,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 24),
         const _FieldLabel('EQUIPAMENTOS DISPONÍVEIS'),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Selecione tudo que costuma ter à disposição.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
@@ -447,7 +449,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 28),
         const _FieldLabel('EXERCÍCIOS QUE DESEJA EVITAR'),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Opcional. Separe os nomes por vírgulas. Você poderá alterar depois.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
@@ -553,7 +555,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
@@ -576,12 +578,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ? _complete
                   : _next,
               child: _isSaving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.4,
-                        color: Colors.black,
+                        color: AppColors.onPrimary,
                       ),
                     )
                   : Text(isLastPage ? 'CONCLUIR' : 'CONTINUAR'),
@@ -637,7 +639,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 10),
         Text(
           description,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 14,
             height: 1.5,
@@ -695,7 +697,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       const SizedBox(height: 3),
                       Text(
                         description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                           height: 1.35,
@@ -742,7 +744,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Text(
           title,
           style: TextStyle(
-            color: selected ? Colors.black : Colors.white,
+            color: selected ? AppColors.onPrimary : AppColors.textPrimary,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -891,7 +893,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         color: AppColors.textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w800,

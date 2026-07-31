@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/domain/app_auth_state.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
+import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/providers/onboarding_controller.dart';
+import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/progress/presentation/providers/progress_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import 'personal_data_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -42,12 +45,22 @@ class _SettingsContent extends ConsumerWidget {
       _ => null,
     };
 
+    final onboardingAsync = ref.watch(onboardingControllerProvider);
+    final onboardingProfile = switch (onboardingAsync) {
+      AsyncData<OnboardingState>(:final value) => value.profile,
+      _ => OnboardingProfile.defaults().copyWith(
+        name: settings.profile.displayName,
+        measurementSystem: settings.measurementSystem,
+        isCompleted: true,
+      ),
+    };
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Configurações',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: SingleChildScrollView(
@@ -55,24 +68,51 @@ class _SettingsContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionTitle('CONTA'),
+            _sectionTitle('PERFIL E TREINO'),
             const SizedBox(height: 12),
             _sectionCard(
               context,
               children: [
                 ListTile(
-                  leading: _iconBox(context, Icons.person_outline),
-                  title: Text(
-                    settings.profile.displayName,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  leading: _iconBox(context, Icons.badge_outlined),
+                  title: const Text(
+                    'Dados pessoais',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(_profileSubtitle(settings)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => showPersonalDataSheet(context, settings),
+                ),
+                Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: _iconBox(context, Icons.tune_rounded),
+                  title: const Text(
+                    'Preferências de treino',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
-                    _profileSubtitle(settings),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
+                    _trainingPreferencesSubtitle(onboardingProfile),
                   ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final updated = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OnboardingScreen(
+                          initialProfile: onboardingProfile,
+                          isEditing: true,
+                        ),
+                      ),
+                    );
+
+                    if (updated == true && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Preferências de treino atualizadas.'),
+                        ),
+                      );
+                    }
+                  },
                 ),
               ],
             ),
@@ -88,12 +128,64 @@ class _SettingsContent extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
+                        'Tema do aplicativo',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _themeModeDescription(settings.themeMode),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<PulseThemeMode>(
+                          showSelectedIcon: false,
+                          segments: const [
+                            ButtonSegment(
+                              value: PulseThemeMode.system,
+                              icon: Icon(Icons.brightness_auto_outlined),
+                              label: Text('Sistema'),
+                            ),
+                            ButtonSegment(
+                              value: PulseThemeMode.light,
+                              icon: Icon(Icons.light_mode_outlined),
+                              label: Text('Claro'),
+                            ),
+                            ButtonSegment(
+                              value: PulseThemeMode.dark,
+                              icon: Icon(Icons.dark_mode_outlined),
+                              label: Text('Escuro'),
+                            ),
+                          ],
+                          selected: <PulseThemeMode>{settings.themeMode},
+                          onSelectionChanged: (selection) {
+                            ref
+                                .read(settingsControllerProvider.notifier)
+                                .setThemeMode(selection.first);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: AppColors.border, height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
                         'Cor principal',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'A cor selecionada é aplicada em botões, indicadores e destaques.',
+                      Text(
+                        'Aplicada em ações e destaques. No modo claro, o tom é suavizado automaticamente.',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -105,21 +197,28 @@ class _SettingsContent extends ConsumerWidget {
                         spacing: 14,
                         runSpacing: 16,
                         children: pulsePalettes.map((palette) {
-                          final selected =
-                              settings.themeColorValue ==
-                              palette.primary.toARGB32();
+                          final brightness = Theme.of(context).brightness;
+                          final displayColor = palette.colorFor(brightness);
+                          final selected = palette.matches(
+                            settings.themeColorValue,
+                          );
+                          final checkColor =
+                              ThemeData.estimateBrightnessForColor(
+                                    displayColor,
+                                  ) ==
+                                  Brightness.dark
+                              ? Colors.white
+                              : Colors.black;
 
                           return Semantics(
-                            label: 'Tema ${palette.name}',
+                            label: 'Cor ${palette.name}',
                             button: true,
                             selected: selected,
                             child: GestureDetector(
                               onTap: () {
                                 ref
                                     .read(settingsControllerProvider.notifier)
-                                    .changeThemeColor(
-                                      palette.primary.toARGB32(),
-                                    );
+                                    .changeThemeColor(palette.storageValue);
                               },
                               child: SizedBox(
                                 width: 64,
@@ -132,19 +231,27 @@ class _SettingsContent extends ConsumerWidget {
                                       width: 50,
                                       height: 50,
                                       decoration: BoxDecoration(
-                                        color: palette.primary,
+                                        color: displayColor,
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: selected
-                                              ? Colors.white
+                                              ? Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface
                                               : Colors.transparent,
                                           width: 3,
                                         ),
                                         boxShadow: selected
                                             ? [
                                                 BoxShadow(
-                                                  color: palette.primary
-                                                      .withValues(alpha: 0.45),
+                                                  color: displayColor
+                                                      .withValues(
+                                                        alpha:
+                                                            brightness ==
+                                                                Brightness.light
+                                                            ? 0.18
+                                                            : 0.32,
+                                                      ),
                                                   blurRadius: 12,
                                                   spreadRadius: 2,
                                                 ),
@@ -152,10 +259,7 @@ class _SettingsContent extends ConsumerWidget {
                                             : const [],
                                       ),
                                       child: selected
-                                          ? const Icon(
-                                              Icons.check,
-                                              color: Colors.black,
-                                            )
+                                          ? Icon(Icons.check, color: checkColor)
                                           : null,
                                     ),
                                     const SizedBox(height: 7),
@@ -164,7 +268,9 @@ class _SettingsContent extends ConsumerWidget {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: selected
-                                            ? Colors.white
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface
                                             : AppColors.textSecondary,
                                         fontSize: 10,
                                         fontWeight: selected
@@ -185,23 +291,20 @@ class _SettingsContent extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 30),
-            _sectionTitle('ALERTAS DURANTE O TREINO'),
+            _sectionTitle('TREINO E UNIDADES'),
             const SizedBox(height: 12),
             _sectionCard(
               context,
               children: [
                 SwitchListTile(
                   activeThumbColor: Theme.of(context).colorScheme.primary,
+                  secondary: const Icon(Icons.record_voice_over_outlined),
                   title: const Text(
                     'Aviso por voz ao fim do descanso',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text(
                     'Fala quando é hora de iniciar a próxima série.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
                   ),
                   value: settings.voiceAfterRest,
                   onChanged: (value) async {
@@ -216,19 +319,16 @@ class _SettingsContent extends ConsumerWidget {
                     }
                   },
                 ),
-                const Divider(color: AppColors.border, height: 1),
+                Divider(color: AppColors.border, height: 1),
                 SwitchListTile(
                   activeThumbColor: Theme.of(context).colorScheme.primary,
+                  secondary: const Icon(Icons.notifications_active_outlined),
                   title: const Text(
                     'Lembrete de inatividade',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text(
                     'Salva sua preferência para os lembretes futuros.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
                   ),
                   value: settings.inactivityReminder,
                   onChanged: (value) {
@@ -237,19 +337,9 @@ class _SettingsContent extends ConsumerWidget {
                         .setInactivityReminder(value);
                   },
                 ),
-              ],
-            ),
-            const SizedBox(height: 30),
-            _sectionTitle('PREFERÊNCIAS GERAIS'),
-            const SizedBox(height: 12),
-            _sectionCard(
-              context,
-              children: [
+                Divider(color: AppColors.border, height: 1),
                 ListTile(
-                  leading: const Icon(
-                    Icons.straighten,
-                    color: AppColors.textSecondary,
-                  ),
+                  leading: const Icon(Icons.straighten),
                   title: const Text(
                     'Sistema de medidas',
                     style: TextStyle(fontWeight: FontWeight.w600),
@@ -291,20 +381,13 @@ class _SettingsContent extends ConsumerWidget {
               children: [
                 SwitchListTile(
                   activeThumbColor: Theme.of(context).colorScheme.primary,
-                  secondary: const Icon(
-                    Icons.lock_outline,
-                    color: Colors.white,
-                  ),
+                  secondary: const Icon(Icons.lock_outline),
                   title: const Text(
                     'Proteger o PULSE',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: const Text(
                     'Usa biometria, rosto, PIN, padrão ou senha do aparelho.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
                   ),
                   value: authState?.isLockEnabled ?? false,
                   onChanged: authState == null
@@ -320,7 +403,6 @@ class _SettingsContent extends ConsumerWidget {
                                 content: Text(
                                   'Configure uma forma de desbloqueio no aparelho antes de ativar a proteção.',
                                 ),
-                                behavior: SnackBarBehavior.floating,
                               ),
                             );
                           }
@@ -335,18 +417,12 @@ class _SettingsContent extends ConsumerWidget {
               context,
               children: [
                 ListTile(
-                  leading: const Icon(
-                    Icons.info_outline,
-                    color: AppColors.textSecondary,
-                  ),
+                  leading: const Icon(Icons.info_outline),
                   title: const Text(
                     'Sobre o PULSE',
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textSecondary,
-                  ),
+                  trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     showAboutDialog(
                       context: context,
@@ -361,7 +437,7 @@ class _SettingsContent extends ConsumerWidget {
                     );
                   },
                 ),
-                const Divider(color: AppColors.border, height: 1),
+                Divider(color: AppColors.border, height: 1),
                 ListTile(
                   leading: const Icon(
                     Icons.delete_forever,
@@ -376,10 +452,6 @@ class _SettingsContent extends ConsumerWidget {
                   ),
                   subtitle: const Text(
                     'Remove perfil, fichas, histórico e preferências deste aparelho.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
                   ),
                   onTap: () => _confirmFactoryReset(context, ref),
                 ),
@@ -395,14 +467,9 @@ class _SettingsContent extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Apagar todos os dados?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-        ),
+        title: const Text('Apagar todos os dados?'),
         content: const Text(
           'Essa ação apagará perfil, fichas, histórico e preferências salvas neste aparelho. Não será possível desfazer.',
-          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -439,23 +506,21 @@ class _SettingsContent extends ConsumerWidget {
 
     Navigator.of(context).popUntil((route) => route.isFirst);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Os dados locais do PULSE foram apagados.'),
-        behavior: SnackBarBehavior.floating,
-      ),
+      const SnackBar(content: Text('Os dados locais do PULSE foram apagados.')),
     );
   }
 
   String _profileSubtitle(PulseSettings settings) {
     final profile = settings.profile;
-    final parts = <String>[];
+    final parts = <String>[profile.displayName];
 
     if (profile.weightKg > 0) {
       if (settings.measurementSystem == MeasurementSystem.metric) {
         parts.add('${profile.weightKg.toStringAsFixed(1)} kg');
       } else {
-        final pounds = profile.weightKg * 2.2046226218;
-        parts.add('${pounds.toStringAsFixed(1)} lbs');
+        parts.add(
+          '${(profile.weightKg * 2.2046226218).toStringAsFixed(1)} lbs',
+        );
       }
     }
 
@@ -463,17 +528,32 @@ class _SettingsContent extends ConsumerWidget {
       parts.add('${profile.age} anos');
     }
 
-    return parts.isEmpty
-        ? 'Edite seus dados pessoais na tela Perfil.'
-        : parts.join(' • ');
+    return parts.join(' • ');
+  }
+
+  String _trainingPreferencesSubtitle(OnboardingProfile profile) {
+    if (!profile.isPersonalized) {
+      return 'Objetivo, rotina, local e equipamentos';
+    }
+
+    return '${profile.goal.label} • ${profile.trainingDaysPerWeek}x por semana • ${profile.sessionDurationMinutes} min';
+  }
+
+  String _themeModeDescription(PulseThemeMode mode) {
+    return switch (mode) {
+      PulseThemeMode.system =>
+        'Acompanha automaticamente o tema claro ou escuro do aparelho.',
+      PulseThemeMode.light => 'Mantém o PULSE sempre no tema claro.',
+      PulseThemeMode.dark => 'Mantém o PULSE sempre no tema escuro.',
+    };
   }
 
   Widget _sectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         color: AppColors.textSecondary,
         letterSpacing: 1,
       ),
@@ -485,7 +565,7 @@ class _SettingsContent extends ConsumerWidget {
       color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
@@ -535,17 +615,13 @@ class _SettingsErrorView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.redAccent,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
+              const Icon(Icons.error_outline, size: 42),
+              const SizedBox(height: 12),
               const Text(
                 'Não foi possível carregar as configurações.',
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: onRetry,
                 child: const Text('Tentar novamente'),

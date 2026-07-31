@@ -118,13 +118,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             backgroundColor: Theme.of(context).colorScheme.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: AppColors.border),
             ),
-            title: const Text(
+            title: Text(
               'Configurar Exercício',
               style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
                 fontSize: 18,
               ),
             ),
@@ -144,20 +144,18 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
                   TextField(
                     controller: repsCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Séries e Repetições (ex: 3x 10-12)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -171,20 +169,18 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
                   TextField(
                     controller: restCtrl,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Tempo de Descanso (ex: 60 seg)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -213,7 +209,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       'TÉCNICA E OBSERVAÇÕES',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         fontSize: 12,
                         letterSpacing: 0.5,
                       ),
@@ -224,25 +220,23 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: selectedTechnique,
                     dropdownColor: Theme.of(context).colorScheme.surface,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_down,
                       color: AppColors.textSecondary,
                     ),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                     decoration: InputDecoration(
                       labelText: 'Técnica / Método',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -278,17 +272,15 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
                   TextField(
                     controller: noteCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Observação Livre (Ex: Banco no 4)',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: Theme.of(context).scaffoldBackgroundColor,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -304,7 +296,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text(
+                child: Text(
                   'Cancelar',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
@@ -312,7 +304,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                 ),
                 onPressed: () {
                   bool isSupersetFinal = selectedTechnique == 'Bi-Set';
@@ -431,16 +423,16 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Adicionar em qual ficha?',
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: Icon(Icons.close, color: AppColors.textPrimary),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
@@ -463,7 +455,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         tileColor: Theme.of(context).colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: AppColors.border),
                         ),
                         leading: Container(
                           width: 40,
@@ -482,10 +474,10 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         ),
                         title: Text(
                           routine.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         subtitle: Text(
@@ -495,7 +487,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                             fontSize: 12,
                           ),
                         ),
-                        trailing: const Icon(
+                        trailing: Icon(
                           Icons.add_circle_outline,
                           color: AppColors.textSecondary,
                         ),
@@ -543,7 +535,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             widget.isSelecting
                 ? 'Adicionar ao Treino'
                 : 'Biblioteca de Exercícios',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
           ),
         ),
         body: Column(
@@ -554,18 +546,18 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 autofocus: false,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Buscar por nome ou músculo...',
-                  hintStyle: const TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: const Icon(
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
+                  prefixIcon: Icon(
                     Icons.search,
                     color: AppColors.textSecondary,
                   ),
 
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.clear,
                             color: AppColors.textSecondary,
                           ),
@@ -583,7 +575,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -601,7 +593,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             ),
             Expanded(
               child: allExercises.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'Nenhum exercício encontrado.',
                         style: TextStyle(color: AppColors.textSecondary),
@@ -658,9 +650,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                             ),
                             title: Text(
                               ex.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 fontSize: 14,
                               ),
                             ),
@@ -699,7 +691,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                           );
                                         },
                                       ),
-                                      const Icon(
+                                      Icon(
                                         Icons.chevron_right,
                                         color: AppColors.textSecondary,
                                       ),

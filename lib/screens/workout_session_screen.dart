@@ -535,12 +535,12 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Escolha seu aplicativo de áudio 🎧',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -550,10 +550,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 color: Colors.redAccent,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'YouTube Music',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -571,10 +571,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 color: Colors.green,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'Spotify',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -589,10 +589,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 color: Colors.cyanAccent,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'Deezer',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -607,10 +607,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 color: Colors.pinkAccent,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'Apple Music',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -625,10 +625,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 color: Colors.orangeAccent,
                 size: 28,
               ),
-              title: const Text(
+              title: Text(
                 'Amazon Music',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -671,11 +671,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text(
+        title: Text(
           'Pausar ou Encerrar?',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
-        content: const Text(
+        content: Text(
           'Deseja minimizar para continuar depois ou encerrar definitivamente e descartar o progresso de hoje?',
           style: TextStyle(color: AppColors.textSecondary),
         ),
@@ -799,11 +802,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text(
+        title: Text(
           'Nenhuma série concluída',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
-        content: const Text(
+        content: Text(
           'Para salvar no histórico, conclua pelo menos uma série. Você pode continuar o treino ou descartá-lo.',
           style: TextStyle(color: AppColors.textSecondary),
         ),
@@ -905,25 +911,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         context: context,
         builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: const Text(
+          title: Text(
             'Salvar treino incompleto?',
-            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '$completedSets séries foram concluídas. As séries pendentes ficarão identificadas no histórico.',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _notesController,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
                 maxLines: 2,
                 decoration: InputDecoration(
                   hintText: 'Anotação sobre o treino (opcional)',
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -931,7 +940,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                   fillColor: Theme.of(context).scaffoldBackgroundColor,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -979,25 +988,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text(
+        title: Text(
           'Finalizar treino?',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Todas as séries foram concluídas. Confirme para salvar a sessão no histórico.',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Como foi o treino? (opcional)',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
@@ -1005,7 +1017,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                 fillColor: Theme.of(context).scaffoldBackgroundColor,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1020,7 +1032,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text(
+            child: Text(
               'Cancelar',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -1028,7 +1040,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: AppColors.onPrimary,
             ),
             onPressed: ref.read(workoutControllerProvider).isFinishing
                 ? null
@@ -1062,23 +1074,20 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             ? TextInputType.number
             : const TextInputType.numberWithOptions(decimal: true),
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontSize: 13,
           fontWeight: FontWeight.bold,
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 11,
-          ),
+          hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           contentPadding: EdgeInsets.zero,
           filled: true,
           fillColor: Theme.of(context).scaffoldBackgroundColor,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: AppColors.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),
@@ -1222,7 +1231,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'TEMPO TOTAL',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -1256,7 +1265,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                           children: [
                             Text(
                               '${sessionProgress.completedSets}/${sessionProgress.totalSets} séries',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -1302,7 +1311,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                           foregroundColor: Theme.of(
                             context,
                           ).colorScheme.primary,
-                          side: const BorderSide(color: AppColors.border),
+                          side: BorderSide(color: AppColors.border),
                         ),
                         onPressed: () => Navigator.push(
                           context,
@@ -1492,10 +1501,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 child: Text(
                                                   ex.name,
                                                   textAlign: TextAlign.center,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 20,
                                                     fontWeight: FontWeight.w800,
-                                                    color: Colors.white,
+                                                    color:
+                                                        AppColors.textPrimary,
                                                   ),
                                                 ),
                                               ),
@@ -1514,7 +1524,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 ),
                                               ),
                                               const SizedBox(height: 24),
-                                              const Text(
+                                              Text(
                                                 'MÚSCULOS SECUNDÁRIOS:',
                                                 style: TextStyle(
                                                   fontSize: 10,
@@ -1525,13 +1535,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               ),
                                               Text(
                                                 details['secondary'],
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 13,
-                                                  color: Colors.white,
+                                                  color: AppColors.textPrimary,
                                                 ),
                                               ),
                                               const SizedBox(height: 16),
-                                              const Text(
+                                              Text(
                                                 'COMO EXECUTAR:',
                                                 style: TextStyle(
                                                   fontSize: 10,
@@ -1668,7 +1678,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       children: [
                                         Text(
                                           ex.description,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 11,
                                           ),
@@ -1737,7 +1747,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         const SizedBox(height: 2),
                                         Text(
                                           progression.nextTarget,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
@@ -1748,14 +1758,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       ],
                                     ),
                                   ),
-                                  trailing: const Icon(
+                                  trailing: Icon(
                                     Icons.help_outline,
                                     color: AppColors.textSecondary,
                                     size: 20,
                                   ),
                                 ),
                               ),
-                              const Divider(color: AppColors.border, height: 1),
+                              Divider(color: AppColors.border, height: 1),
 
                               Padding(
                                 padding: const EdgeInsets.only(
@@ -1765,7 +1775,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                   bottom: 4,
                                 ),
                                 child: Row(
-                                  children: const [
+                                  children: [
                                     Expanded(
                                       flex: 2,
                                       child: Text(
@@ -1849,7 +1859,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                       ? Theme.of(
                                                           context,
                                                         ).colorScheme.primary
-                                                      : Colors.white,
+                                                      : AppColors.textPrimary,
                                                   fontSize: 14,
                                                 ),
                                               ),
@@ -1895,8 +1905,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                     activeColor: Theme.of(
                                                       context,
                                                     ).colorScheme.primary,
-                                                    checkColor: Colors.black,
-                                                    side: const BorderSide(
+                                                    checkColor:
+                                                        AppColors.onPrimary,
+                                                    side: BorderSide(
                                                       color: AppColors.border,
                                                       width: 1.5,
                                                     ),
@@ -1937,7 +1948,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                border: const Border(top: BorderSide(color: AppColors.border)),
+                border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Column(
                 children: [
@@ -1988,10 +1999,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                               ),
                               Text(
                                 _formatTime(workoutState.restSeconds),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontFeatures: [FontFeature.tabularFigures()],
                                 ),
                               ),
@@ -2023,7 +2034,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Descanso Inteligente Ativado',
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -2044,7 +2055,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

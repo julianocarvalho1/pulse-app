@@ -53,8 +53,8 @@ class AppLockScreen extends ConsumerWidget {
                       const SizedBox(height: 30),
                       Text(
                         'PULSE',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 7,
@@ -79,8 +79,8 @@ class AppLockScreen extends ConsumerWidget {
                       Text(
                         'Olá, ${authState.userName}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 30,
                           fontWeight: FontWeight.w900,
                         ),
@@ -91,7 +91,7 @@ class AppLockScreen extends ConsumerWidget {
                             ? 'Configure a segurança do aparelho ou continue temporariamente sem o bloqueio do PULSE.'
                             : 'Use impressão digital, reconhecimento facial, PIN, padrão ou senha do aparelho para acessar seus dados.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 15,
                           height: 1.55,
@@ -112,8 +112,8 @@ class AppLockScreen extends ConsumerWidget {
                           child: Text(
                             authState.message!,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
                               fontSize: 13,
                               height: 1.4,
                             ),
@@ -137,7 +137,7 @@ class AppLockScreen extends ConsumerWidget {
                                   height: 21,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.4,
-                                    color: Colors.black,
+                                    color: AppColors.onPrimary,
                                   ),
                                 )
                               : const Icon(Icons.fingerprint_rounded, size: 26),
@@ -150,10 +150,11 @@ class AppLockScreen extends ConsumerWidget {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colorScheme.primary,
-                            foregroundColor: Colors.black,
+                            foregroundColor: AppColors.onPrimary,
                             disabledBackgroundColor: colorScheme.primary
                                 .withValues(alpha: 0.55),
-                            disabledForegroundColor: Colors.black54,
+                            disabledForegroundColor: AppColors.onPrimary
+                                .withValues(alpha: 0.55),
                             minimumSize: const Size.fromHeight(58),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
@@ -177,9 +178,9 @@ class AppLockScreen extends ConsumerWidget {
                                   .disableLockAndUnlock();
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
+                              foregroundColor: AppColors.textPrimary,
                               minimumSize: const Size.fromHeight(54),
-                              side: const BorderSide(color: AppColors.border),
+                              side: BorderSide(color: AppColors.border),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
@@ -196,7 +197,7 @@ class AppLockScreen extends ConsumerWidget {
                         ),
                       ],
                       const SizedBox(height: 24),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
@@ -263,9 +264,9 @@ class _PulseLogo extends StatelessWidget {
                 color: primaryColor,
                 borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.fitness_center_rounded,
-                color: Colors.black,
+                color: AppColors.onPrimary,
                 size: 44,
               ),
             );

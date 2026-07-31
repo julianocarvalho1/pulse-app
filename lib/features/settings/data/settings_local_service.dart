@@ -4,6 +4,7 @@ import '../domain/pulse_settings.dart';
 
 class SettingsLocalService {
   static const String _themeColorKey = 'theme_color';
+  static const String _themeModeKey = 'settings_theme_mode';
   static const String _voiceAfterRestKey = 'settings_voice_after_rest';
   static const String _legacyVibrateAfterRestKey =
       'settings_vibrate_after_rest';
@@ -18,6 +19,12 @@ class SettingsLocalService {
     final preferences = await SharedPreferences.getInstance();
     final defaults = PulseSettings.defaults();
 
+    final themeModeName = preferences.getString(_themeModeKey);
+    final themeMode = PulseThemeMode.values.firstWhere(
+      (mode) => mode.name == themeModeName,
+      orElse: () => defaults.themeMode,
+    );
+
     final systemName = preferences.getString(_measurementSystemKey);
     final measurementSystem = systemName == MeasurementSystem.imperial.name
         ? MeasurementSystem.imperial
@@ -28,6 +35,7 @@ class SettingsLocalService {
     return PulseSettings(
       themeColorValue:
           preferences.getInt(_themeColorKey) ?? defaults.themeColorValue,
+      themeMode: themeMode,
       voiceAfterRest:
           preferences.getBool(_voiceAfterRestKey) ??
           preferences.getBool(_legacyVibrateAfterRestKey) ??
@@ -50,6 +58,7 @@ class SettingsLocalService {
 
     await Future.wait([
       preferences.setInt(_themeColorKey, settings.themeColorValue),
+      preferences.setString(_themeModeKey, settings.themeMode.name),
       preferences.setBool(_voiceAfterRestKey, settings.voiceAfterRest),
       preferences.setBool(_inactivityReminderKey, settings.inactivityReminder),
       preferences.setString(

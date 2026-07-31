@@ -116,7 +116,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 const Text(
                   'NOTIFICAÇÕES DO SISTEMA',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
@@ -179,7 +179,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -203,18 +203,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         context: screenContext,
         builder: (dialogContext) => AlertDialog(
           backgroundColor: Theme.of(screenContext).colorScheme.surface,
-          title: const Text(
+          title: Text(
             'Trocar Treino?',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           content: Text(
             'Você tem um treino ("${provider.activeRoutineName}") em andamento. Deseja substituí-lo pelo treino dinâmico?',
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -222,12 +225,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(screenContext).colorScheme.primary,
-                foregroundColor: Colors.black,
+                foregroundColor: AppColors.onPrimary,
               ),
               onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text(
                 'Trocar',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -283,22 +286,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Treino Dinâmico ⚡',
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: Icon(Icons.close, color: AppColors.textPrimary),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -308,11 +311,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
+                  Text(
                     'MÚSCULO FOCO',
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
                       letterSpacing: 0.5,
                     ),
@@ -337,8 +340,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: musculoFoco == m
-                                        ? Colors.black
-                                        : Colors.white,
+                                        ? AppColors.onPrimary
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                                 selected: musculoFoco == m,
@@ -359,11 +362,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'DURAÇÃO DO TREINO',
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
                       letterSpacing: 0.5,
                     ),
@@ -385,8 +388,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: quantidadeEx == d['val']
-                                        ? Colors.black
-                                        : Colors.white,
+                                        ? AppColors.onPrimary
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                                 selected: quantidadeEx == d['val'],
@@ -413,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppColors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -483,7 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       label: const Text(
                         'GERAR E INICIAR TREINO',
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           fontSize: 16,
                         ),
                       ),
@@ -533,14 +536,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: AppColors.surface,
-            title: const Text(
+            title: Text(
               'Sair do App?',
               style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            content: const Text(
+            content: Text(
               'Deseja realmente fechar o aplicativo?',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -559,10 +562,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   backgroundColor: Colors.redAccent,
                 ),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
+                child: Text(
                   'Sair',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -609,22 +612,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.fitness_center,
-                          color: Colors.black,
+                          color: AppColors.onPrimary,
                           size: 16,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     'PULSE',
                     style: TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 2.0,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -686,12 +689,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _obterSaudacao(userName),
                       style: const TextStyle(
                         fontSize: 26,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Pronto para mais um treino?',
                       style: TextStyle(
                         fontSize: 15,
@@ -706,9 +709,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.15),
+                        color: AppColors.primarySoft,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -736,7 +737,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
                                 AppColors.surfaceLight,
                                 AppColors.surface,
@@ -771,7 +772,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         'SESSÃO EM ANDAMENTO',
                                         style: TextStyle(
                                           fontSize: 9,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w700,
                                           color: Colors.orangeAccent,
                                           letterSpacing: 0.5,
                                         ),
@@ -782,11 +783,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       'Continuar ${provider.activeRoutineName}',
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                     const SizedBox(height: 6),
-                                    const Text(
+                                    Text(
                                       'Não deixe seu descanso passar!',
                                       style: TextStyle(
                                         fontSize: 13,
@@ -830,7 +831,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
                                 AppColors.surfaceLight,
                                 AppColors.surface,
@@ -856,10 +857,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.15),
+                                        color: AppColors.primarySoft,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -868,7 +866,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             : 'PLANO ATUAL (TOQUE PARA VER)',
                                         style: TextStyle(
                                           fontSize: 9,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w700,
                                           color: Theme.of(
                                             context,
                                           ).colorScheme.primary,
@@ -881,13 +879,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       rotinaDoDia.name,
                                       style: const TextStyle(
                                         fontSize: 22,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
                                       'Foco: ${rotinaDoDia.focus}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         color: AppColors.textSecondary,
                                       ),
@@ -899,9 +897,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.12),
+                                  color: AppColors.primarySoft,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -915,7 +911,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'O SEU TREINO DE HOJE É',
                         style: TextStyle(
                           fontSize: 12,
@@ -945,7 +941,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   rotinaDoDia.name,
                                   style: const TextStyle(
                                     fontSize: 22,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
@@ -989,7 +985,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             backgroundColor: Theme.of(
                               context,
                             ).colorScheme.primary,
-                            foregroundColor: Colors.black,
+                            foregroundColor: AppColors.onPrimary,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -1003,7 +999,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 'INICIAR TREINO',
                                 style: TextStyle(
                                   fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -1017,16 +1013,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.5),
+                            color: AppColors.primaryBorder,
                             width: 1.5,
                           ),
                         ),
@@ -1047,7 +1041,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     color: Theme.of(
                                       context,
                                     ).colorScheme.primary,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 12,
                                     letterSpacing: 0.5,
                                   ),
@@ -1059,11 +1053,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               'Não sabe por onde começar?',
                               style: TextStyle(
                                 fontSize: 22,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'Fique tranquilo! Preparamos um catálogo com fichas prontas para iniciantes, intermediários e avançados.\n\nEscolha o seu nível e importe uma ficha para iniciar sua jornada.',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
@@ -1079,7 +1073,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   backgroundColor: Theme.of(
                                     context,
                                   ).colorScheme.primary,
-                                  foregroundColor: Colors.black,
+                                  foregroundColor: AppColors.onPrimary,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,
                                   ),
@@ -1092,7 +1086,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 label: const Text(
                                   'EXPLORAR CATÁLOGO',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -1119,21 +1113,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.15),
-                              AppColors.surface,
-                            ],
+                            colors: [AppColors.primarySoft, AppColors.surface],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.3),
-                          ),
+                          border: Border.all(color: AppColors.primaryBorder),
                         ),
                         child: Row(
                           children: [
@@ -1145,7 +1130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     'TREINO DINÂMICO ⚡',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w800,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.primary,
@@ -1153,16 +1138,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text(
+                                  Text(
                                     'Sem tempo para planejar?',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     'Nós geramos um treino aleatório para você agora mesmo.',
                                     style: TextStyle(
                                       fontSize: 12,
@@ -1182,16 +1167,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Theme.of(context).colorScheme.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
+                                    color: AppColors.primaryBorder.withValues(
+                                      alpha: 0.55,
+                                    ),
+                                    blurRadius: 8,
+                                    spreadRadius: 0,
                                   ),
                                 ],
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.shuffle,
-                                color: Colors.black,
+                                color: AppColors.onPrimary,
                                 size: 24,
                               ),
                             ),
@@ -1205,7 +1191,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'RESUMO SEMANAL',
                           style: TextStyle(
                             fontSize: 12,
@@ -1228,7 +1214,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -1317,10 +1303,7 @@ class _SummaryStat extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
           ),
         ],
       ),

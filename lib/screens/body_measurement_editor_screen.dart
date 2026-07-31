@@ -74,7 +74,7 @@ class _BodyMeasurementEditorScreenState
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           children: <Widget>[
-            const Text(
+            Text(
               'Preencha somente o que foi medido hoje. Os valores anteriores aparecem apenas como referência.',
               style: TextStyle(
                 color: AppColors.textSecondary,

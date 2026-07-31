@@ -47,7 +47,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         children: <Widget>[
           const Text(
             'PROGRESSO',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -264,12 +264,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Text(
+                      Text(
                         'MEDIDAS CORPORAIS',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.6,
                         ),
                       ),
@@ -307,12 +307,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'EVOLUÇÃO REAL',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: AppColors.textSecondary,
                             letterSpacing: 0.6,
                           ),
@@ -327,7 +327,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       '${values.last.toStringAsFixed(1)} ${_measurementUnit(_measurementType, settings)}',
                       style: const TextStyle(
                         fontSize: 24,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -335,13 +335,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '${DateFormat('dd/MM').format(selectedPoints.first.recordedAt)} → ${DateFormat('dd/MM').format(selectedPoints.last.recordedAt)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,
                       ),
                     ),
                   ] else
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 26),
                       child: Text(
                         'Registre pelo menos dois valores desta medida para visualizar a evolução.',
@@ -357,12 +357,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
             if (entries.isNotEmpty) ...<Widget>[
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'HISTÓRICO DE MEDIDAS',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
                 ),
               ),
@@ -415,12 +415,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'EVOLUÇÃO POR EXERCÍCIO',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
                   ),
                 ),
@@ -471,7 +471,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Row(
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Icon(
@@ -505,14 +505,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     children: <Widget>[
                       Text(
                         DateFormat('dd/MM').format(weightPoints.first.date),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 10,
                         ),
                       ),
                       Text(
                         DateFormat('dd/MM').format(weightPoints.last.date),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 10,
                         ),
@@ -531,7 +531,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Faça este exercício novamente para comparar sua evolução.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -551,17 +551,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'RECORDES PESSOAIS',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Melhores cargas de todo o histórico, independentemente do período selecionado.',
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -615,7 +615,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   _monthYearLabel(month),
                   style: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -724,8 +724,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               fontSize: 12,
               fontWeight: day == null && !isToday
                   ? FontWeight.w400
-                  : FontWeight.w800,
-              color: day == null ? Colors.white : Colors.black,
+                  : FontWeight.w700,
+              color: day == null
+                  ? AppColors.textPrimary
+                  : hasCompleted
+                  ? AppColors.onPrimary
+                  : Colors.black87,
             ),
           ),
           if (hasCompleted && hasIncomplete)
@@ -789,14 +793,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 2),
           Text(label, style: const TextStyle(fontSize: 13)),
           const SizedBox(height: 5),
           Text(
             detail,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 10,
               height: 1.3,
@@ -831,12 +835,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'SEQUÊNCIA DE TREINOS',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -844,7 +848,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   '${summary.currentStreak} dias atuais',
                   style: const TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -852,10 +856,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           ),
           Text(
             'Recorde: ${summary.longestStreak}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -868,12 +869,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
+          Text(
             'COMPARAÇÃO COM O PERÍODO ANTERIOR',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
@@ -924,14 +925,14 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           style: TextStyle(
             color: color,
             fontSize: 16,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
         ),
       ],
     );
@@ -955,27 +956,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
               Text(
                 trailing,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 10,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
           ),
           const SizedBox(height: 16),
           if (values.length >= 2)
@@ -987,10 +985,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 child: Text(
                   emptyMessage,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
+                  style: TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
               ),
             ),
@@ -1056,7 +1051,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       const SizedBox(height: 4),
                       Text(
                         DateFormat("dd/MM/yyyy 'às' HH:mm").format(item.date),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
                         ),
@@ -1082,7 +1077,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       item.duration,
                       style: TextStyle(
                         color: color,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1091,7 +1086,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       style: TextStyle(
                         color: color,
                         fontSize: 9,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -1125,7 +1120,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               style: TextStyle(
                 color: color,
                 fontSize: 20,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(width: 8),
@@ -1189,12 +1184,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'PESO DO PERFIL',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1204,13 +1199,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       : 'Não informado',
                   style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-          const Text(
+          Text(
             'Registre uma pesagem\npara criar o histórico.',
             textAlign: TextAlign.right,
             style: TextStyle(
@@ -1252,7 +1247,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             '${DateFormat("dd/MM/yyyy 'às' HH:mm").format(entry.recordedAt)}\n$values',
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               height: 1.4,
@@ -1300,7 +1295,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   const SizedBox(height: 3),
                   Text(
                     '${record.reps} repetições • ${DateFormat('dd/MM/yyyy').format(record.date)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 11,
                     ),
@@ -1313,7 +1308,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -1336,7 +1331,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -1353,7 +1348,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 maxLines: 1,
                 style: const TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -1434,7 +1429,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               height: 1.4,
               fontSize: 12,
@@ -1461,7 +1456,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
         ),
       ],
     );
@@ -1476,7 +1471,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.textSecondary, fontSize: 9),
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 9),
       ),
     );
   }
@@ -1503,7 +1498,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? Colors.white : AppColors.textSecondary,
+            color: active ? AppColors.textPrimary : AppColors.textSecondary,
           ),
         ),
       ),
@@ -1579,7 +1574,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                 child: Row(
                   children: <Widget>[
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -1587,7 +1582,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                             'Escolher medida',
                             style: TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           SizedBox(height: 3),
@@ -1609,7 +1604,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   ],
                 ),
               ),
-              const Divider(height: 1, color: AppColors.border),
+              Divider(height: 1, color: AppColors.border),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -1671,10 +1666,10 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       children: <Widget>[
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0.7,
           ),
         ),
@@ -1720,7 +1715,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: selected
-                              ? FontWeight.w800
+                              ? FontWeight.w700
                               : FontWeight.w600,
                           color: selected ? primary : AppColors.textPrimary,
                         ),
@@ -1772,7 +1767,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               onTap: () =>
                   Navigator.pop(sheetContext, _MeasurementAction.weight),
             ),
-            const Divider(color: AppColors.border),
+            Divider(color: AppColors.border),
             ListTile(
               leading: Icon(
                 Icons.straighten,
@@ -2041,10 +2036,10 @@ class _WeightEntrySheetState extends State<_WeightEntrySheet> {
             const SizedBox(height: 18),
             const Text(
               'Registrar peso',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Cria uma pesagem independente. Nenhuma outra medida será copiada.',
               style: TextStyle(
                 color: AppColors.textSecondary,

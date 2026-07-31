@@ -21,6 +21,15 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
     return _service.load();
   }
 
+  Future<void> setThemeMode(PulseThemeMode themeMode) async {
+    final current = _currentValue;
+    if (current == null || current.themeMode == themeMode) {
+      return;
+    }
+
+    await _persist(current.copyWith(themeMode: themeMode));
+  }
+
   Future<void> changeThemeColor(int colorValue) async {
     final current = _currentValue;
     if (current == null || current.themeColorValue == colorValue) {

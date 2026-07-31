@@ -15,28 +15,39 @@ import 'theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: AppColors.background,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-      systemStatusBarContrastEnforced: false,
-      systemNavigationBarColor: AppColors.surface,
-      systemNavigationBarDividerColor: AppColors.surface,
-      systemNavigationBarIconBrightness: Brightness.light,
-      systemNavigationBarContrastEnforced: false,
-    ),
-  );
-
   runApp(const ProviderScope(child: PulseApp()));
 }
 
-class PulseApp extends ConsumerWidget {
+class PulseApp extends ConsumerStatefulWidget {
   const PulseApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PulseApp> createState() => _PulseAppState();
+}
+
+class _PulseAppState extends ConsumerState<PulseApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsControllerProvider);
 
     final settings = switch (settingsAsync) {
@@ -44,12 +55,53 @@ class PulseApp extends ConsumerWidget {
       _ => PulseSettings.defaults(),
     };
 
-    return MaterialApp(
-      title: 'PULSE',
-      debugShowCheckedModeBanner: false,
-      theme: buildPulseTheme(Color(settings.themeColorValue)),
-      home: const AuthGate(child: OnboardingGate(child: MainNavigation())),
+    final platformBrightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final effectiveBrightness = _resolveBrightness(
+      settings.themeMode,
+      platformBrightness,
     );
+    final materialThemeMode = _toMaterialThemeMode(settings.themeMode);
+    final selectedPalette = pulsePaletteForValue(settings.themeColorValue);
+    final effectivePrimaryColor = selectedPalette.colorFor(effectiveBrightness);
+
+    AppColors.configure(
+      effectiveBrightness,
+      primaryColor: effectivePrimaryColor,
+    );
+    final overlayStyle = pulseSystemUiOverlayStyle(effectiveBrightness);
+    SystemChrome.setSystemUIOverlayStyle(overlayStyle);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: MaterialApp(
+        title: 'PULSE',
+        debugShowCheckedModeBanner: false,
+        theme: buildPulseLightTheme(selectedPalette.lightPrimary),
+        darkTheme: buildPulseDarkTheme(selectedPalette.darkPrimary),
+        themeMode: materialThemeMode,
+        home: const AuthGate(child: OnboardingGate(child: MainNavigation())),
+      ),
+    );
+  }
+
+  Brightness _resolveBrightness(
+    PulseThemeMode themeMode,
+    Brightness platformBrightness,
+  ) {
+    return switch (themeMode) {
+      PulseThemeMode.system => platformBrightness,
+      PulseThemeMode.light => Brightness.light,
+      PulseThemeMode.dark => Brightness.dark,
+    };
+  }
+
+  ThemeMode _toMaterialThemeMode(PulseThemeMode themeMode) {
+    return switch (themeMode) {
+      PulseThemeMode.system => ThemeMode.system,
+      PulseThemeMode.light => ThemeMode.light,
+      PulseThemeMode.dark => ThemeMode.dark,
+    };
   }
 }
 
@@ -73,15 +125,8 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    const systemUiStyle = SystemUiOverlayStyle(
-      statusBarColor: AppColors.background,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-      systemStatusBarContrastEnforced: false,
-      systemNavigationBarColor: AppColors.surface,
-      systemNavigationBarDividerColor: AppColors.surface,
-      systemNavigationBarIconBrightness: Brightness.light,
-      systemNavigationBarContrastEnforced: false,
+    final systemUiStyle = pulseSystemUiOverlayStyle(
+      Theme.of(context).brightness,
     );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -93,7 +138,7 @@ class _MainNavigationState extends State<MainNavigation> {
           child: IndexedStack(index: _index, children: _screens),
         ),
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border(top: BorderSide(color: AppColors.border)),
           ),

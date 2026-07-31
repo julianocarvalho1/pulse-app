@@ -113,7 +113,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             const SizedBox(height: 32),
 
             // DADOS DO PROGRAMA
-            const Text(
+            Text(
               'PASSO 1: DADOS GERAIS',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -125,14 +125,14 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
               decoration: InputDecoration(
                 labelText: 'Nome do Programa (ex: Foco Emagrecimento)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
                 enabledBorder: OutlineInputBorder(
@@ -150,10 +150,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _focusController,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 labelText: 'Objetivo Principal (ex: Hipertrofia, Cardio)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
                 enabledBorder: OutlineInputBorder(
@@ -171,7 +171,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             const SizedBox(height: 32),
 
             // DIVISÃO DO TREINO
-            const Text(
+            Text(
               'PASSO 2: DIVISÃO DO TREINO',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -181,9 +181,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Como você quer organizar seus dias na academia?',
-              style: TextStyle(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -196,7 +196,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                     split,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.black : Colors.white,
+                      color: isSelected
+                          ? AppColors.onPrimary
+                          : AppColors.textPrimary,
                     ),
                   ),
                   selected: isSelected,
@@ -223,14 +225,14 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

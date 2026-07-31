@@ -29,17 +29,17 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.white,
+            color: AppColors.textPrimary,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Detalhes do Treino',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -81,7 +81,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     dataFormatada,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -135,7 +135,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
             // NOVO: CAIXA DE ANOTAÇÕES/FEEDBACK DO TREINO
             if (workout.notes.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'ANOTAÇÕES DO TREINO',
                 style: TextStyle(
                   fontSize: 12,
@@ -171,8 +171,8 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         workout.notes,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                           height: 1.4,
                         ),
@@ -184,7 +184,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
             ],
 
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'EXERCÍCIOS REALIZADOS',
               style: TextStyle(
                 fontSize: 12,
@@ -197,7 +197,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
 
             // LISTA DE EXERCÍCIOS
             if (workout.exercises.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
                   padding: EdgeInsets.all(20.0),
                   child: Text(
@@ -242,7 +242,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
-                                children: const [
+                                children: [
                                   Text(
                                     'Série',
                                     style: TextStyle(
@@ -347,7 +347,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
         ),
       ],
     );

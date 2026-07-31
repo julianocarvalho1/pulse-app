@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../settings/domain/pulse_settings.dart';
@@ -143,7 +143,7 @@ class _OnboardingErrorView extends StatelessWidget {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Seus treinos nÃ£o foram apagados. Tente carregar novamente.',
                     textAlign: TextAlign.center,
                     style: TextStyle(

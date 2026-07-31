@@ -22,14 +22,16 @@ class MiniLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 1. Pegamos a cor principal do tema aqui, onde temos acesso ao 'context'
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
 
     return SizedBox(
       height: height,
       width: double.infinity,
       // 2. Passamos a cor capturada para dentro do pintor
       child: CustomPaint(
-        painter: _LineChartPainter(values, showDots, primaryColor),
+        painter: _LineChartPainter(values, showDots, primaryColor, isDark),
       ),
     );
   }
@@ -39,8 +41,9 @@ class _LineChartPainter extends CustomPainter {
   final List<double> values;
   final bool showDots;
   final Color primaryColor; // 3. O pintor recebe e guarda a cor aqui
+  final bool isDark;
 
-  _LineChartPainter(this.values, this.showDots, this.primaryColor);
+  _LineChartPainter(this.values, this.showDots, this.primaryColor, this.isDark);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -80,7 +83,7 @@ class _LineChartPainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: [
           // 4. Usando a cor recebida com o formato moderno de transparência
-          primaryColor.withValues(alpha: 0.30),
+          primaryColor.withValues(alpha: isDark ? 0.28 : 0.16),
           primaryColor.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -111,5 +114,7 @@ class _LineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
-      oldDelegate.values != values || oldDelegate.primaryColor != primaryColor;
+      oldDelegate.values != values ||
+      oldDelegate.primaryColor != primaryColor ||
+      oldDelegate.isDark != isDark;
 }

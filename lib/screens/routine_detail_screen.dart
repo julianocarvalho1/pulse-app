@@ -88,16 +88,16 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Editar Ficha de Treino',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
+                          icon: Icon(Icons.close, color: AppColors.textPrimary),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -105,42 +105,38 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameCtrl,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: focusCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'GERENCIAR EXERCÍCIOS',
                       style: TextStyle(
                         fontSize: 12,
@@ -178,15 +174,15 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                             ),
                             title: Text(
                               ex.name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
                             ),
                             subtitle: Text(
                               '${ex.reps} • ${ex.rest}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
                               ),
@@ -216,7 +212,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.primary,
-                          foregroundColor: Colors.black,
+                          foregroundColor: AppColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -452,18 +448,21 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          title: const Text(
+          title: Text(
             'Trocar Treino?',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           content: Text(
             'Você tem um treino ("${provider.activeRoutineName}") em andamento. Deseja substituí-lo por este?',
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
+              child: Text(
                 'Cancelar',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -471,7 +470,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.black,
+                foregroundColor: AppColors.onPrimary,
               ),
               onPressed: () {
                 provider.startRoutine(routine, replaceActive: true);
@@ -554,10 +553,10 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 children: [
                   Text(
                     routine.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -573,7 +572,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     routine.focus,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                       height: 1.4,
@@ -582,7 +581,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.format_list_numbered,
                         size: 16,
                         color: AppColors.textSecondary,
@@ -590,7 +589,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       const SizedBox(width: 6),
                       Text(
                         '${routine.exercises.length} Exercícios nesta ficha',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -602,7 +601,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'LISTA DE EXERCÍCIOS',
               style: TextStyle(
                 fontSize: 12,
@@ -631,7 +630,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
           child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: AppColors.onPrimary,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -678,7 +677,7 @@ class _ExerciseMetric extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,

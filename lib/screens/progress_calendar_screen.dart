@@ -101,7 +101,7 @@ class _ProgressCalendarScreenState
                       const Spacer(),
                       Text(
                         '$activeDays dias ativos',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
                         ),
@@ -190,7 +190,7 @@ class _ProgressCalendarScreenState
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'TREINOS DO MÊS',
               style: TextStyle(
                 color: AppColors.textSecondary,
@@ -258,7 +258,11 @@ class _ProgressCalendarScreenState
               Text(
                 '${date.day}',
                 style: TextStyle(
-                  color: summary == null ? Colors.white : Colors.black,
+                  color: summary == null
+                      ? AppColors.textPrimary
+                      : hasCompleted
+                      ? AppColors.onPrimary
+                      : Colors.black87,
                   fontWeight: summary == null && !isToday
                       ? FontWeight.w400
                       : FontWeight.w800,
@@ -316,7 +320,7 @@ class _ProgressCalendarScreenState
               ),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -366,7 +370,7 @@ class _ProgressCalendarScreenState
         ),
         subtitle: Text(
           '${day.completedCount} concluídos • ${day.incompleteCount} incompletos',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
         ),
         children: day.items.map((item) {
           final incomplete = item.isIncomplete;
@@ -388,10 +392,7 @@ class _ProgressCalendarScreenState
             ),
             subtitle: Text(
               '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
@@ -417,7 +418,7 @@ class _ProgressCalendarScreenState
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Column(
+      child: Column(
         children: <Widget>[
           Icon(
             Icons.calendar_month_outlined,
@@ -456,7 +457,7 @@ class _ProgressCalendarScreenState
         const SizedBox(width: 5),
         Text(
           label,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
         ),
       ],
     );
@@ -550,7 +551,7 @@ class _ProgressCalendarScreenState
                   title: Text(item.routineName),
                   subtitle: Text(
                     '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {

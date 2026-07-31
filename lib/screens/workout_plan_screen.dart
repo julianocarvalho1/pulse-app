@@ -50,7 +50,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
         ),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.black,
+          foregroundColor: AppColors.onPrimary,
           elevation: 0,
           onPressed: () {
             Navigator.push(
@@ -105,16 +105,16 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Editar Ficha de Treino',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
+                          icon: Icon(Icons.close, color: AppColors.textPrimary),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -122,42 +122,38 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     TextField(
                       controller: nameCtrl,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: focusCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'GERENCIAR EXERCÍCIOS',
                       style: TextStyle(
                         fontSize: 12,
@@ -195,15 +191,15 @@ class WorkoutPlanScreen extends ConsumerWidget {
                             ),
                             title: Text(
                               ex.name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
                             ),
                             subtitle: Text(
                               '${ex.reps} • ${ex.rest}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
                               ),
@@ -233,7 +229,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.primary,
-                          foregroundColor: Colors.black,
+                          foregroundColor: AppColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -292,13 +288,13 @@ class WorkoutPlanScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.fitness_center_outlined,
               size: 48,
               color: AppColors.textSecondary,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Você não possui fichas ativas.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
             ),
@@ -307,7 +303,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
               builder: (ctx) => ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
@@ -375,18 +371,15 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
               title: Text(
                 groupName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                 ),
               ),
               subtitle: Text(
                 '${groupRoutines.length} fichas neste programa',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               childrenPadding: const EdgeInsets.only(
                 left: 16,
@@ -448,7 +441,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.redAccent,
-        child: const Icon(Icons.delete_sweep, color: Colors.white, size: 28),
+        child: Icon(Icons.delete_sweep, color: AppColors.textPrimary, size: 28),
       ),
       onDismissed: (direction) {
         provider.deleteRoutine(routine.id);
@@ -485,23 +478,20 @@ class WorkoutPlanScreen extends ConsumerWidget {
           ),
           title: Text(
             routine.name,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 15,
-              color: Colors.white,
+              color: AppColors.textPrimary,
             ),
           ),
           subtitle: Text(
             '${routine.exercises.length} exercício(s) • Foco: ${routine.focus}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           trailing: PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+            icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
             color: AppColors.surface,
             onSelected: (value) {
               if (value == 'view') {
@@ -519,16 +509,19 @@ class WorkoutPlanScreen extends ConsumerWidget {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'view',
                 child: Text(
                   'Ver Detalhes',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit',
-                child: Text('Editar', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  'Editar',
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
               ),
               const PopupMenuItem(
                 value: 'delete',
@@ -648,7 +641,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Contém ${prog.routines.length} fichas de treino',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,
                                   ),
@@ -668,7 +661,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'MÉTODO E OBJETIVO:',
                               style: TextStyle(
                                 fontSize: 10,
@@ -679,8 +672,8 @@ class WorkoutPlanScreen extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               prog.focus,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
                                 fontSize: 13,
                                 height: 1.4,
                               ),
@@ -723,7 +716,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                 backgroundColor: Theme.of(
                                   context,
                                 ).colorScheme.primary,
-                                foregroundColor: Colors.black,
+                                foregroundColor: AppColors.onPrimary,
                                 disabledBackgroundColor: AppColors.surfaceLight,
                                 disabledForegroundColor:
                                     AppColors.textSecondary,
@@ -823,7 +816,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'FICHAS INCLUSAS NO PROGRAMA:',
               style: TextStyle(
                 fontSize: 12,
@@ -846,8 +839,8 @@ class WorkoutPlanScreen extends ConsumerWidget {
                   children: [
                     Text(
                       r.name,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -855,7 +848,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${r.exercises.length} exercícios estruturados.',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
@@ -870,7 +863,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.black,
+                  foregroundColor: AppColors.onPrimary,
                   disabledBackgroundColor: AppColors.surfaceLight,
                   disabledForegroundColor: AppColors.textSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 enum MeasurementSystem { metric, imperial }
 
+enum PulseThemeMode { system, light, dark }
+
 @immutable
 class UserProfile {
   const UserProfile({
@@ -40,6 +42,7 @@ class UserProfile {
 class PulseSettings {
   const PulseSettings({
     required this.themeColorValue,
+    required this.themeMode,
     required this.voiceAfterRest,
     required this.inactivityReminder,
     required this.measurementSystem,
@@ -47,6 +50,7 @@ class PulseSettings {
   });
 
   final int themeColorValue;
+  final PulseThemeMode themeMode;
   final bool voiceAfterRest;
   final bool inactivityReminder;
   final MeasurementSystem measurementSystem;
@@ -55,6 +59,7 @@ class PulseSettings {
   factory PulseSettings.defaults() {
     return const PulseSettings(
       themeColorValue: 0xFF00E676,
+      themeMode: PulseThemeMode.dark,
       voiceAfterRest: true,
       inactivityReminder: true,
       measurementSystem: MeasurementSystem.metric,
@@ -64,6 +69,7 @@ class PulseSettings {
 
   PulseSettings copyWith({
     int? themeColorValue,
+    PulseThemeMode? themeMode,
     bool? voiceAfterRest,
     bool? inactivityReminder,
     MeasurementSystem? measurementSystem,
@@ -71,6 +77,7 @@ class PulseSettings {
   }) {
     return PulseSettings(
       themeColorValue: themeColorValue ?? this.themeColorValue,
+      themeMode: themeMode ?? this.themeMode,
       voiceAfterRest: voiceAfterRest ?? this.voiceAfterRest,
       inactivityReminder: inactivityReminder ?? this.inactivityReminder,
       measurementSystem: measurementSystem ?? this.measurementSystem,

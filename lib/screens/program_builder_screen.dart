@@ -75,21 +75,24 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
+        title: Text(
           'Criar Novo Exercício',
-          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: customNameCtrl,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textPrimary),
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                 labelText: 'Nome do exercício/aparelho',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                enabledBorder: const UnderlineInputBorder(
+                labelStyle: TextStyle(color: AppColors.textSecondary),
+                enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: UnderlineInputBorder(
@@ -102,12 +105,12 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: customMuscleCtrl,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textPrimary),
               textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                 labelText: 'Foco (ex: Costas, LPO, Cardio)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
-                enabledBorder: const UnderlineInputBorder(
+                labelStyle: TextStyle(color: AppColors.textSecondary),
+                enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: UnderlineInputBorder(
@@ -122,7 +125,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancelar',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -130,7 +133,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
+              foregroundColor: AppColors.onPrimary,
             ),
             onPressed: () {
               if (customNameCtrl.text.trim().isNotEmpty) {
@@ -210,14 +213,14 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
               backgroundColor: AppColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
+                side: BorderSide(color: AppColors.border),
               ),
               title: Text(
                 editIndex == null
                     ? 'Configurar Exercício'
                     : 'Editar Configuração',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                 ),
@@ -239,20 +242,18 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
                     TextField(
                       controller: repsCtrl,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Séries e Reps (ex: 4x 15-12-10)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: AppColors.background,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -266,20 +267,18 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
                     TextField(
                       controller: restCtrl,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Descanso (ex: 60 seg)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: AppColors.background,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -293,18 +292,19 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
                     TextField(
                       controller: obsCtrl,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                      ),
                       maxLines: 2,
                       decoration: InputDecoration(
                         labelText: 'Observações (ex: Falha nas últimas)',
-                        labelStyle: const TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        labelStyle: TextStyle(color: AppColors.textSecondary),
                         filled: true,
                         fillColor: AppColors.background,
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.border),
+                          borderSide: BorderSide(color: AppColors.border),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -336,7 +336,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                               fontSize: 14,
                             ),
                           ),
-                          subtitle: const Text(
+                          subtitle: Text(
                             'Unir com o exercício de cima',
                             style: TextStyle(
                               fontSize: 11,
@@ -365,15 +365,15 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                         border: Border.all(color: AppColors.border),
                       ),
                       child: SwitchListTile(
-                        title: const Text(
+                        title: Text(
                           'Dropset',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontSize: 14,
                           ),
                         ),
-                        subtitle: const Text(
+                        subtitle: Text(
                           'Reduzir carga na última série',
                           style: TextStyle(
                             fontSize: 11,
@@ -396,7 +396,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
+                  child: Text(
                     'Cancelar',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
@@ -404,7 +404,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.black,
+                    foregroundColor: AppColors.onPrimary,
                   ),
                   onPressed: () {
                     String finalReps = repsCtrl.text.trim().isEmpty
@@ -512,7 +512,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.surface,
                         borderRadius: BorderRadius.vertical(
                           top: Radius.circular(24),
@@ -539,13 +539,11 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: TextField(
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: AppColors.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Buscar exercício...',
-                          hintStyle: const TextStyle(
-                            color: AppColors.textSecondary,
-                          ),
-                          prefixIcon: const Icon(
+                          hintStyle: TextStyle(color: AppColors.textSecondary),
+                          prefixIcon: Icon(
                             Icons.search,
                             color: AppColors.textSecondary,
                           ),
@@ -601,7 +599,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
                     Expanded(
                       child: allExercises.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 'Nenhum exercício encontrado.',
                                 style: TextStyle(
@@ -627,15 +625,15 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                   ),
                                   title: Text(
                                     ex.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                   subtitle: Text(
                                     ex.muscle,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontSize: 12,
                                     ),
@@ -748,7 +746,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                 ),
 
                 if (routine.exercises.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Center(
                       child: Text(
@@ -798,10 +796,10 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                               Expanded(
                                 child: Text(
                                   ex.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -816,12 +814,12 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                     color: Colors.redAccent,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'DROPSET',
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -862,7 +860,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
                                     'Obs: ${ex.description}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
                                       fontStyle: FontStyle.italic,
@@ -876,7 +874,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                             children: [
                               // AQUI ESTÁ O LÁPIS DIRETO NO EXERCÍCIO
                               IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.edit,
                                   color: AppColors.textSecondary,
                                   size: 20,
@@ -939,8 +937,8 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: AppColors.border),
+                        foregroundColor: AppColors.textPrimary,
+                        side: BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -958,14 +956,14 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
