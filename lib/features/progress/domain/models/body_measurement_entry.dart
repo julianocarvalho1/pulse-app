@@ -94,6 +94,19 @@ class BodyMeasurementEntry {
     return BodyMeasurementType.values.any((type) => valueFor(type) != null);
   }
 
+  bool get isWeightOnly {
+    return weightKg != null &&
+        BodyMeasurementType.values
+            .where((type) => !type.isWeight)
+            .every((type) => valueFor(type) == null);
+  }
+
+  bool get hasBodyMeasurements {
+    return BodyMeasurementType.values
+        .where((type) => !type.isWeight)
+        .any((type) => valueFor(type) != null);
+  }
+
   double? valueFor(BodyMeasurementType type) {
     return switch (type) {
       BodyMeasurementType.weight => weightKg,

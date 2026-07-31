@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/providers/onboarding_controller.dart';
 import '../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../features/progress/domain/models/body_measurement_entry.dart';
+import '../features/progress/presentation/providers/progress_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
@@ -708,6 +710,28 @@ class _PersonalDataSheetState extends ConsumerState<_PersonalDataSheet> {
 
       final weightKg = _isMetric ? enteredWeight : enteredWeight / 2.2046226218;
       final heightCm = _isMetric ? enteredHeight : enteredHeight * 2.54;
+
+      final previousWeightKg = widget.initialSettings.profile.weightKg;
+      final weightChanged = (previousWeightKg - weightKg).abs() >= 0.0001;
+
+      if (weightChanged) {
+        await ref.read(bodyMeasurementsControllerProvider.future);
+        final measurementsController = ref.read(
+          bodyMeasurementsControllerProvider.notifier,
+        );
+
+        await measurementsController.ensureWeightBaseline(previousWeightKg);
+
+        if (weightKg > 0) {
+          await measurementsController.save(
+            BodyMeasurementEntry(
+              id: 'profile_weight_${DateTime.now().microsecondsSinceEpoch}',
+              recordedAt: DateTime.now(),
+              weightKg: weightKg,
+            ),
+          );
+        }
+      }
 
       await ref
           .read(settingsControllerProvider.notifier)

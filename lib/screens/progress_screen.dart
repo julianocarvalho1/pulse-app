@@ -12,6 +12,7 @@ import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mini_line_chart.dart';
+import 'body_measurement_editor_screen.dart';
 import 'progress_calendar_screen.dart';
 import 'workout_history_detail_screen.dart';
 
@@ -264,7 +265,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const Text(
-                        'AVALIAÇÕES CORPORAIS',
+                        'MEDIDAS CORPORAIS',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -275,21 +276,21 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       const SizedBox(height: 4),
                       Text(
                         latest == null
-                            ? 'Nenhuma avaliação registrada'
-                            : 'Última em ${DateFormat('dd/MM/yyyy').format(latest.recordedAt)}',
+                            ? 'Nenhuma medida registrada'
+                            : '${latest.isWeightOnly ? 'Última pesagem' : 'Última avaliação'} em ${DateFormat('dd/MM/yyyy').format(latest.recordedAt)}',
                         style: const TextStyle(fontSize: 13),
                       ),
                     ],
                   ),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () => _openMeasurementEditor(
+                  onPressed: () => _openMeasurementActionPicker(
                     context,
                     settings: settings,
-                    latest: latest,
+                    entries: entries,
                   ),
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('ATUALIZAR'),
+                  label: const Text('REGISTRAR'),
                 ),
               ],
             ),
@@ -317,26 +318,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                           ),
                         ),
                       ),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<BodyMeasurementType>(
-                          value: _measurementType,
-                          dropdownColor: AppColors.surfaceLight,
-                          items: BodyMeasurementType.values.map((type) {
-                            return DropdownMenuItem<BodyMeasurementType>(
-                              value: type,
-                              child: Text(
-                                type.label,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (type) {
-                            if (type != null) {
-                              setState(() => _measurementType = type);
-                            }
-                          },
-                        ),
-                      ),
+                      _measurementTypeSelector(context),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -362,7 +344,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 26),
                       child: Text(
-                        'Registre pelo menos duas avaliações desta medida para visualizar a evolução.',
+                        'Registre pelo menos dois valores desta medida para visualizar a evolução.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppColors.textSecondary,
@@ -376,7 +358,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             if (entries.isNotEmpty) ...<Widget>[
               const SizedBox(height: 20),
               const Text(
-                'ÚLTIMAS AVALIAÇÕES',
+                'HISTÓRICO DE MEDIDAS',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
@@ -1229,7 +1211,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             ),
           ),
           const Text(
-            'Registre uma avaliação\npara criar o histórico.',
+            'Registre uma pesagem\npara criar o histórico.',
             textAlign: TextAlign.right,
             style: TextStyle(
               color: AppColors.textSecondary,
@@ -1263,20 +1245,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         borderRadius: BorderRadius.circular(13),
         child: ListTile(
           title: Text(
-            DateFormat("dd/MM/yyyy 'às' HH:mm").format(entry.recordedAt),
+            entry.isWeightOnly ? 'Pesagem' : 'Avaliação corporal',
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           subtitle: Text(
-            values,
-            maxLines: 2,
+            '${DateFormat("dd/MM/yyyy 'às' HH:mm").format(entry.recordedAt)}\n$values',
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
+              height: 1.4,
             ),
           ),
+          isThreeLine: true,
           trailing: IconButton(
-            tooltip: 'Excluir avaliação',
+            tooltip: entry.isWeightOnly
+                ? 'Excluir pesagem'
+                : 'Excluir avaliação',
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
             onPressed: () => _deleteMeasurement(context, entry),
           ),
@@ -1524,43 +1510,344 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Future<void> _openMeasurementEditor(
-    BuildContext context, {
-    required PulseSettings settings,
-    required BodyMeasurementEntry? latest,
-  }) async {
-    final entry = await showModalBottomSheet<BodyMeasurementEntry>(
+  Widget _measurementTypeSelector(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Selecionar medida para o gráfico',
+      value: _measurementType.label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openMeasurementTypePicker(context),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 172),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Flexible(
+                child: Text(
+                  _measurementType.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.keyboard_arrow_down_rounded, size: 19),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMeasurementTypePicker(BuildContext context) async {
+    final selected = await showModalBottomSheet<BodyMeasurementType>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.58,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Row(
+                  children: <Widget>[
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Escolher medida',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Selecione o dado exibido no gráfico de evolução.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Fechar',
+                      onPressed: () => Navigator.pop(sheetContext),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: AppColors.border),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                  children: <Widget>[
+                    _measurementTypeGroup(
+                      sheetContext,
+                      title: 'PRINCIPAIS',
+                      types: const <BodyMeasurementType>[
+                        BodyMeasurementType.weight,
+                        BodyMeasurementType.shoulders,
+                        BodyMeasurementType.chest,
+                        BodyMeasurementType.waist,
+                        BodyMeasurementType.hips,
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _measurementTypeGroup(
+                      sheetContext,
+                      title: 'BRAÇOS',
+                      types: const <BodyMeasurementType>[
+                        BodyMeasurementType.leftArm,
+                        BodyMeasurementType.rightArm,
+                        BodyMeasurementType.leftForearm,
+                        BodyMeasurementType.rightForearm,
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _measurementTypeGroup(
+                      sheetContext,
+                      title: 'PERNAS',
+                      types: const <BodyMeasurementType>[
+                        BodyMeasurementType.leftThigh,
+                        BodyMeasurementType.rightThigh,
+                        BodyMeasurementType.leftCalf,
+                        BodyMeasurementType.rightCalf,
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      setState(() => _measurementType = selected);
+    }
+  }
+
+  Widget _measurementTypeGroup(
+    BuildContext sheetContext, {
+    required String title,
+    required List<BodyMeasurementType> types,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.7,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: types.map((type) {
+            final selected = type == _measurementType;
+            final primary = Theme.of(sheetContext).colorScheme.primary;
+
+            return Semantics(
+              button: true,
+              selected: selected,
+              label: type.label,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => Navigator.pop(sheetContext, type),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? primary.withValues(alpha: 0.14)
+                        : AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected ? primary : AppColors.border,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      if (selected) ...<Widget>[
+                        Icon(Icons.check_rounded, size: 16, color: primary),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        type.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: selected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: selected ? primary : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openMeasurementActionPicker(
+    BuildContext context, {
+    required PulseSettings settings,
+    required List<BodyMeasurementEntry> entries,
+  }) async {
+    final action = await showModalBottomSheet<_MeasurementAction>(
+      context: context,
       backgroundColor: AppColors.surface,
       useSafeArea: true,
-      builder: (_) => _MeasurementEditorSheet(
-        latest: latest,
-        profileWeightKg: settings.profile.weightKg,
-        measurementSystem: settings.measurementSystem,
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 14),
+            ListTile(
+              leading: Icon(
+                Icons.monitor_weight_outlined,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text('Registrar peso'),
+              subtitle: const Text(
+                'Para uma pesagem rápida, sem copiar outras medidas.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _MeasurementAction.weight),
+            ),
+            const Divider(color: AppColors.border),
+            ListTile(
+              leading: Icon(
+                Icons.straighten,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text('Nova avaliação corporal'),
+              subtitle: const Text('Registre apenas as regiões medidas hoje.'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.pop(
+                sheetContext,
+                _MeasurementAction.bodyAssessment,
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
-    if (entry == null) {
+    if (action == null || !context.mounted) {
       return;
     }
 
+    BodyMeasurementEntry? entry;
+
+    if (action == _MeasurementAction.weight) {
+      BodyMeasurementEntry? latestWeight;
+      for (final item in entries) {
+        if (item.weightKg != null) {
+          latestWeight = item;
+          break;
+        }
+      }
+      entry = await showModalBottomSheet<BodyMeasurementEntry>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.surface,
+        useSafeArea: true,
+        builder: (_) => _WeightEntrySheet(
+          latestWeight: latestWeight,
+          measurementSystem: settings.measurementSystem,
+        ),
+      );
+    } else {
+      entry = await Navigator.of(context).push<BodyMeasurementEntry>(
+        MaterialPageRoute<BodyMeasurementEntry>(
+          builder: (_) => BodyMeasurementEditorScreen(
+            history: entries,
+            measurementSystem: settings.measurementSystem,
+          ),
+        ),
+      );
+    }
+
+    if (entry == null || !context.mounted) {
+      return;
+    }
+
+    await _saveMeasurement(context, entry);
+  }
+
+  Future<void> _saveMeasurement(
+    BuildContext context,
+    BodyMeasurementEntry entry,
+  ) async {
     try {
       await ref.read(bodyMeasurementsControllerProvider.notifier).save(entry);
-
-      final weight = entry.weightKg;
-      if (weight != null && weight > 0) {
-        await ref
-            .read(settingsControllerProvider.notifier)
-            .updateProfile(settings.profile.copyWith(weightKg: weight));
-      }
 
       if (!context.mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Avaliação corporal salva.'),
+        SnackBar(
+          content: Text(
+            entry.isWeightOnly ? 'Pesagem salva.' : 'Avaliação corporal salva.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1569,8 +1856,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível salvar a avaliação.'),
+        SnackBar(
+          content: Text(
+            entry.isWeightOnly
+                ? 'Não foi possível salvar a pesagem.'
+                : 'Não foi possível salvar a avaliação.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1581,12 +1872,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     BuildContext context,
     BodyMeasurementEntry entry,
   ) async {
+    final entryLabel = entry.isWeightOnly ? 'A pesagem' : 'A avaliação';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Excluir avaliação?'),
+        title: Text(
+          entry.isWeightOnly ? 'Excluir pesagem?' : 'Excluir avaliação?',
+        ),
         content: Text(
-          'O registro de ${DateFormat('dd/MM/yyyy').format(entry.recordedAt)} será removido.',
+          '$entryLabel de ${DateFormat('dd/MM/yyyy').format(entry.recordedAt)} será removida.',
         ),
         actions: <Widget>[
           TextButton(
@@ -1686,24 +1980,23 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   }
 }
 
-class _MeasurementEditorSheet extends StatefulWidget {
-  const _MeasurementEditorSheet({
-    required this.latest,
-    required this.profileWeightKg,
+enum _MeasurementAction { weight, bodyAssessment }
+
+class _WeightEntrySheet extends StatefulWidget {
+  const _WeightEntrySheet({
+    required this.latestWeight,
     required this.measurementSystem,
   });
 
-  final BodyMeasurementEntry? latest;
-  final double profileWeightKg;
+  final BodyMeasurementEntry? latestWeight;
   final MeasurementSystem measurementSystem;
 
   @override
-  State<_MeasurementEditorSheet> createState() =>
-      _MeasurementEditorSheetState();
+  State<_WeightEntrySheet> createState() => _WeightEntrySheetState();
 }
 
-class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
-  late final Map<BodyMeasurementType, TextEditingController> _controllers;
+class _WeightEntrySheetState extends State<_WeightEntrySheet> {
+  final TextEditingController _weightController = TextEditingController();
   late DateTime _recordedAt;
   bool _saving = false;
 
@@ -1711,40 +2004,18 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
   void initState() {
     super.initState();
     _recordedAt = DateTime.now();
-    _controllers = <BodyMeasurementType, TextEditingController>{
-      for (final type in BodyMeasurementType.values)
-        type: TextEditingController(text: _initialValue(type)),
-    };
   }
 
   @override
   void dispose() {
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
+    _weightController.dispose();
     super.dispose();
-  }
-
-  String _initialValue(BodyMeasurementType type) {
-    final value =
-        widget.latest?.valueFor(type) ??
-        (type.isWeight && widget.profileWeightKg > 0
-            ? widget.profileWeightKg
-            : null);
-    if (value == null) {
-      return '';
-    }
-
-    final displayed = widget.measurementSystem == MeasurementSystem.metric
-        ? value
-        : type.isWeight
-        ? value * 2.2046226218
-        : value / 2.54;
-    return displayed.toStringAsFixed(1);
   }
 
   @override
   Widget build(BuildContext context) {
+    final latest = widget.latestWeight;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -1754,6 +2025,7 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
       ),
       child: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Center(
@@ -1768,33 +2040,51 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
             ),
             const SizedBox(height: 18),
             const Text(
-              'Nova avaliação corporal',
+              'Registrar peso',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Preencha somente as medidas que você aferiu. Os dados ficam salvos localmente.',
+              'Cria uma pesagem independente. Nenhuma outra medida será copiada.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.calendar_today_outlined),
-              title: const Text('Data da avaliação'),
-              subtitle: Text(
-                DateFormat("dd/MM/yyyy 'às' HH:mm").format(_recordedAt),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _weightController,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _selectDate,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                labelText: 'Peso',
+                suffixText: _unit,
+                helperText: latest?.weightKg == null
+                    ? 'Sem pesagem anterior'
+                    : 'Último: ${_displayWeight(latest!.weightKg!)} $_unit em ${DateFormat('dd/MM/yyyy').format(latest.recordedAt)}',
+                helperMaxLines: 2,
+              ),
             ),
-            const Divider(color: AppColors.border),
             const SizedBox(height: 8),
-            ...BodyMeasurementType.values.map(_field),
-            const SizedBox(height: 12),
+            Material(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(14),
+              child: ListTile(
+                leading: const Icon(Icons.calendar_today_outlined),
+                title: const Text('Data da pesagem'),
+                subtitle: Text(
+                  DateFormat("dd/MM/yyyy 'às' HH:mm").format(_recordedAt),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _selectDate,
+              ),
+            ),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -1806,7 +2096,7 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
                         height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('SALVAR AVALIAÇÃO'),
+                    : const Text('SALVAR PESAGEM'),
               ),
             ),
           ],
@@ -1815,21 +2105,15 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
     );
   }
 
-  Widget _field(BodyMeasurementType type) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 11),
-      child: TextField(
-        controller: _controllers[type],
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-        decoration: InputDecoration(
-          labelText: type.label,
-          suffixText: widget.measurementSystem == MeasurementSystem.metric
-              ? (type.isWeight ? 'kg' : 'cm')
-              : (type.isWeight ? 'lbs' : 'in'),
-        ),
-      ),
-    );
+  String get _unit {
+    return widget.measurementSystem == MeasurementSystem.metric ? 'kg' : 'lbs';
+  }
+
+  String _displayWeight(double weightKg) {
+    final displayed = widget.measurementSystem == MeasurementSystem.metric
+        ? weightKg
+        : weightKg * 2.2046226218;
+    return displayed.toStringAsFixed(1).replaceAll('.', ',');
   }
 
   Future<void> _selectDate() async {
@@ -1866,57 +2150,32 @@ class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
   void _submit() {
     FocusScope.of(context).unfocus();
 
-    final values = <BodyMeasurementType, double?>{
-      for (final type in BodyMeasurementType.values)
-        type: _toStorageValue(_parse(_controllers[type]!.text), type),
-    };
-
-    if (values.values.every((value) => value == null)) {
+    final entered = double.tryParse(
+      _weightController.text.trim().replaceAll(',', '.'),
+    );
+    if (entered == null || entered <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Informe pelo menos uma medida válida.'),
+          content: Text('Informe um peso válido.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
+    final weightKg = widget.measurementSystem == MeasurementSystem.metric
+        ? entered
+        : entered / 2.2046226218;
+
     setState(() => _saving = true);
 
-    final entry = BodyMeasurementEntry(
-      id: 'measurement_${DateTime.now().microsecondsSinceEpoch}',
-      recordedAt: _recordedAt,
-      weightKg: values[BodyMeasurementType.weight],
-      shouldersCm: values[BodyMeasurementType.shoulders],
-      chestCm: values[BodyMeasurementType.chest],
-      waistCm: values[BodyMeasurementType.waist],
-      hipsCm: values[BodyMeasurementType.hips],
-      leftArmCm: values[BodyMeasurementType.leftArm],
-      rightArmCm: values[BodyMeasurementType.rightArm],
-      leftForearmCm: values[BodyMeasurementType.leftForearm],
-      rightForearmCm: values[BodyMeasurementType.rightForearm],
-      leftThighCm: values[BodyMeasurementType.leftThigh],
-      rightThighCm: values[BodyMeasurementType.rightThigh],
-      leftCalfCm: values[BodyMeasurementType.leftCalf],
-      rightCalfCm: values[BodyMeasurementType.rightCalf],
+    Navigator.pop(
+      context,
+      BodyMeasurementEntry(
+        id: 'weight_${DateTime.now().microsecondsSinceEpoch}',
+        recordedAt: _recordedAt,
+        weightKg: weightKg,
+      ),
     );
-
-    Navigator.pop(context, entry);
-  }
-
-  double? _toStorageValue(double? value, BodyMeasurementType type) {
-    if (value == null || widget.measurementSystem == MeasurementSystem.metric) {
-      return value;
-    }
-
-    return type.isWeight ? value / 2.2046226218 : value * 2.54;
-  }
-
-  double? _parse(String text) {
-    final value = double.tryParse(text.trim().replaceAll(',', '.'));
-    if (value == null || value <= 0) {
-      return null;
-    }
-    return value;
   }
 }

@@ -78,6 +78,24 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
         .updateUserName(normalizedName);
   }
 
+  Future<void> setCurrentWeight(double weightKg) async {
+    final current = _currentValue;
+    if (current == null) {
+      return;
+    }
+
+    final normalizedWeight = weightKg < 0 ? 0.0 : weightKg;
+    if ((current.profile.weightKg - normalizedWeight).abs() < 0.0001) {
+      return;
+    }
+
+    await _persist(
+      current.copyWith(
+        profile: current.profile.copyWith(weightKg: normalizedWeight),
+      ),
+    );
+  }
+
   Future<void> updateProfile(UserProfile profile) async {
     final current = _currentValue;
     if (current == null) {
