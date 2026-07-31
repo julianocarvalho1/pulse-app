@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -25,58 +26,6 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
 
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   int _tab = 0;
-
-  String _getImagePath(String exerciseName) {
-    String cleanName = exerciseName.toLowerCase().trim();
-
-    final Map<String, String> aliases = {
-      'crucifixo com halteres': 'crucifixo_reto',
-      'crucifixo maquina': 'peck_deck_voador',
-      'encolhimento no smith': 'encolhimento_na_barra_smith',
-      'elevacao frontal com barra': 'elevacao_frontal_com_barra_anilha',
-      'pull-down na polia': 'pull_down_na_polia',
-      'passada / afundo': 'passada_afundo',
-      'puxada na frente': 'puxada_frontal_aberta',
-      'remada curvada': 'remada_curvada_com_barra',
-      'rosca direta': 'rosca_direta_com_barra',
-      'agachamento': 'agachamento_livre',
-      'leg press': 'leg_press_45',
-      'cadeira extensora': 'cadeira_extensora',
-      'crunch abdominal': 'abdominal_supra',
-      'triceps na polia': 'triceps_pulley_reta_v',
-      'rosca scott': 'rosca_scott_maquina_livre',
-      'desenvolvimento militar': 'desenvolvimento_com_barra',
-      'chest press': 'supino_reto_com_barra',
-      'remada sentada': 'remada_baixa_sentada',
-      'remada baixa': 'remada_baixa_sentada',
-    };
-
-    String nameForAlias = cleanName
-        .replaceAll(RegExp(r'[áàâã]'), 'a')
-        .replaceAll(RegExp(r'[éèê]'), 'e')
-        .replaceAll(RegExp(r'[íìî]'), 'i')
-        .replaceAll(RegExp(r'[óòôõ]'), 'o')
-        .replaceAll(RegExp(r'[úùû]'), 'u')
-        .replaceAll('ç', 'c');
-
-    if (aliases.containsKey(nameForAlias)) {
-      return 'assets/images/${aliases[nameForAlias]}.gif';
-    }
-
-    cleanName = cleanName.replaceAll('-', '_');
-    cleanName = cleanName.replaceAll('/', '_');
-    cleanName = cleanName.replaceAll(RegExp(r'[áàâã]'), 'a');
-    cleanName = cleanName.replaceAll(RegExp(r'[éèê]'), 'e');
-    cleanName = cleanName.replaceAll(RegExp(r'[íìî]'), 'i');
-    cleanName = cleanName.replaceAll(RegExp(r'[óòôõ]'), 'o');
-    cleanName = cleanName.replaceAll(RegExp(r'[úùû]'), 'u');
-    cleanName = cleanName.replaceAll('ç', 'c');
-    cleanName = cleanName.replaceAll(RegExp(r'[^a-z0-9_\s]'), '');
-    cleanName = cleanName.trim().replaceAll(RegExp(r'\s+'), '_');
-    cleanName = cleanName.replaceAll('__', '_');
-
-    return 'assets/images/$cleanName.gif';
-  }
 
   Map<String, dynamic> _getDetailedInfo() {
     String id = widget.exercise.id;
@@ -844,7 +793,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(15),
                         child: Image.asset(
-                          _getImagePath(widget.exercise.name),
+                          ExerciseCatalog.mediaPathFor(widget.exercise),
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) =>
                               const Center(

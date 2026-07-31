@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'exercise_detail_screen.dart';
@@ -31,55 +32,34 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     super.dispose();
   }
 
-  String _getImagePath(String exerciseName) {
-    String cleanName = exerciseName.toLowerCase().trim();
+  static const List<String> _muscleOrder = <String>[
+    'Peito',
+    'Costas',
+    'Ombros',
+    'Trapézio',
+    'Bíceps',
+    'Antebraço',
+    'Tríceps',
+    'Pernas',
+    'Panturrilha',
+    'Abdômen',
+    'Outros',
+  ];
 
-    final Map<String, String> aliases = {
-      'crucifixo com halteres': 'crucifixo_reto',
-      'crucifixo maquina': 'peck_deck_voador',
-      'encolhimento no smith': 'encolhimento_na_barra_smith',
-      'elevacao frontal com barra': 'elevacao_frontal_com_barra_anilha',
-      'pull-down na polia': 'pull_down_na_polia',
-      'passada / afundo': 'passada_afundo',
-      'puxada na frente': 'puxada_frontal_aberta',
-      'remada curvada': 'remada_curvada_com_barra',
-      'rosca direta': 'rosca_direta_com_barra',
-      'agachamento': 'agachamento_livre',
-      'leg press': 'leg_press_45',
-      'cadeira extensora': 'cadeira_extensora',
-      'crunch abdominal': 'abdominal_supra',
-      'rosca scott': 'rosca_scott_maquina_livre',
-      'desenvolvimento militar': 'desenvolvimento_com_barra',
-      'chest press': 'supino_reto_com_barra',
-      'remada sentada': 'remada_baixa_sentada',
-      'remada baixa': 'remada_baixa_sentada',
-    };
+  int _compareExercises(Exercise first, Exercise second) {
+    final firstMuscle = ExerciseCatalog.standardizedMuscle(first.muscle);
+    final secondMuscle = ExerciseCatalog.standardizedMuscle(second.muscle);
+    final firstIndex = _muscleOrder.indexOf(firstMuscle);
+    final secondIndex = _muscleOrder.indexOf(secondMuscle);
+    final safeFirstIndex = firstIndex < 0 ? _muscleOrder.length : firstIndex;
+    final safeSecondIndex = secondIndex < 0 ? _muscleOrder.length : secondIndex;
 
-    String nameForAlias = cleanName
-        .replaceAll(RegExp(r'[áàâã]'), 'a')
-        .replaceAll(RegExp(r'[éèê]'), 'e')
-        .replaceAll(RegExp(r'[íìî]'), 'i')
-        .replaceAll(RegExp(r'[óòôõ]'), 'o')
-        .replaceAll(RegExp(r'[úùû]'), 'u')
-        .replaceAll('ç', 'c');
-
-    if (aliases.containsKey(nameForAlias)) {
-      return 'assets/images/${aliases[nameForAlias]}.gif';
+    final muscleComparison = safeFirstIndex.compareTo(safeSecondIndex);
+    if (muscleComparison != 0) {
+      return muscleComparison;
     }
 
-    cleanName = cleanName.replaceAll('-', '_');
-    cleanName = cleanName.replaceAll('/', '_');
-    cleanName = cleanName.replaceAll(RegExp(r'[áàâã]'), 'a');
-    cleanName = cleanName.replaceAll(RegExp(r'[éèê]'), 'e');
-    cleanName = cleanName.replaceAll(RegExp(r'[íìî]'), 'i');
-    cleanName = cleanName.replaceAll(RegExp(r'[óòôõ]'), 'o');
-    cleanName = cleanName.replaceAll(RegExp(r'[úùû]'), 'u');
-    cleanName = cleanName.replaceAll('ç', 'c');
-    cleanName = cleanName.replaceAll(RegExp(r'[^a-z0-9_\s]'), '');
-    cleanName = cleanName.trim().replaceAll(RegExp(r'\s+'), '_');
-    cleanName = cleanName.replaceAll('__', '_');
-
-    return 'assets/images/$cleanName.gif';
+    return first.name.toLowerCase().compareTo(second.name.toLowerCase());
   }
 
   void _showExerciseConfigDialog(
@@ -522,10 +502,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final workoutState = ref.watch(workoutControllerProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
 
-    final allExercises = workoutState.allExercises.where((ex) {
-      return ex.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          ex.muscle.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+    final allExercises =
+        workoutState.allExercises
+            .where(
+              (exercise) => ExerciseCatalog.matches(exercise, _searchQuery),
+            )
+            .toList()
+          ..sort(_compareExercises);
 
     final content = Column(
       children: [
@@ -537,7 +520,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             autofocus: false,
             style: TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Buscar por nome ou músculo...',
+              hintText: 'Buscar por nome, alias ou músculo...',
               hintStyle: TextStyle(color: AppColors.textSecondary),
               prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
 
@@ -589,107 +572,149 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final ex = allExercises[index];
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        leading: Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
-                            child: Image.asset(
-                              _getImagePath(ex.name),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Center(
-                                    child: Icon(
-                                      Icons.fitness_center,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      size: 24,
-                                    ),
-                                  ),
+                    final muscle = ExerciseCatalog.standardizedMuscle(
+                      ex.muscle,
+                    );
+                    final previousMuscle = index == 0
+                        ? null
+                        : ExerciseCatalog.standardizedMuscle(
+                            allExercises[index - 1].muscle,
+                          );
+                    final showHeader = muscle != previousMuscle;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showHeader)
+                          Padding(
+                            padding: EdgeInsets.only(
+                              left: 4,
+                              top: index == 0 ? 0 : 10,
+                              bottom: 8,
+                            ),
+                            child: Text(
+                              muscle.toUpperCase(),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.9,
+                              ),
                             ),
                           ),
-                        ),
-                        title: Text(
-                          ex.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                            fontSize: 14,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
                           ),
-                        ),
-                        subtitle: Text(
-                          ex.muscle.toUpperCase(),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        trailing: widget.isSelecting
-                            ? Icon(
-                                Icons.add_circle,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            leading: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).scaffoldBackgroundColor,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(9),
+                                child: Image.asset(
+                                  ExerciseCatalog.mediaPathFor(ex),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Center(
+                                        child: Icon(
+                                          Icons.fitness_center,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          size: 24,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              ex.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              ExerciseCatalog.standardizedMuscle(
+                                ex.muscle,
+                              ).toUpperCase(),
+                              style: TextStyle(
                                 color: Theme.of(context).colorScheme.primary,
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.add_circle_outline,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                    onPressed: () {
-                                      _searchFocusNode.unfocus();
-                                      _showRoutineSelector(
-                                        context,
-                                        ex,
-                                        provider,
-                                      );
-                                    },
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ],
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
                               ),
-                        onTap: () {
-                          _searchFocusNode.unfocus();
-                          FocusScope.of(context).unfocus();
+                            ),
+                            trailing: widget.isSelecting
+                                ? Icon(
+                                    Icons.add_circle,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.add_circle_outline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        onPressed: () {
+                                          _searchFocusNode.unfocus();
+                                          _showRoutineSelector(
+                                            context,
+                                            ex,
+                                            provider,
+                                          );
+                                        },
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ],
+                                  ),
+                            onTap: () {
+                              _searchFocusNode.unfocus();
+                              FocusScope.of(context).unfocus();
 
-                          if (widget.isSelecting) {
-                            _showExerciseConfigDialog(context, ex, provider);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ExerciseDetailScreen(exercise: ex),
-                              ),
-                            );
-                          }
-                        },
-                      ),
+                              if (widget.isSelecting) {
+                                _showExerciseConfigDialog(
+                                  context,
+                                  ex,
+                                  provider,
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ExerciseDetailScreen(exercise: ex),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),

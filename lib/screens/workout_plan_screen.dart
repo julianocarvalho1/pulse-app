@@ -611,7 +611,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Programas de hipertrofia baseados nas metodologias do Guia Oficial.',
+                    'Programas prontos para você importar e adaptar à sua rotina.',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontSize: 12,

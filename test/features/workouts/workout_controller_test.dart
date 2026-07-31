@@ -5,6 +5,7 @@ import 'package:pulse/features/workouts/data/services/workout_feedback_service.d
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
+import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/features/workouts/domain/repositories/workout_repository.dart';
 import 'package:pulse/features/workouts/presentation/providers/workout_controller.dart';
 import 'package:pulse/models/exercise.dart';
@@ -257,6 +258,93 @@ void main() {
 
     expect(updatedRoutine.exercises, hasLength(1));
     expect(updatedRoutine.exercises.single.id, exercise.id);
+  });
+
+  test('normaliza identidades antigas sem perder fichas e histórico', () async {
+    const legacyExercise = Exercise(
+      id: 'ex_pm_1',
+      name: 'Chest Press',
+      muscle: 'Peito',
+      description: 'Controle bem a descida.',
+      reps: '4x 8-12',
+      rest: '60 seg',
+      customNote: 'Teste de migração',
+    );
+    final legacyRoutine = WorkoutRoutine(
+      id: 'legacy-routine',
+      name: 'Treino antigo',
+      focus: 'Peito',
+      exercises: const <Exercise>[legacyExercise],
+    );
+    final legacyHistory = WorkoutHistoryItem(
+      id: 'legacy-history',
+      routineName: legacyRoutine.name,
+      date: DateTime(2026, 7, 31),
+      duration: '30 min',
+      exercises: <ExerciseLog>[
+        ExerciseLog(
+          exerciseId: 'ex_pm_1',
+          exerciseName: 'Chest Press',
+          sets: const <ExerciseSet>[ExerciseSet(reps: 10, weight: 40)],
+        ),
+      ],
+    );
+    final legacySession = ActiveWorkoutSession(
+      id: 'active',
+      routineName: legacyRoutine.name,
+      startedAt: DateTime(2026, 7, 31),
+      elapsedSeconds: 12,
+      exercises: <ActiveWorkoutExercise>[
+        ActiveWorkoutExercise(
+          exercise: legacyExercise,
+          sets: const <ActiveWorkoutSet>[
+            ActiveWorkoutSet(setNumber: 1, repsText: '10'),
+          ],
+        ),
+      ],
+    );
+    final repository =
+        _FakeWorkoutRepository(routines: <WorkoutRoutine>[legacyRoutine])
+          ..history = <WorkoutHistoryItem>[legacyHistory]
+          ..activeSession = legacySession;
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(workoutControllerProvider.notifier).initialization;
+
+    final migratedExercise = container
+        .read(workoutControllerProvider)
+        .myRoutines
+        .single
+        .exercises
+        .single;
+    final migratedLog = container
+        .read(workoutHistoryControllerProvider)
+        .items
+        .single
+        .exercises
+        .single;
+    final migratedSession = container
+        .read(workoutSessionControllerProvider)
+        .activeSession;
+
+    expect(migratedExercise.id, 'p12');
+    expect(migratedExercise.name, 'Supino Reto Articulado');
+    expect(migratedExercise.reps, legacyExercise.reps);
+    expect(migratedExercise.customNote, legacyExercise.customNote);
+    expect(migratedLog.exerciseId, 'p12');
+    expect(migratedLog.exerciseName, 'Supino Reto Articulado');
+    expect(migratedSession?.exercises.single.exercise.id, 'p12');
+    expect(repository.routines.single.exercises.single.id, 'p12');
+    expect(repository.history.single.exercises.single.exerciseId, 'p12');
+    expect(repository.activeSession?.exercises.single.exercise.id, 'p12');
   });
 
   test('migra bi-set criado pelo construtor antigo', () async {

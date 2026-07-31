@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -489,18 +490,20 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            final allExercises = ref
-                .read(workoutControllerProvider)
-                .allExercises
-                .where((ex) {
-                  return ex.name.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      ) ||
-                      ex.muscle.toLowerCase().contains(
-                        searchQuery.toLowerCase(),
-                      );
-                })
-                .toList();
+            final allExercises =
+                ref
+                    .read(workoutControllerProvider)
+                    .allExercises
+                    .where(
+                      (exercise) =>
+                          ExerciseCatalog.matches(exercise, searchQuery),
+                    )
+                    .toList()
+                  ..sort(
+                    (first, second) => first.name.toLowerCase().compareTo(
+                      second.name.toLowerCase(),
+                    ),
+                  );
 
             return DraggableScrollableSheet(
               initialChildSize: 0.9,
@@ -632,7 +635,9 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    ex.muscle,
+                                    ExerciseCatalog.standardizedMuscle(
+                                      ex.muscle,
+                                    ),
                                     style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontSize: 12,
@@ -849,7 +854,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${ex.muscle} • ${ex.reps.replaceAll(RegExp(r'\s*\+\s*DROPSET', caseSensitive: false), '').replaceAll(RegExp(r'\s*\+\s*BISET', caseSensitive: false), '')} • ${ex.rest}',
+                                '${ExerciseCatalog.standardizedMuscle(ex.muscle)} • ${ex.reps.replaceAll(RegExp(r'\s*\+\s*DROPSET', caseSensitive: false), '').replaceAll(RegExp(r'\s*\+\s*BISET', caseSensitive: false), '')} • ${ex.rest}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.primary,

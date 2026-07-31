@@ -253,7 +253,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'p7',
-    name: 'Crucifixo com Halteres',
+    name: 'Crucifixo Reto com Halteres',
     muscle: 'Peito',
     description: 'Isolamento do peitoral utilizando halteres no banco reto.',
     reps: '3x 10-12',
@@ -270,7 +270,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'p9',
-    name: 'Peck Deck (Voador)',
+    name: 'Voador Peitoral na Máquina',
     muscle: 'Peito',
     description: 'Máquina para isolamento (braços flexionados).',
     reps: '2x 12-15',
@@ -278,7 +278,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'p10',
-    name: 'Crossover Polia Alta',
+    name: 'Crossover na Polia Alta',
     muscle: 'Peito',
     description: 'Foco porção inferior/miolo do peitoral.',
     reps: '3x 12-15',
@@ -286,7 +286,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'p11',
-    name: 'Crossover Polia Baixa',
+    name: 'Crossover na Polia Baixa',
     muscle: 'Peito',
     description: 'Foco porção clavicular (superior).',
     reps: '3x 12-15',
@@ -302,7 +302,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'p13',
-    name: 'Crucifixo Máquina',
+    name: 'Crucifixo na Máquina',
     muscle: 'Peito',
     description: 'Isolamento na máquina (braços estendidos).',
     reps: '3x 10-12',
@@ -320,7 +320,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'c2',
-    name: 'Puxada Triângulo (Fechada)',
+    name: 'Puxada Fechada com Triângulo',
     muscle: 'Costas',
     description: 'Foco no miolo das costas.',
     reps: '3x 10-12',
@@ -360,7 +360,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'c7',
-    name: 'Serrote (Remada Unilateral)',
+    name: 'Remada Unilateral com Halter',
     muscle: 'Costas',
     description: 'Com halter apoiado no banco.',
     reps: '3x 10-12 por braço',
@@ -376,7 +376,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'c9',
-    name: 'Pull-down na Polia',
+    name: 'Puxada com Braços Estendidos na Polia',
     muscle: 'Costas',
     description: 'Foco em grande dorsal com braços esticados.',
     reps: '3x 12-15',
@@ -384,7 +384,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'c10',
-    name: 'Voador Dorsal (Inverso)',
+    name: 'Voador Inverso na Máquina',
     muscle: 'Costas',
     description: 'Foco em posterior de ombro e miolo das costas.',
     reps: '3x 12-15',
@@ -442,7 +442,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'o7',
-    name: 'Elevação Frontal com Barra',
+    name: 'Elevação Frontal com Barra ou Anilha',
     muscle: 'Ombros',
     description: 'Ambas as mãos simultâneas usando barra.',
     reps: '3x 12-15',
@@ -474,7 +474,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 't2',
-    name: 'Encolhimento no Smith',
+    name: 'Encolhimento na Barra Smith',
     muscle: 'Trapézio',
     description: 'Elevação de escápulas com barra guiada (cargas mais altas).',
     reps: '4x 8-10',
@@ -508,7 +508,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'b4',
-    name: 'Rosca Scott Máquina',
+    name: 'Rosca Scott na Máquina',
     muscle: 'Bíceps',
     description: 'Isolamento no banco inclinando estabilizado.',
     reps: '3x 10-12',
@@ -550,7 +550,7 @@ final List<Exercise> exerciseDatabase = [
   // TRÍCEPS
   Exercise(
     id: 'tr1',
-    name: 'Tríceps Pulley Barra Reta',
+    name: 'Tríceps na Polia com Barra Reta',
     muscle: 'Tríceps',
     description: 'Polia alta com barra reta.',
     reps: '4x 10-12',
@@ -558,7 +558,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'tr2',
-    name: 'Tríceps Corda',
+    name: 'Tríceps na Polia com Corda',
     muscle: 'Tríceps',
     description: 'Polia com maior extensão final abrindo a corda.',
     reps: '3x 12-15',
@@ -656,7 +656,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'pe5',
-    name: 'Leg Press 90° (Horizontal)',
+    name: 'Leg Press Horizontal',
     muscle: 'Pernas',
     description: 'Empurre horizontal na máquina.',
     reps: '4x 10-12',
@@ -688,7 +688,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'pe9',
-    name: 'Flexora em Pé Unilateral',
+    name: 'Flexora Unilateral em Pé',
     muscle: 'Pernas',
     description: 'Trabalho de isquiotibiais focado em um lado.',
     reps: '3x 12-15 por perna',
@@ -712,7 +712,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'pe12',
-    name: 'Levantamento Pélvico (Hip Thrust)',
+    name: 'Elevação Pélvica com Barra',
     muscle: 'Pernas',
     description: 'Foco máximo de contração em glúteos.',
     reps: '4x 10-12',
@@ -736,7 +736,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'pe15',
-    name: 'Passada / Afundo',
+    name: 'Afundo ou Passada',
     muscle: 'Pernas',
     description:
         'Movimento unilateral focado em quadríceps e glúteos. Pode ser feito andando (passada) ou no lugar (afundo).',
@@ -753,7 +753,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'pe17',
-    name: 'Gêmeos Sentado (Máquina)',
+    name: 'Panturrilha Sentada na Máquina',
     muscle: 'Panturrilha',
     description: 'Foco no músculo sóleo.',
     reps: '4x 15-20',
@@ -795,7 +795,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'ab3',
-    name: 'Abdominal Máquina',
+    name: 'Abdominal na Máquina',
     muscle: 'Abdômen',
     description: 'Flexão com resistência/carga na máquina.',
     reps: '3x 15-20',
@@ -803,7 +803,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'ab4',
-    name: 'Abdominal Polia (Crunch)',
+    name: 'Abdominal na Polia',
     muscle: 'Abdômen',
     description: 'Ajoelhado de frente ou costas para a polia.',
     reps: '3x 15-20',
@@ -819,7 +819,7 @@ final List<Exercise> exerciseDatabase = [
   ),
   Exercise(
     id: 'ab6',
-    name: 'Abdominal Oblíquo (Russo)',
+    name: 'Abdominal Russo',
     muscle: 'Abdômen',
     description: 'Rotação de tronco lateral.',
     reps: '3x 15-20',

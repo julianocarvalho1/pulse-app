@@ -1,4 +1,5 @@
 import '../../../../models/exercise.dart';
+import '../../../exercises/domain/exercise_catalog.dart';
 
 List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
   return [
@@ -10,40 +11,29 @@ List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
         WorkoutRoutine(
           id: 'rout_hip_A',
           name: 'Treino A - Peito, Ombro e Tríceps',
-          focus: 'Foco em empurrar (Push)',
+          focus: 'Foco em movimentos de empurrar',
           groupName: 'Hipertrofia Moderna (ABC)',
           exercises: [
-            Exercise(
-              id: 'ex_pm_1',
-              name: 'Chest Press',
-              muscle: 'Peito',
+            ExerciseCatalog.prescribedExercise(
+              id: 'p12',
               description: 'Controle bem a descida.',
               reps: '4x 8-12',
               rest: '60 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_2',
-              name: 'Crucifixo com Halteres',
-              muscle: 'Peito',
+            ExerciseCatalog.prescribedExercise(
+              id: 'p7',
               description: 'Foque no alongamento do músculo.',
               reps: '3x 12',
               rest: '45 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_3',
-              name: 'Desenvolvimento Militar',
-              muscle: 'Ombro',
+            ExerciseCatalog.prescribedExercise(
+              id: 'o2',
               description: 'Sente-se com a coluna reta.',
               reps: '4x 10',
               rest: '60 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_4',
-              name: 'Tríceps na Polia',
-              muscle: 'Tríceps',
+            ExerciseCatalog.prescribedExercise(
+              id: 'tr1',
               description: 'Mantenha o cotovelo colado no corpo.',
               reps: '3x 12',
               rest: '45 seg',
@@ -54,40 +44,29 @@ List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
         WorkoutRoutine(
           id: 'rout_hip_B',
           name: 'Treino B - Costas e Bíceps',
-          focus: 'Foco em puxar (Pull)',
+          focus: 'Foco em movimentos de puxar',
           groupName: 'Hipertrofia Moderna (ABC)',
           exercises: [
-            Exercise(
-              id: 'ex_pm_5',
-              name: 'Puxada na Frente',
-              muscle: 'Costas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'c1',
               description: 'Estufe o peito na puxada.',
               reps: '4x 10',
               rest: '60 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_6',
-              name: 'Remada Curvada',
-              muscle: 'Costas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'c3',
               description: 'Mantenha a lombar travada.',
               reps: '4x 8-10',
               rest: '60 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_7',
-              name: 'Rosca Direta',
-              muscle: 'Bíceps',
+            ExerciseCatalog.prescribedExercise(
+              id: 'b1',
               description: 'Não balance o tronco.',
               reps: '3x 12',
               rest: '45 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_8',
-              name: 'Rosca Scott',
-              muscle: 'Bíceps',
+            ExerciseCatalog.prescribedExercise(
+              id: 'b4',
               description: 'Isole completamente o músculo.',
               reps: '3x 10',
               rest: '45 seg',
@@ -97,45 +76,34 @@ List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
         ),
         WorkoutRoutine(
           id: 'rout_hip_C',
-          name: 'Treino C - Pernas e Core',
-          focus: 'Membros Inferiores (Legs)',
+          name: 'Treino C - Pernas e Abdômen',
+          focus: 'Membros inferiores e abdômen',
           groupName: 'Hipertrofia Moderna (ABC)',
           exercises: [
-            Exercise(
-              id: 'ex_pm_9',
-              name: 'Agachamento',
-              muscle: 'Pernas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'pe1',
               description: 'Quebre a paralela se tiver mobilidade.',
               reps: '4x 8-10',
               rest: '90 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_10',
-              name: 'Leg Press',
-              muscle: 'Pernas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'pe4',
               description: 'Não trave o joelho em cima.',
               reps: '4x 12',
               rest: '60 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_11',
-              name: 'Cadeira Extensora',
-              muscle: 'Pernas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'pe6',
               description: 'Aperte no topo por 1 segundo.',
               reps: '3x 15',
               rest: '45 seg',
               customNote: 'Falha Muscular',
             ),
-            Exercise(
-              id: 'ex_pm_12',
-              name: 'Crunch Abdominal',
-              muscle: 'Core',
+            ExerciseCatalog.prescribedExercise(
+              id: 'ab1',
               description: 'Foque em dobrar o tronco.',
               reps: '4x 15-20',
               rest: '45 seg',
-              customNote: '',
             ),
           ],
         ),
@@ -152,33 +120,24 @@ List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
           focus: 'Gasto Calórico',
           groupName: 'Seca Tudo (Projeto Verão)',
           exercises: [
-            Exercise(
-              id: 'ex_pm_13',
-              name: 'Chest Press',
-              muscle: 'Peito',
+            ExerciseCatalog.prescribedExercise(
+              id: 'p12',
               description: 'Sem pausa.',
               reps: '3x 15',
               rest: '0 seg',
               isSuperset: true,
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_14',
-              name: 'Remada Baixa',
-              muscle: 'Costas',
-              description: 'Direto do Chest Press.',
+            ExerciseCatalog.prescribedExercise(
+              id: 'c5',
+              description: 'Direto do supino articulado.',
               reps: '3x 15',
               rest: '45 seg',
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_15',
-              name: 'Elevação Frontal com Barra',
-              muscle: 'Ombro',
+            ExerciseCatalog.prescribedExercise(
+              id: 'o7',
               description: 'Movimento controlado.',
               reps: '3x 15',
               rest: '30 seg',
-              customNote: '',
             ),
           ],
         ),
@@ -188,33 +147,25 @@ List<WorkoutProgram> buildPreMadeWorkoutPrograms() {
           focus: 'Gasto Calórico',
           groupName: 'Seca Tudo (Projeto Verão)',
           exercises: [
-            Exercise(
-              id: 'ex_pm_16',
-              name: 'Passada / Afundo',
-              muscle: 'Pernas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'pe15',
               description: 'Passos largos.',
               reps: '4x 20',
               rest: '45 seg',
               customNote: '10 cada perna',
             ),
-            Exercise(
-              id: 'ex_pm_17',
-              name: 'Cadeira Extensora',
-              muscle: 'Pernas',
+            ExerciseCatalog.prescribedExercise(
+              id: 'pe6',
               description: 'Explosivo.',
               reps: '3x 15',
               rest: '0 seg',
               isSuperset: true,
-              customNote: '',
             ),
-            Exercise(
-              id: 'ex_pm_18',
-              name: 'Crunch Abdominal',
-              muscle: 'Core',
+            ExerciseCatalog.prescribedExercise(
+              id: 'ab1',
               description: 'Até queimar.',
               reps: '3x 20',
               rest: '45 seg',
-              customNote: '',
             ),
           ],
         ),

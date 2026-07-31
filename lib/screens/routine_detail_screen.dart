@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'workout_session_screen.dart';
@@ -16,44 +17,6 @@ class RoutineDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
-  String _getImagePath(String exerciseName) {
-    String cleanName = exerciseName.toLowerCase().trim();
-
-    final Map<String, String> aliases = {
-      'puxada na frente': 'puxada_frontal_aberta',
-      'remada curvada': 'remada_curvada_com_barra',
-      'rosca direta': 'rosca_direta_com_barra',
-      'agachamento': 'agachamento_livre',
-      'leg press': 'leg_press_45',
-      'cadeira extensora': 'cadeira_extensora',
-      'crunch abdominal': 'abdominal_supra',
-      'tríceps na polia': 'triceps_pulley_reta_v',
-      'triceps na polia': 'triceps_pulley_reta_v',
-      'rosca scott': 'rosca_scott_maquina_livre',
-      'desenvolvimento militar': 'desenvolvimento_com_barra',
-      'chest press': 'supino_reto_com_barra',
-      'remada sentada': 'remada_baixa_sentada',
-      'remada baixa': 'remada_baixa_sentada',
-    };
-
-    if (aliases.containsKey(cleanName)) {
-      return 'assets/images/${aliases[cleanName]}.gif';
-    }
-
-    cleanName = cleanName.replaceAll('/', ' ');
-    cleanName = cleanName.replaceAll('-', ' ');
-    cleanName = cleanName.replaceAll(RegExp(r'[áàâã]'), 'a');
-    cleanName = cleanName.replaceAll(RegExp(r'[éèê]'), 'e');
-    cleanName = cleanName.replaceAll(RegExp(r'[íìî]'), 'i');
-    cleanName = cleanName.replaceAll(RegExp(r'[óòôõ]'), 'o');
-    cleanName = cleanName.replaceAll(RegExp(r'[úùû]'), 'u');
-    cleanName = cleanName.replaceAll('ç', 'c');
-    cleanName = cleanName.replaceAll(RegExp(r'[^a-z0-9\s]'), '');
-    cleanName = cleanName.trim().replaceAll(RegExp(r'\s+'), '_');
-
-    return 'assets/images/$cleanName.gif';
-  }
-
   void _openEditRoutineModal(
     BuildContext context,
     WorkoutController provider,
@@ -335,7 +298,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(9),
                     child: Image.asset(
-                      _getImagePath(exercise.name),
+                      ExerciseCatalog.mediaPathFor(exercise),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Center(
                         child: Text(
