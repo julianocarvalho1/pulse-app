@@ -121,6 +121,32 @@ void main() {
     expect(calendar[DateTime(2026, 7, 29)]!.hasCompleted, isTrue);
   });
 
+  test('mantém recordes pessoais de todo o histórico fora do filtro', () {
+    final history = <WorkoutHistoryItem>[
+      _workout(
+        id: 'recorde-antigo',
+        date: DateTime(2026, 5, 1),
+        sets: const <ExerciseSet>[ExerciseSet(reps: 6, weight: 80)],
+      ),
+      _workout(
+        id: 'treino-recente',
+        date: DateTime(2026, 7, 29),
+        sets: const <ExerciseSet>[ExerciseSet(reps: 10, weight: 50)],
+      ),
+    ];
+
+    final summary = service.buildSummary(
+      history: history,
+      period: ProgressPeriod.fourWeeks,
+      now: DateTime(2026, 7, 30),
+    );
+
+    expect(summary.current.workouts, 1);
+    expect(summary.exerciseProgress.single.points, hasLength(1));
+    expect(summary.personalRecords.single.weight, 80);
+    expect(summary.personalRecords.single.date, DateTime(2026, 5, 1));
+  });
+
   test('interpreta durações HH:MM:SS e MM:SS', () {
     expect(service.parseDurationSeconds('01:02:03'), 3723);
     expect(service.parseDurationSeconds('42:15'), 2535);

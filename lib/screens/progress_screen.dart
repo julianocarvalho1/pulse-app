@@ -468,15 +468,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   children: <Widget>[
                     Expanded(
                       child: _smallMetric(
-                        'CARGA ATUAL',
+                        'CARGA RECENTE',
                         _formatWeight(selected.latestWeight),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _smallMetric(
-                        'ÚLTIMO VOLUME',
-                        _formatVolume(selected.latestVolume),
+                        'VOLUME RECENTE',
+                        _formatExactVolume(selected.latestVolume),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -488,21 +488,76 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(
+                      Icons.info_outline,
+                      size: 15,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Carga recente é a maior carga da última sessão. O gráfico compara a maior carga de cada sessão. Volume recente é a soma de carga × repetições da última sessão.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 18),
-                if (weightValues.length >= 2)
+                if (weightValues.length >= 2) ...<Widget>[
                   MiniLineChart(
                     values: weightValues,
                     height: 140,
                     showDots: true,
-                  )
-                else
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        DateFormat('dd/MM').format(weightPoints.first.date),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('dd/MM').format(weightPoints.last.date),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
-                      child: Text(
-                        'Registre carga em pelo menos duas sessões para formar o gráfico.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary),
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            'Primeiro registro: ${_formatWeight(selected.latestWeight)}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Faça este exercício novamente para comparar sua evolução.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -521,6 +576,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Melhores cargas de todo o histórico, independentemente do período selecionado.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              height: 1.35,
             ),
           ),
           const SizedBox(height: 10),
@@ -1288,16 +1352,25 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 9,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          SizedBox(
+            height: 18,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1593,6 +1666,13 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       return '${(volume / 1000).toStringAsFixed(1)} t';
     }
     return '${volume.toStringAsFixed(0)} kg';
+  }
+
+  String _formatExactVolume(double volume) {
+    if (volume <= 0) {
+      return '-- kg';
+    }
+    return '${NumberFormat('#,##0.##', 'pt_BR').format(volume)} kg';
   }
 
   String _formatWeight(double weight) {

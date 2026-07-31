@@ -87,7 +87,7 @@ class WorkoutAnalyticsService {
       start: start,
       end: end,
     );
-    final records = _buildPersonalRecords(currentItems);
+    final records = _buildPersonalRecords(validHistory);
     final exerciseProgress = _buildExerciseProgress(currentItems);
     final trainingDays = validHistory
         .map((item) => _dateOnly(item.date))
