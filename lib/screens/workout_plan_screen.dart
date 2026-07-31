@@ -371,61 +371,68 @@ class WorkoutPlanScreen extends ConsumerWidget {
 
     groupedRoutines.forEach((groupName, groupRoutines) {
       listItems.add(
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Material(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Theme(
-            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              collapsedIconColor: AppColors.textSecondary,
-              iconColor: Theme.of(context).colorScheme.primary,
-              leading: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.folder,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-              ),
-              title: Text(
-                groupName,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              subtitle: Text(
-                '${groupRoutines.length} fichas neste programa',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              childrenPadding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: 16,
-              ),
-              children: groupRoutines
-                  .map(
-                    (routine) => _buildRoutineTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: AppColors.border),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                collapsedIconColor: AppColors.textSecondary,
+                iconColor: Theme.of(context).colorScheme.primary,
+                leading: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
                       context,
-                      provider,
-                      routine,
-                      isInsideGroup: true,
-                    ),
-                  )
-                  .toList(),
+                    ).colorScheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.folder,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                ),
+                title: Text(
+                  groupName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  '${groupRoutines.length} fichas neste programa',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                childrenPadding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                ),
+                children: groupRoutines
+                    .map(
+                      (routine) => _buildRoutineTile(
+                        context,
+                        provider,
+                        routine,
+                        isInsideGroup: true,
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
           ),
         ),

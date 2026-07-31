@@ -334,77 +334,80 @@ class _ProgressCalendarScreenState
   }
 
   Widget _dayHistoryCard(BuildContext context, WorkoutDaySummary day) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: ExpansionTile(
-        shape: const Border(),
-        collapsedShape: const Border(),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(11),
-          ),
-          child: Center(
-            child: Text(
-              '${day.date.day}',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          shape: const Border(),
+          collapsedShape: const Border(),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Center(
+              child: Text(
+                '${day.date.day}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
-        ),
-        title: Text(
-          _fullDateLabel(day.date),
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-        ),
-        subtitle: Text(
-          '${day.completedCount} concluídos • ${day.incompleteCount} incompletos',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-        ),
-        children: day.items.map((item) {
-          final incomplete = item.isIncomplete;
-          final color = incomplete
-              ? Colors.orangeAccent
-              : Theme.of(context).colorScheme.primary;
+          title: Text(
+            _fullDateLabel(day.date),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          subtitle: Text(
+            '${day.completedCount} concluídos • ${day.incompleteCount} incompletos',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+          ),
+          children: day.items.map((item) {
+            final incomplete = item.isIncomplete;
+            final color = incomplete
+                ? Colors.orangeAccent
+                : Theme.of(context).colorScheme.primary;
 
-          return ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
-            leading: Icon(
-              incomplete
-                  ? Icons.pending_actions_rounded
-                  : Icons.check_circle_rounded,
-              color: color,
-            ),
-            title: Text(
-              item.routineName,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => WorkoutHistoryDetailScreen(workout: item),
-                ),
-              );
-            },
-          );
-        }).toList(),
+            return ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+              leading: Icon(
+                incomplete
+                    ? Icons.pending_actions_rounded
+                    : Icons.check_circle_rounded,
+                color: color,
+              ),
+              title: Text(
+                item.routineName,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
   }

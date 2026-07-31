@@ -418,12 +418,14 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   child: Text(
                     completedWorkouts == 0
-                        ? 'Comece sua evolução'
+                        ? 'Nenhum treino concluído'
                         : '$completedWorkouts treino${completedWorkouts == 1 ? '' : 's'} concluído${completedWorkouts == 1 ? '' : 's'}',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: completedWorkouts == 0
+                          ? AppColors.textSecondary
+                          : Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),

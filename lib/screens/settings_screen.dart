@@ -297,7 +297,6 @@ class _SettingsContent extends ConsumerWidget {
               context,
               children: [
                 SwitchListTile(
-                  activeThumbColor: Theme.of(context).colorScheme.primary,
                   secondary: const Icon(Icons.record_voice_over_outlined),
                   title: const Text(
                     'Aviso por voz ao fim do descanso',
@@ -321,7 +320,6 @@ class _SettingsContent extends ConsumerWidget {
                 ),
                 Divider(color: AppColors.border, height: 1),
                 SwitchListTile(
-                  activeThumbColor: Theme.of(context).colorScheme.primary,
                   secondary: const Icon(Icons.notifications_active_outlined),
                   title: const Text(
                     'Lembrete de inatividade',
@@ -380,7 +378,6 @@ class _SettingsContent extends ConsumerWidget {
               context,
               children: [
                 SwitchListTile(
-                  activeThumbColor: Theme.of(context).colorScheme.primary,
                   secondary: const Icon(Icons.lock_outline),
                   title: const Text(
                     'Proteger o PULSE',

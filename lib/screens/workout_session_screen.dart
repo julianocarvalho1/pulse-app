@@ -475,6 +475,35 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  Widget _buildExerciseInfoMetric(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, size: 19, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+        ),
+      ],
+    );
+  }
+
   void _showMusicSelector() {
     showModalBottomSheet(
       context: context,
@@ -1478,7 +1507,54 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                   ),
                                                 ),
                                               ),
-                                              const SizedBox(height: 24),
+                                              const SizedBox(height: 20),
+                                              Container(
+                                                width: double.infinity,
+                                                padding: const EdgeInsets.all(
+                                                  14,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primarySoft,
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  border: Border.all(
+                                                    color:
+                                                        AppColors.primaryBorder,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child:
+                                                          _buildExerciseInfoMetric(
+                                                            context,
+                                                            icon: Icons
+                                                                .repeat_rounded,
+                                                            label:
+                                                                'Séries e reps',
+                                                            value: ex.reps,
+                                                          ),
+                                                    ),
+                                                    Container(
+                                                      width: 1,
+                                                      height: 38,
+                                                      color: AppColors
+                                                          .primaryBorder,
+                                                    ),
+                                                    Expanded(
+                                                      child:
+                                                          _buildExerciseInfoMetric(
+                                                            context,
+                                                            icon: Icons
+                                                                .timer_outlined,
+                                                            label: 'Descanso',
+                                                            value: ex.rest,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 20),
                                               Text(
                                                 'MÚSCULOS SECUNDÁRIOS:',
                                                 style: TextStyle(
@@ -1539,13 +1615,12 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                         Expanded(
                                                           child: Text(
                                                             details['steps'][i],
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 13,
-                                                                  color: Colors
-                                                                      .white,
-                                                                  height: 1.3,
-                                                                ),
+                                                            style: TextStyle(
+                                                              fontSize: 13,
+                                                              color: AppColors
+                                                                  .textPrimary,
+                                                              height: 1.4,
+                                                            ),
                                                           ),
                                                         ),
                                                       ],
@@ -1553,7 +1628,77 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                   );
                                                 },
                                               ),
-                                              const SizedBox(height: 24),
+                                              if (ex.customNote
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                                const SizedBox(height: 16),
+                                                Container(
+                                                  width: double.infinity,
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        AppColors.surfaceLight,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: AppColors.border,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .sticky_note_2_outlined,
+                                                        size: 18,
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              'OBSERVAÇÃO DA FICHA',
+                                                              style: TextStyle(
+                                                                fontSize: 10,
+                                                                color: AppColors
+                                                                    .textSecondary,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 4,
+                                                            ),
+                                                            Text(
+                                                              ex.customNote,
+                                                              style: TextStyle(
+                                                                fontSize: 13,
+                                                                color: AppColors
+                                                                    .textPrimary,
+                                                                height: 1.35,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                              const SizedBox(height: 20),
                                               SizedBox(
                                                 width: double.infinity,
                                                 child: TextButton(
