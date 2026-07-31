@@ -1944,139 +1944,148 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                       },
                     ),
             ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(top: BorderSide(color: AppColors.border)),
-              ),
-              child: Column(
-                children: [
-                  if (workoutState.isResting)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.primary,
+            SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: Column(
+                  children: [
+                    if (workoutState.isResting)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.timer,
-                                color: Theme.of(context).colorScheme.primary,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.timer,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'DESCANSO',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                TextButton(
+                                  onPressed: () => provider.addRestSeconds(-15),
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(36, 32),
+                                    padding: EdgeInsets.zero,
+                                    foregroundColor: AppColors.textSecondary,
+                                  ),
+                                  child: const Text('-15'),
+                                ),
+                                Text(
+                                  _formatTime(workoutState.restSeconds),
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => provider.addRestSeconds(15),
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(36, 32),
+                                    padding: EdgeInsets.zero,
+                                    foregroundColor: AppColors.textSecondary,
+                                  ),
+                                  child: const Text('+15'),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.redAccent,
                                 size: 20,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'DESCANSO',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => provider.addRestSeconds(-15),
-                                style: TextButton.styleFrom(
-                                  minimumSize: const Size(36, 32),
-                                  padding: EdgeInsets.zero,
-                                  foregroundColor: AppColors.textSecondary,
-                                ),
-                                child: const Text('-15'),
-                              ),
-                              Text(
-                                _formatTime(workoutState.restSeconds),
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                  fontFeatures: [FontFeature.tabularFigures()],
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () => provider.addRestSeconds(15),
-                                style: TextButton.styleFrom(
-                                  minimumSize: const Size(36, 32),
-                                  padding: EdgeInsets.zero,
-                                  foregroundColor: AppColors.textSecondary,
-                                ),
-                                child: const Text('+15'),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.redAccent,
-                              size: 20,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => provider.stopRestTimer(),
                             ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => provider.stopRestTimer(),
+                          ],
+                        ),
+                      )
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Descanso Inteligente Ativado',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Icon(
+                            Icons.auto_awesome,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
                           ),
                         ],
                       ),
-                    )
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Descanso Inteligente Ativado',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      onPressed: workoutState.isFinishing
-                          ? null
-                          : () => _confirmFinish(provider),
-                      child: Text(
-                        workoutState.isFinishing
-                            ? 'SALVANDO...'
-                            : 'FINALIZAR E SALVAR',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
+                        onPressed: workoutState.isFinishing
+                            ? null
+                            : () => _confirmFinish(provider),
+                        child: Text(
+                          workoutState.isFinishing
+                              ? 'SALVANDO...'
+                              : 'FINALIZAR E SALVAR',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

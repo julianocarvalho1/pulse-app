@@ -131,7 +131,10 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       const WorkoutPlanScreen(),
       const ProgressScreen(),
-      ProfileScreen(onOpenProgress: () => _selectTab(2)),
+      ProfileScreen(
+        onOpenWorkouts: () => _selectTab(1),
+        onOpenProgress: () => _selectTab(2),
+      ),
     ];
   }
 
@@ -139,6 +142,7 @@ class _MainNavigationState extends State<MainNavigation> {
     if (_index == index) {
       return;
     }
+    HapticFeedback.selectionClick();
     setState(() => _index = index);
   }
 

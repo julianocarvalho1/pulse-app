@@ -40,34 +40,56 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   Widget build(BuildContext context) {
     final summary = ref.watch(workoutProgressSummaryProvider(_period));
 
-    final topPadding = MediaQuery.paddingOf(context).top;
-
     return ColoredBox(
       color: AppColors.background,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20, topPadding + 12, 20, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text(
+      child: CustomScrollView(
+        key: const PageStorageKey<String>('progress-scroll'),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: <Widget>[
+          SliverAppBar(
+            primary: true,
+            pinned: true,
+            floating: true,
+            snap: true,
+            toolbarHeight: 60,
+            backgroundColor: AppColors.background,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            automaticallyImplyLeading: false,
+            titleSpacing: 20,
+            title: const Text(
               'Progresso',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 18),
-            SizedBox(
-              height: 36,
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _ProgressTabsHeaderDelegate(
+              backgroundColor: AppColors.background,
+              borderColor: AppColors.border,
               child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 scrollDirection: Axis.horizontal,
                 itemCount: _tabs.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 20),
                 itemBuilder: (context, index) => _tabItem(_tabs[index], index),
               ),
             ),
-            Container(height: 1, color: AppColors.border),
-            const SizedBox(height: 20),
-            _buildTabContent(context, summary),
-          ],
-        ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.paddingOf(context).bottom + 32,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _buildTabContent(context, summary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2190,5 +2212,45 @@ class _WeightEntrySheetState extends State<_WeightEntrySheet> {
         weightKg: weightKg,
       ),
     );
+  }
+}
+
+class _ProgressTabsHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _ProgressTabsHeaderDelegate({
+    required this.backgroundColor,
+    required this.borderColor,
+    required this.child,
+  });
+
+  final Color backgroundColor;
+  final Color borderColor;
+  final Widget child;
+
+  @override
+  double get minExtent => 48;
+
+  @override
+  double get maxExtent => 48;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(bottom: BorderSide(color: borderColor)),
+      ),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _ProgressTabsHeaderDelegate oldDelegate) {
+    return oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.borderColor != borderColor ||
+        oldDelegate.child != child;
   }
 }

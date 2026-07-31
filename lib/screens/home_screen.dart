@@ -34,13 +34,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String _obterSaudacao(String nome) {
     final hora = DateTime.now().hour;
-    final nomeFormatado = nome.toUpperCase();
+    final nomeNormalizado = nome.trim();
+    final primeiroNome = nomeNormalizado.isEmpty
+        ? 'Atleta'
+        : nomeNormalizado.split(RegExp(r'\s+')).first;
+
     if (hora < 12) {
-      return 'BOM DIA, $nomeFormatado!';
+      return 'Bom dia, $primeiroNome';
     } else if (hora < 18) {
-      return 'BOA TARDE, $nomeFormatado!';
+      return 'Boa tarde, $primeiroNome';
     } else {
-      return 'BOA NOITE, $nomeFormatado!';
+      return 'Boa noite, $primeiroNome';
     }
   }
 
@@ -557,7 +561,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: AppColors.danger,
                 ),
                 onPressed: () => Navigator.pop(ctx, true),
                 child: Text(
@@ -586,8 +590,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               primary: true,
               floating: true,
               snap: true,
-              pinned: false,
-              toolbarHeight: 64,
+              pinned: true,
+              toolbarHeight: 60,
               surfaceTintColor: Colors.transparent,
               scrolledUnderElevation: 0,
               backgroundColor: AppColors.background,
@@ -686,14 +690,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       _obterSaudacao(userName),
                       style: const TextStyle(
-                        fontSize: 26,
+                        fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                        letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Pronto para mais um treino?',
+                      'Vamos cuidar do treino de hoje?',
                       style: TextStyle(
                         fontSize: 15,
                         color: AppColors.textSecondary,
@@ -745,7 +749,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: Colors.orangeAccent,
+                              color: AppColors.warning,
                               width: 1.5,
                             ),
                           ),
@@ -761,17 +765,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         vertical: 3,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.orangeAccent.withValues(
-                                          alpha: 0.2,
+                                        color: AppColors.warning.withValues(
+                                          alpha: 0.14,
                                         ),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         'SESSÃO EM ANDAMENTO',
                                         style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.orangeAccent,
+                                          color: AppColors.warning,
                                           letterSpacing: 0.5,
                                         ),
                                       ),
@@ -799,14 +803,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: Colors.orangeAccent.withValues(
-                                    alpha: 0.15,
+                                  color: AppColors.warning.withValues(
+                                    alpha: 0.12,
                                   ),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.orangeAccent,
+                                child: Icon(
+                                  Icons.play_arrow_rounded,
+                                  color: AppColors.warning,
                                   size: 30,
                                 ),
                               ),

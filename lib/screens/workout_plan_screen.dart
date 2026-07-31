@@ -22,30 +22,41 @@ class WorkoutPlanScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
+          primary: true,
+          toolbarHeight: 60,
+          backgroundColor: AppColors.background,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          automaticallyImplyLeading: false,
+          titleSpacing: 20,
           title: const Text(
             'Treinos',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22),
           ),
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          automaticallyImplyLeading: false,
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.primary,
-            labelColor: Theme.of(context).colorScheme.primary,
+            indicatorWeight: 2.5,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelColor: AppColors.textPrimary,
             unselectedLabelColor: AppColors.textSecondary,
+            dividerColor: AppColors.border,
             labelStyle: const TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 11,
+              fontSize: 13,
             ),
-            tabs: const [
-              Tab(text: 'FICHAS'),
-              Tab(text: 'PROGRAMAS'),
-              Tab(text: 'EXERCÍCIOS'),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+            tabs: const <Widget>[
+              Tab(text: 'Fichas'),
+              Tab(text: 'Programas'),
+              Tab(text: 'Exercícios'),
             ],
           ),
         ),
         body: TabBarView(
-          children: [
+          children: <Widget>[
             _buildMyRoutinesTab(context, provider, myRoutines),
             _buildCatalogTab(context, provider, preMadePrograms),
             const ExercisesScreen(embedded: true),
@@ -63,8 +74,8 @@ class WorkoutPlanScreen extends ConsumerWidget {
           },
           icon: const Icon(Icons.add),
           label: const Text(
-            'Nova Ficha',
-            style: TextStyle(fontWeight: FontWeight.w800),
+            'Nova ficha',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
       ),
@@ -287,45 +298,61 @@ class WorkoutPlanScreen extends ConsumerWidget {
     List<WorkoutRoutine> routines,
   ) {
     if (routines.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.fitness_center_outlined,
-              size: 48,
-              color: AppColors.textSecondary,
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 96),
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.border),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Você não possui fichas ativas.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
-            ),
-            const SizedBox(height: 16),
-            Builder(
-              builder: (ctx) => ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: AppColors.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+            child: Column(
+              children: <Widget>[
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    shape: BoxShape.circle,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  child: Icon(
+                    Icons.fitness_center_outlined,
+                    size: 29,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                onPressed: () {
-                  DefaultTabController.of(ctx).animateTo(1);
-                },
-                child: const Text(
-                  'Explorar Catálogo',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+                const SizedBox(height: 16),
+                const Text(
+                  'Crie sua primeira ficha',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
-              ),
+                const SizedBox(height: 7),
+                Text(
+                  'Use o botão “Nova ficha” ou importe um programa pronto para começar.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Builder(
+                  builder: (tabContext) => OutlinedButton.icon(
+                    onPressed: () {
+                      DefaultTabController.of(tabContext).animateTo(1);
+                    },
+                    icon: const Icon(Icons.menu_book_outlined, size: 18),
+                    label: const Text('Explorar programas'),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
