@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/auth/presentation/auth_gate.dart';
+import 'features/onboarding/presentation/onboarding_gate.dart';
 import 'features/settings/domain/pulse_settings.dart';
 import 'features/settings/presentation/providers/settings_controller.dart';
 import 'screens/exercises_screen.dart';
@@ -47,7 +48,7 @@ class PulseApp extends ConsumerWidget {
       title: 'PULSE',
       debugShowCheckedModeBanner: false,
       theme: buildPulseTheme(Color(settings.themeColorValue)),
-      home: const AuthGate(child: MainNavigation()),
+      home: const AuthGate(child: OnboardingGate(child: MainNavigation())),
     );
   }
 }

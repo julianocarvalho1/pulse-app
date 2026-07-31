@@ -57,6 +57,27 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
     await _persist(current.copyWith(measurementSystem: measurementSystem));
   }
 
+  Future<void> applyOnboarding({
+    required String name,
+    required MeasurementSystem measurementSystem,
+  }) async {
+    final current = _currentValue;
+    if (current == null) {
+      return;
+    }
+
+    final normalizedName = name.trim().isEmpty ? 'Atleta' : name.trim();
+    final next = current.copyWith(
+      measurementSystem: measurementSystem,
+      profile: current.profile.copyWith(name: normalizedName),
+    );
+
+    await _persist(next);
+    await ref
+        .read(authControllerProvider.notifier)
+        .updateUserName(normalizedName);
+  }
+
   Future<void> updateProfile(UserProfile profile) async {
     final current = _currentValue;
     if (current == null) {

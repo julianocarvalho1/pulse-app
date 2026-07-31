@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../features/onboarding/domain/onboarding_profile.dart';
+import '../features/onboarding/presentation/providers/onboarding_controller.dart';
+import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
@@ -20,6 +23,16 @@ class ProfileScreen extends ConsumerWidget {
     final settings = switch (settingsAsync) {
       AsyncData<PulseSettings>(:final value) => value,
       _ => PulseSettings.defaults(),
+    };
+
+    final onboardingAsync = ref.watch(onboardingControllerProvider);
+    final onboardingProfile = switch (onboardingAsync) {
+      AsyncData<OnboardingState>(:final value) => value.profile,
+      _ => OnboardingProfile.defaults().copyWith(
+        name: settings.profile.displayName,
+        measurementSystem: settings.measurementSystem,
+        isCompleted: true,
+      ),
     };
 
     final history = workoutState.history;
@@ -56,6 +69,32 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: _personalDataSubtitle(settings),
             onTapAction: () {
               _showPersonalDataPanel(context, ref, settings);
+            },
+          ),
+          _tile(
+            context,
+            Icons.tune_rounded,
+            'Preferências de treino',
+            subtitle: _trainingPreferencesSubtitle(onboardingProfile),
+            onTapAction: () async {
+              final updated = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardingScreen(
+                    initialProfile: onboardingProfile,
+                    isEditing: true,
+                  ),
+                ),
+              );
+
+              if (updated == true && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Preferências de treino atualizadas.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
           ),
           _tile(
@@ -352,6 +391,14 @@ class ProfileScreen extends ConsumerWidget {
         return _PersonalDataSheet(initialSettings: settings);
       },
     );
+  }
+
+  String _trainingPreferencesSubtitle(OnboardingProfile profile) {
+    if (!profile.isPersonalized) {
+      return 'Toque para configurar objetivo, rotina e equipamentos';
+    }
+
+    return '${profile.goal.label} • ${profile.trainingDaysPerWeek}x por semana • ${profile.sessionDurationMinutes} min';
   }
 
   String _personalDataSubtitle(PulseSettings settings) {

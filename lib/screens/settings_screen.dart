@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/domain/app_auth_state.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
+import '../features/onboarding/presentation/providers/onboarding_controller.dart';
 import '../features/progress/presentation/providers/progress_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
@@ -430,6 +431,7 @@ class _SettingsContent extends ConsumerWidget {
         .read(settingsControllerProvider.notifier)
         .resetToDefaults(clearStorage: false);
     await ref.read(authControllerProvider.notifier).resetAfterFactoryReset();
+    ref.read(onboardingControllerProvider.notifier).resetAfterFactoryReset();
 
     if (!context.mounted) {
       return;
