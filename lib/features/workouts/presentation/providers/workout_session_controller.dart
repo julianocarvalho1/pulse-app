@@ -462,13 +462,25 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
 
   Future<void> _endActiveWorkout() async {
     final voiceAfterRest = state.voiceAfterRest;
+    final repository = _repository;
+
     _globalTimer?.cancel();
     _restTimer?.cancel();
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
 
     await _persistenceQueue;
-    await _repository.clearActiveSession();
+
+    if (_disposed) {
+      return;
+    }
+
+    await repository.clearActiveSession();
+
+    if (_disposed) {
+      return;
+    }
+
     state = WorkoutSessionState.initial(voiceAfterRest: voiceAfterRest);
   }
 
@@ -498,9 +510,15 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       return Future<void>.value();
     }
 
+    final repository = _repository;
+
     _persistenceQueue = _persistenceQueue.then((_) async {
+      if (_disposed) {
+        return;
+      }
+
       try {
-        await _repository.saveActiveSession(session);
+        await repository.saveActiveSession(session);
       } catch (error, stackTrace) {
         debugPrint('Erro ao salvar sessão ativa: $error');
         debugPrintStack(stackTrace: stackTrace);

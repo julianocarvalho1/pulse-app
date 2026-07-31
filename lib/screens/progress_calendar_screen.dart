@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../features/workouts/presentation/providers/workout_controller.dart';
+
+import '../features/progress/domain/models/workout_progress_summary.dart';
+import '../features/progress/presentation/providers/progress_providers.dart';
 import '../theme/app_theme.dart';
+import 'workout_history_detail_screen.dart';
 
 class ProgressCalendarScreen extends ConsumerStatefulWidget {
   const ProgressCalendarScreen({super.key});
@@ -14,130 +17,128 @@ class ProgressCalendarScreen extends ConsumerStatefulWidget {
 
 class _ProgressCalendarScreenState
     extends ConsumerState<ProgressCalendarScreen> {
-  DateTime _currentMonth = DateTime.now();
-
-  void _mudarMes(int delta) {
-    setState(() {
-      _currentMonth = DateTime(
-        _currentMonth.year,
-        _currentMonth.month + delta,
-        1,
-      );
-    });
-  }
-
-  int _getDaysInMonth(int year, int month) {
-    return DateTime(year, month + 1, 0).day;
-  }
-
-  int _getFirstWeekday(int year, int month) {
-    return DateTime(year, month, 1).weekday; // 1 = Seg, 7 = Dom
-  }
+  DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
 
   @override
   Widget build(BuildContext context) {
-    final workoutState = ref.watch(workoutControllerProvider);
-    final history = workoutState.history;
-
-    int daysInMonth = _getDaysInMonth(_currentMonth.year, _currentMonth.month);
-    int firstWeekday = _getFirstWeekday(
+    final days = ref.watch(workoutCalendarProvider(_currentMonth));
+    final daysInMonth = DateUtils.getDaysInMonth(
       _currentMonth.year,
       _currentMonth.month,
     );
-    int startOffset = firstWeekday == 7
-        ? 0
-        : firstWeekday; // Ajusta pra Domingo ser 0
-
-    // Conta total de treinos do mês atual para exibir no cabeçalho
-    int treinosDoMes = history
-        .where(
-          (h) =>
-              h.date.year == _currentMonth.year &&
-              h.date.month == _currentMonth.month,
-        )
-        .length;
+    final firstWeekday = DateTime(
+      _currentMonth.year,
+      _currentMonth.month,
+      1,
+    ).weekday;
+    final offset = firstWeekday == 7 ? 0 : firstWeekday;
+    final cells = ((daysInMonth + offset) / 7).ceil() * 7;
+    final completed = days.values.fold<int>(
+      0,
+      (total, day) => total + day.completedCount,
+    );
+    final incomplete = days.values.fold<int>(
+      0,
+      (total, day) => total + day.incompleteCount,
+    );
+    final activeDays = days.length;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
         title: const Text(
           'Calendário de Treinos',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(17),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(17),
                 border: Border.all(color: AppColors.border),
               ),
               child: Column(
-                children: [
+                children: <Widget>[
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                    children: <Widget>[
                       IconButton(
-                        icon: const Icon(
-                          Icons.chevron_left,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => _mudarMes(-1),
+                        tooltip: 'Mês anterior',
+                        onPressed: () => _changeMonth(-1),
+                        icon: const Icon(Icons.chevron_left),
                       ),
-                      Text(
-                        DateFormat(
-                          'MMMM yyyy',
-                          'pt_BR',
-                        ).format(_currentMonth).toUpperCase(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                      Expanded(
+                        child: Text(
+                          _monthYearLabel(_currentMonth),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white,
-                        ),
-                        onPressed: () => _mudarMes(1),
+                        tooltip: 'Próximo mês',
+                        onPressed: _canGoNext ? () => _changeMonth(1) : null,
+                        icon: const Icon(Icons.chevron_right),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // Cabeçalho dos dias da semana
+                  const SizedBox(height: 12),
+                  Row(
+                    children: <Widget>[
+                      _legend(
+                        Theme.of(context).colorScheme.primary,
+                        'Concluído',
+                      ),
+                      const SizedBox(width: 14),
+                      _legend(Colors.orangeAccent, 'Incompleto'),
+                      const Spacer(),
+                      Text(
+                        '$activeDays dias ativos',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-                        .map((dia) {
+                    children:
+                        const <String>[
+                          'Dom',
+                          'Seg',
+                          'Ter',
+                          'Qua',
+                          'Qui',
+                          'Sex',
+                          'Sáb',
+                        ].map((label) {
                           return SizedBox(
-                            width: 32,
+                            width: 34,
                             child: Center(
                               child: Text(
-                                dia,
-                                style: const TextStyle(
+                                label,
+                                style: TextStyle(
                                   color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           );
-                        })
-                        .toList(),
+                        }).toList(),
                   ),
-                  const SizedBox(height: 12),
-
-                  // GRID DO CALENDÁRIO MANUAL
+                  const SizedBox(height: 10),
                   GridView.builder(
+                    itemCount: cells,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
@@ -146,87 +147,428 @@ class _ProgressCalendarScreenState
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,
                         ),
-                    itemCount: daysInMonth + startOffset,
                     itemBuilder: (context, index) {
-                      if (index < startOffset) {
-                        return const SizedBox.shrink(); // Espaços vazios do início do mês
+                      if (index < offset || index >= offset + daysInMonth) {
+                        return const SizedBox.shrink();
                       }
 
-                      int day = index - startOffset + 1;
-                      DateTime currentDay = DateTime(
+                      final dayNumber = index - offset + 1;
+                      final date = DateTime(
                         _currentMonth.year,
                         _currentMonth.month,
-                        day,
+                        dayNumber,
                       );
-
-                      // Verifica se treinou neste dia exato
-                      bool hasWorkout = history.any(
-                        (h) =>
-                            h.date.year == currentDay.year &&
-                            h.date.month == currentDay.month &&
-                            h.date.day == currentDay.day,
-                      );
-                      bool isToday =
-                          DateTime.now().year == currentDay.year &&
-                          DateTime.now().month == currentDay.month &&
-                          DateTime.now().day == currentDay.day;
-
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: hasWorkout
-                              ? Theme.of(context).colorScheme.primary
-                              : (isToday
-                                    ? AppColors.border
-                                    : Colors.transparent),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isToday
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$day',
-                            style: TextStyle(
-                              color: hasWorkout ? Colors.black : Colors.white,
-                              fontWeight: hasWorkout || isToday
-                                  ? FontWeight.w800
-                                  : FontWeight.normal,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      );
+                      final summary = days[date];
+                      return _dayCell(context, date: date, summary: summary);
                     },
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
             Row(
-              children: [
-                Icon(
-                  Icons.local_fire_department,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 24,
+              children: <Widget>[
+                Expanded(
+                  child: _summaryCard(
+                    context,
+                    label: 'CONCLUÍDOS',
+                    value: completed,
+                    color: Theme.of(context).colorScheme.primary,
+                    icon: Icons.check_circle_outline,
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'VOCÊ TREINOU $treinosDoMes DIAS NESTE MÊS!',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _summaryCard(
+                    context,
+                    label: 'INCOMPLETOS',
+                    value: incomplete,
+                    color: Colors.orangeAccent,
+                    icon: Icons.pending_actions_outlined,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            const Text(
+              'TREINOS DO MÊS',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (days.isEmpty)
+              _emptyMonth()
+            else
+              ..._orderedDays(days).map((day) => _dayHistoryCard(context, day)),
           ],
         ),
       ),
+    );
+  }
+
+  bool get _canGoNext {
+    final now = DateTime.now();
+    return _currentMonth.year < now.year ||
+        (_currentMonth.year == now.year && _currentMonth.month < now.month);
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + delta);
+    });
+  }
+
+  Widget _dayCell(
+    BuildContext context, {
+    required DateTime date,
+    required WorkoutDaySummary? summary,
+  }) {
+    final hasCompleted = summary?.hasCompleted ?? false;
+    final hasIncomplete = summary?.hasIncomplete ?? false;
+    final isToday = DateUtils.isSameDay(date, DateTime.now());
+    final primary = Theme.of(context).colorScheme.primary;
+    final background = hasCompleted
+        ? primary
+        : hasIncomplete
+        ? Colors.orangeAccent
+        : Colors.transparent;
+
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: summary == null ? null : () => _showDay(context, summary),
+        child: Container(
+          decoration: BoxDecoration(
+            color: background,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isToday ? primary : Colors.transparent,
+              width: 1.7,
+            ),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Text(
+                '${date.day}',
+                style: TextStyle(
+                  color: summary == null ? Colors.white : Colors.black,
+                  fontWeight: summary == null && !isToday
+                      ? FontWeight.w400
+                      : FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+              if (hasCompleted && hasIncomplete)
+                Positioned(
+                  right: 1,
+                  bottom: 1,
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: Colors.orangeAccent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryCard(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, color: color, size: 25),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                '$value',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dayHistoryCard(BuildContext context, WorkoutDaySummary day) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: ExpansionTile(
+        shape: const Border(),
+        collapsedShape: const Border(),
+        leading: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Center(
+            child: Text(
+              '${day.date.day}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          _fullDateLabel(day.date),
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        ),
+        subtitle: Text(
+          '${day.completedCount} concluídos • ${day.incompleteCount} incompletos',
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+        ),
+        children: day.items.map((item) {
+          final incomplete = item.isIncomplete;
+          final color = incomplete
+              ? Colors.orangeAccent
+              : Theme.of(context).colorScheme.primary;
+
+          return ListTile(
+            contentPadding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+            leading: Icon(
+              incomplete
+                  ? Icons.pending_actions_rounded
+                  : Icons.check_circle_rounded,
+              color: color,
+            ),
+            title: Text(
+              item.routineName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+                ),
+              );
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _emptyMonth() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const Column(
+        children: <Widget>[
+          Icon(
+            Icons.calendar_month_outlined,
+            color: AppColors.textSecondary,
+            size: 40,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Nenhum treino neste mês',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Os dias treinados aparecerão aqui após o registro no histórico.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _legend(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+        ),
+      ],
+    );
+  }
+
+  String _monthYearLabel(DateTime date) {
+    const months = <String>[
+      'JANEIRO',
+      'FEVEREIRO',
+      'MARÇO',
+      'ABRIL',
+      'MAIO',
+      'JUNHO',
+      'JULHO',
+      'AGOSTO',
+      'SETEMBRO',
+      'OUTUBRO',
+      'NOVEMBRO',
+      'DEZEMBRO',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String _fullDateLabel(DateTime date) {
+    const weekdays = <String>[
+      'segunda-feira',
+      'terça-feira',
+      'quarta-feira',
+      'quinta-feira',
+      'sexta-feira',
+      'sábado',
+      'domingo',
+    ];
+    const months = <String>[
+      'janeiro',
+      'fevereiro',
+      'março',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${date.day} de ${months[date.month - 1]}';
+  }
+
+  List<WorkoutDaySummary> _orderedDays(Map<DateTime, WorkoutDaySummary> days) {
+    final result = days.values.toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return result;
+  }
+
+  Future<void> _showDay(BuildContext context, WorkoutDaySummary day) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                _fullDateLabel(day.date),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ...day.items.map((item) {
+                final incomplete = item.isIncomplete;
+                final color = incomplete
+                    ? Colors.orangeAccent
+                    : Theme.of(context).colorScheme.primary;
+
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    incomplete
+                        ? Icons.pending_actions_rounded
+                        : Icons.check_circle_rounded,
+                    color: color,
+                  ),
+                  title: Text(item.routineName),
+                  subtitle: Text(
+                    '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            WorkoutHistoryDetailScreen(workout: item),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 }

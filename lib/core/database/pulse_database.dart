@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 1;
+  static const int databaseVersion = 2;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -39,6 +39,7 @@ class PulseDatabase {
           await db.execute('PRAGMA foreign_keys = ON');
         },
         onCreate: _createSchema,
+        onUpgrade: _upgradeSchema,
       ),
     );
 
@@ -218,6 +219,45 @@ class PulseDatabase {
     await db.execute('''
       CREATE UNIQUE INDEX active_session_sets_order_index
       ON active_session_sets (session_exercise_id, set_order)
+    ''');
+
+    await _createBodyMeasurementsTable(db);
+  }
+
+  Future<void> _upgradeSchema(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) {
+      await _createBodyMeasurementsTable(db);
+    }
+  }
+
+  Future<void> _createBodyMeasurementsTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS body_measurements (
+        id TEXT PRIMARY KEY NOT NULL,
+        recorded_at_ms INTEGER NOT NULL,
+        weight_kg REAL,
+        shoulders_cm REAL,
+        chest_cm REAL,
+        waist_cm REAL,
+        hips_cm REAL,
+        left_arm_cm REAL,
+        right_arm_cm REAL,
+        left_forearm_cm REAL,
+        right_forearm_cm REAL,
+        left_thigh_cm REAL,
+        right_thigh_cm REAL,
+        left_calf_cm REAL,
+        right_calf_cm REAL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS body_measurements_date_index
+      ON body_measurements (recorded_at_ms DESC)
     ''');
   }
 }

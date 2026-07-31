@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/domain/app_auth_state.dart';
 import '../features/auth/presentation/providers/auth_controller.dart';
+import '../features/progress/presentation/providers/progress_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
@@ -424,6 +425,7 @@ class _SettingsContent extends ConsumerWidget {
     }
 
     await ref.read(workoutControllerProvider.notifier).factoryReset();
+    await ref.read(bodyMeasurementsControllerProvider.notifier).clearAll();
     await ref
         .read(settingsControllerProvider.notifier)
         .resetToDefaults(clearStorage: false);

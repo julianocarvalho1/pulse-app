@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
+import '../features/progress/domain/models/body_measurement_entry.dart';
+import '../features/progress/domain/models/progress_period.dart';
+import '../features/progress/domain/models/workout_progress_summary.dart';
+import '../features/progress/presentation/providers/progress_controller.dart';
+import '../features/progress/presentation/providers/progress_providers.dart';
+import '../features/settings/domain/pulse_settings.dart';
+import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
-import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../widgets/mini_line_chart.dart';
+import 'progress_calendar_screen.dart';
 import 'workout_history_detail_screen.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
@@ -15,391 +23,594 @@ class ProgressScreen extends ConsumerStatefulWidget {
 }
 
 class _ProgressScreenState extends ConsumerState<ProgressScreen> {
-  int _tab = 0;
-  final List<String> _tabs = const [
+  static const List<String> _tabs = <String>[
     'Consistência',
     'Treinos',
     'Medidas',
     'Desempenho',
   ];
 
-  final Map<String, double> _medidas = {
-    'Peso': 0.0,
-    'Ombros': 0.0,
-    'Tórax': 0.0,
-    'Cintura': 0.0,
-    'Quadril': 0.0,
-    'Braço Esq.': 0.0,
-    'Braço Dir.': 0.0,
-    'Antebraço Esq.': 0.0,
-    'Antebraço Dir.': 0.0,
-    'Coxa Esq.': 0.0,
-    'Coxa Dir.': 0.0,
-    'Panturrilha Esq.': 0.0,
-    'Panturrilha Dir.': 0.0,
-  };
-
-  String _medidaSelecionadaParaGrafico = 'Peso';
-
-  String _periodoMedidas = '6 meses';
-  String _periodoGeral = '6 meses';
-  final List<String> _opcoesDePeriodo = [
-    '1 mês',
-    '3 meses',
-    '6 meses',
-    '1 ano',
-  ];
+  int _tab = 0;
+  ProgressPeriod _period = ProgressPeriod.threeMonths;
+  BodyMeasurementType _measurementType = BodyMeasurementType.weight;
+  String? _selectedExerciseKey;
 
   @override
   Widget build(BuildContext context) {
+    final summary = ref.watch(workoutProgressSummaryProvider(_period));
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           const Text(
             'PROGRESSO',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 18),
-
           SizedBox(
-            height: 34,
+            height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _tabs.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 20),
-              itemBuilder: (context, i) => _tabItem(_tabs[i], i),
+              separatorBuilder: (_, _) => const SizedBox(width: 20),
+              itemBuilder: (context, index) => _tabItem(_tabs[index], index),
             ),
           ),
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 20),
-
-          _buildTabContent(),
+          _buildTabContent(context, summary),
         ],
       ),
     );
   }
 
-  Widget _buildTabContent() {
-    switch (_tab) {
-      case 1:
-        return _buildTreinos(context);
-      case 2:
-        return _buildMedidas(context);
-      case 3:
-        return _buildDesempenho(context);
-      case 0:
-      default:
-        return _buildConsistencia(context);
-    }
+  Widget _buildTabContent(
+    BuildContext context,
+    WorkoutProgressSummary summary,
+  ) {
+    return switch (_tab) {
+      1 => _buildWorkouts(context, summary),
+      2 => _buildMeasurements(context),
+      3 => _buildPerformance(context, summary),
+      _ => _buildConsistency(context, summary),
+    };
   }
 
-  Widget _buildConsistencia(BuildContext context) {
-    final workoutState = ref.watch(workoutControllerProvider);
-    final history = workoutState.history;
-    final now = DateTime.now();
-
-    final treinosEsteMes = history
-        .where((h) => h.date.month == now.month && h.date.year == now.year)
+  Widget _buildConsistency(
+    BuildContext context,
+    WorkoutProgressSummary summary,
+  ) {
+    final stats = summary.current;
+    final month = DateTime(DateTime.now().year, DateTime.now().month);
+    final calendar = ref.watch(workoutCalendarProvider(month));
+    final weeklyVolume = summary.weeklyPoints
+        .map((point) => point.volume)
         .toList();
-
-    int totalTreinos = treinosEsteMes.length;
-    int totalMinutos = 0;
-    double volumeTotal = 0;
-
-    for (var t in treinosEsteMes) {
-      final partes = t.duration.split(':');
-      if (partes.length == 3) {
-        totalMinutos +=
-            (int.tryParse(partes[0]) ?? 0) * 60 +
-            (int.tryParse(partes[1]) ?? 0);
-      } else if (partes.length == 2) {
-        totalMinutos += int.tryParse(partes[0]) ?? 0;
-      }
-
-      for (var ex in t.exercises) {
-        for (var set in ex.sets) {
-          volumeTotal += set.reps * set.weight;
-        }
-      }
-    }
-
-    int calorias = totalMinutos * 7;
-    int horas = totalMinutos ~/ 60;
-    int minsRestantes = totalMinutos % 60;
-    String duracaoStr = horas > 0
-        ? '${horas}h ${minsRestantes}m'
-        : '${minsRestantes}m';
-    String volumeStr = volumeTotal >= 1000
-        ? '${(volumeTotal / 1000).toStringAsFixed(1)} ton'
-        : '${volumeTotal.toStringAsFixed(0)} kg';
-
-    double pesoAtual = _medidas['Peso'] ?? 0.0;
-    String pesoStr = pesoAtual > 0
-        ? '${pesoAtual.toStringAsFixed(1)} kg'
-        : '-- kg';
-    String subtituloPeso = pesoAtual > 0
-        ? 'Atualizado recentemente'
-        : 'Atualize seu peso nas Medidas';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildCalendarioCheckin(context, history, now),
-
-        const SizedBox(height: 24),
-        const Text(
-          'METAS E ESTATÍSTICAS (ESTE MÊS)',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                Icons.fitness_center,
-                totalTreinos.toString(),
-                'Treinos',
-                'Meta: 20',
-                totalTreinos / 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _statCard(
-                Icons.access_time,
-                duracaoStr,
-                'Duração',
-                'Meta: 20h',
-                (horas + (minsRestantes / 60)) / 20,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _statCard(
-                Icons.local_fire_department,
-                calorias.toString(),
-                'Calorias',
-                'Meta: 8.000',
-                calorias / 8000,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _statCard(
-                Icons.bar_chart,
-                volumeStr,
-                'Volume',
-                'Meta: 50 ton',
-                volumeTotal / 50000,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'EVOLUÇÃO DE PESO',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-
-                  PopupMenuButton<String>(
-                    color: AppColors.surfaceLight,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    onSelected: (String resultado) {
-                      setState(() {
-                        _periodoGeral = resultado;
-                      });
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return _opcoesDePeriodo.map((String opcao) {
-                        return PopupMenuItem<String>(
-                          value: opcao,
-                          child: Text(
-                            opcao,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        );
-                      }).toList();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Últimos $_periodoGeral',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.keyboard_arrow_down, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                pesoStr,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
+      children: <Widget>[
+        _periodSelector(),
+        const SizedBox(height: 16),
+        _compactCalendar(context, month, calendar),
+        const SizedBox(height: 20),
+        if (stats.isEmpty)
+          _emptyState(
+            icon: Icons.insights_outlined,
+            title: 'Ainda não há dados neste período',
+            message:
+                'Conclua ou salve um treino incompleto para começar a acompanhar sua evolução real.',
+          )
+        else ...<Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _metricCard(
+                  context,
+                  icon: Icons.fitness_center,
+                  value: '${stats.workouts}',
+                  label: 'Treinos',
+                  detail:
+                      '${stats.completedWorkouts} completos • ${stats.incompleteWorkouts} incompletos',
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtituloPeso,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.primary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metricCard(
+                  context,
+                  icon: Icons.calendar_month,
+                  value: '${stats.activeDays}',
+                  label: 'Dias ativos',
+                  detail:
+                      '${stats.weeklyFrequency.toStringAsFixed(1)} dias/semana',
                 ),
-              ),
-              const SizedBox(height: 16),
-              MiniLineChart(
-                values: _gerarDadosSimulados('Peso', _periodoGeral),
-                height: 120,
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCalendarioCheckin(
-    BuildContext context,
-    List<WorkoutHistoryItem> history,
-    DateTime now,
-  ) {
-    const meses = [
-      'JANEIRO',
-      'FEVEREIRO',
-      'MARÇO',
-      'ABRIL',
-      'MAIO',
-      'JUNHO',
-      'JULHO',
-      'AGOSTO',
-      'SETEMBRO',
-      'OUTUBRO',
-      'NOVEMBRO',
-      'DEZEMBRO',
-    ];
-    final mesAtualStr = meses[now.month - 1];
-
-    final int diasNoMes = DateUtils.getDaysInMonth(now.year, now.month);
-    final int primeiroDiaDaSemana = DateTime(now.year, now.month, 1).weekday;
-
-    final int deslocamento = primeiroDiaDaSemana == 7 ? 0 : primeiroDiaDaSemana;
-    final int totalCelulas = diasNoMes + deslocamento;
-    final int linhas = (totalCelulas / 7).ceil();
-
-    Set<int> diasTreinados = {};
-    for (var h in history) {
-      if (h.date.year == now.year && h.date.month == now.month) {
-        diasTreinados.add(h.date.day);
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$mesAtualStr ${now.year}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+            children: <Widget>[
+              Expanded(
+                child: _metricCard(
+                  context,
+                  icon: Icons.timer_outlined,
+                  value: _formatDuration(stats.durationSeconds),
+                  label: 'Tempo treinado',
+                  detail: '${stats.totalSets} séries registradas',
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${diasTreinados.length} TREINOS',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _metricCard(
+                  context,
+                  icon: Icons.monitor_weight_outlined,
+                  value: _formatVolume(stats.totalVolume),
+                  label: 'Volume',
+                  detail: '${stats.totalReps} repetições',
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
+          _streakCard(context, summary),
+          const SizedBox(height: 16),
+          if (summary.comparison != null)
+            _comparisonCard(context, summary.comparison!),
+          if (summary.comparison != null) const SizedBox(height: 16),
+          _chartCard(
+            context,
+            title: 'VOLUME POR SEMANA',
+            subtitle: 'Somente cargas e repetições registradas nos treinos',
+            values: weeklyVolume,
+            emptyMessage:
+                'São necessárias pelo menos duas semanas com dados para formar a linha de evolução.',
+            trailing: _formatVolume(stats.totalVolume),
+          ),
+        ],
+      ],
+    );
+  }
 
+  Widget _buildWorkouts(BuildContext context, WorkoutProgressSummary summary) {
+    final workouts = summary.workouts;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _periodSelector(),
+        const SizedBox(height: 16),
+        if (workouts.isEmpty)
+          _emptyState(
+            icon: Icons.history,
+            title: 'Nenhum treino no período',
+            message:
+                'Altere o período ou conclua um treino para visualizar o histórico.',
+          )
+        else ...<Widget>[
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
-                .map(
-                  (dia) => SizedBox(
-                    width: 32,
-                    child: Center(
-                      child: Text(
-                        dia,
-                        style: const TextStyle(
+            children: <Widget>[
+              _statusCounter(
+                context,
+                label: 'CONCLUÍDOS',
+                value: summary.current.completedWorkouts,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              _statusCounter(
+                context,
+                label: 'INCOMPLETOS',
+                value: summary.current.incompleteWorkouts,
+                color: Colors.orangeAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...workouts.map((item) => _workoutCard(context, item)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMeasurements(BuildContext context) {
+    final measurementsAsync = ref.watch(bodyMeasurementsControllerProvider);
+    final settingsAsync = ref.watch(settingsControllerProvider);
+    final settings = switch (settingsAsync) {
+      AsyncData<PulseSettings>(:final value) => value,
+      _ => PulseSettings.defaults(),
+    };
+
+    return measurementsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stackTrace) => _emptyState(
+        icon: Icons.error_outline,
+        title: 'Não foi possível carregar as medidas',
+        message: 'Tente novamente para consultar os registros locais.',
+        actionLabel: 'TENTAR NOVAMENTE',
+        onAction: () {
+          ref.read(bodyMeasurementsControllerProvider.notifier).reload();
+        },
+      ),
+      data: (entries) {
+        final latest = entries.isEmpty ? null : entries.first;
+        final selectedPoints =
+            entries
+                .where((entry) => entry.valueFor(_measurementType) != null)
+                .toList()
+              ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+        final values = selectedPoints
+            .map(
+              (entry) => _displayMeasurement(
+                entry.valueFor(_measurementType)!,
+                _measurementType,
+                settings,
+              ),
+            )
+            .toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Text(
+                        'AVALIAÇÕES CORPORAIS',
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        latest == null
+                            ? 'Nenhuma avaliação registrada'
+                            : 'Última em ${DateFormat('dd/MM/yyyy').format(latest.recordedAt)}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _openMeasurementEditor(
+                    context,
+                    settings: settings,
+                    latest: latest,
+                  ),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('ATUALIZAR'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (latest == null)
+              _profileWeightCard(context, settings)
+            else
+              _measurementOverview(context, latest, settings),
+            const SizedBox(height: 16),
+            _sectionCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Expanded(
+                        child: Text(
+                          'EVOLUÇÃO REAL',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<BodyMeasurementType>(
+                          value: _measurementType,
+                          dropdownColor: AppColors.surfaceLight,
+                          items: BodyMeasurementType.values.map((type) {
+                            return DropdownMenuItem<BodyMeasurementType>(
+                              value: type,
+                              child: Text(
+                                type.label,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (type) {
+                            if (type != null) {
+                              setState(() => _measurementType = type);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (values.length >= 2) ...<Widget>[
+                    Text(
+                      '${values.last.toStringAsFixed(1)} ${_measurementUnit(_measurementType, settings)}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    MiniLineChart(values: values, height: 130, showDots: true),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${DateFormat('dd/MM').format(selectedPoints.first.recordedAt)} → ${DateFormat('dd/MM').format(selectedPoints.last.recordedAt)}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ] else
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 26),
+                      child: Text(
+                        'Registre pelo menos duas avaliações desta medida para visualizar a evolução.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (entries.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 20),
+              const Text(
+                'ÚLTIMAS AVALIAÇÕES',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...entries
+                  .take(5)
+                  .map(
+                    (entry) =>
+                        _measurementHistoryCard(context, entry, settings),
+                  ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPerformance(
+    BuildContext context,
+    WorkoutProgressSummary summary,
+  ) {
+    final exercises = summary.exerciseProgress;
+    final selected = exercises.isEmpty
+        ? null
+        : exercises.firstWhere(
+            (item) => item.exerciseKey == _selectedExerciseKey,
+            orElse: () => exercises.first,
+          );
+
+    final weightPoints =
+        selected?.points.where((point) => point.maxWeight > 0).toList() ??
+        const <ExerciseProgressPoint>[];
+    final weightValues = weightPoints.map((point) => point.maxWeight).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _periodSelector(),
+        const SizedBox(height: 16),
+        if (selected == null)
+          _emptyState(
+            icon: Icons.emoji_events_outlined,
+            title: 'Desempenho ainda sem dados',
+            message:
+                'Registre cargas e repetições durante os treinos para acompanhar recordes e evolução.',
+          )
+        else ...<Widget>[
+          _sectionCard(
+            context,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text(
+                  'EVOLUÇÃO POR EXERCÍCIO',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: ValueKey<String>(selected.exerciseKey),
+                  initialValue: selected.exerciseKey,
+                  dropdownColor: AppColors.surfaceLight,
+                  isExpanded: true,
+                  items: exercises.map((exercise) {
+                    return DropdownMenuItem<String>(
+                      value: exercise.exerciseKey,
+                      child: Text(
+                        exercise.exerciseName,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (key) {
+                    if (key != null) {
+                      setState(() => _selectedExerciseKey = key);
+                    }
+                  },
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _smallMetric(
+                        'CARGA ATUAL',
+                        _formatWeight(selected.latestWeight),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _smallMetric(
+                        'ÚLTIMO VOLUME',
+                        _formatVolume(selected.latestVolume),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _smallMetric(
+                        'SESSÕES',
+                        '${selected.points.length}',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                if (weightValues.length >= 2)
+                  MiniLineChart(
+                    values: weightValues,
+                    height: 140,
+                    showDots: true,
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'Registre carga em pelo menos duas sessões para formar o gráfico.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ),
+                if (selected.weightChange != null) ...<Widget>[
+                  const SizedBox(height: 10),
+                  _changeLabel(context, 'Última sessão', selected.weightChange),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'RECORDES PESSOAIS',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (summary.personalRecords.isEmpty)
+            _emptyState(
+              icon: Icons.emoji_events_outlined,
+              title: 'Nenhuma carga registrada',
+              message:
+                  'Os recordes aparecem quando pelo menos uma série possui carga maior que zero.',
+            )
+          else
+            ...summary.personalRecords
+                .take(10)
+                .map((record) => _recordCard(context, record)),
+        ],
+      ],
+    );
+  }
+
+  Widget _compactCalendar(
+    BuildContext context,
+    DateTime month,
+    Map<DateTime, WorkoutDaySummary> days,
+  ) {
+    final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
+    final firstWeekday = DateTime(month.year, month.month, 1).weekday;
+    final offset = firstWeekday == 7 ? 0 : firstWeekday;
+    final cells = ((daysInMonth + offset) / 7).ceil() * 7;
+    final completed = days.values.fold<int>(
+      0,
+      (total, day) => total + day.completedCount,
+    );
+    final incomplete = days.values.fold<int>(
+      0,
+      (total, day) => total + day.incompleteCount,
+    );
+
+    return _sectionCard(
+      context,
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  _monthYearLabel(month),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ProgressCalendarScreen(),
+                    ),
+                  );
+                },
+                child: const Text('VER CALENDÁRIO'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: <Widget>[
+              _legendDot(
+                Theme.of(context).colorScheme.primary,
+                '$completed concluídos',
+              ),
+              const SizedBox(width: 14),
+              _legendDot(Colors.orangeAccent, '$incomplete incompletos'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const <String>['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+                .map(
+                  (label) => SizedBox(
+                    width: 30,
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -407,56 +618,26 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 )
                 .toList(),
           ),
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 8),
           GridView.builder(
+            itemCount: cells,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
             ),
-            itemCount: 7 * linhas,
             itemBuilder: (context, index) {
-              if (index < deslocamento || index >= deslocamento + diasNoMes) {
-                return const SizedBox();
+              if (index < offset || index >= offset + daysInMonth) {
+                return const SizedBox.shrink();
               }
 
-              int diaCorrente = index - deslocamento + 1;
-              bool treinou = diasTreinados.contains(diaCorrente);
-              bool ehHoje = diaCorrente == now.day;
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: treinou
-                      ? Theme.of(context).colorScheme.primary
-                      : (ehHoje ? AppColors.surfaceLight : Colors.transparent),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: ehHoje && !treinou
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.transparent,
-                    width: 1.5,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    diaCorrente.toString(),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: treinou || ehHoje
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: treinou
-                          ? Colors.black
-                          : (ehHoje
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white),
-                    ),
-                  ),
-                ),
-              );
+              final dayNumber = index - offset + 1;
+              final date = DateTime(month.year, month.month, dayNumber);
+              final day = days[date];
+              final isToday = DateUtils.isSameDay(date, DateTime.now());
+              return _calendarDay(context, dayNumber, day, isToday);
             },
           ),
         ],
@@ -464,267 +645,115 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _buildMedidas(BuildContext context) {
-    String labelInicio = 'Início';
-    String labelMeio = 'Meio';
-    if (_periodoMedidas == '1 mês') {
-      labelInicio = 'Semana 1';
-      labelMeio = 'Semana 2';
-    }
-    if (_periodoMedidas == '3 meses') {
-      labelInicio = 'Mês -3';
-      labelMeio = 'Mês -1';
-    }
-    if (_periodoMedidas == '6 meses') {
-      labelInicio = 'Semestre ant.';
-      labelMeio = 'Trimestre ant.';
-    }
-    if (_periodoMedidas == '1 ano') {
-      labelInicio = 'Ano passado';
-      labelMeio = 'Semestre ant.';
-    }
+  Widget _calendarDay(
+    BuildContext context,
+    int dayNumber,
+    WorkoutDaySummary? day,
+    bool isToday,
+  ) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final hasCompleted = day?.hasCompleted ?? false;
+    final hasIncomplete = day?.hasIncomplete ?? false;
+    final background = hasCompleted
+        ? primary
+        : hasIncomplete
+        ? Colors.orangeAccent
+        : Colors.transparent;
 
-    double valorAtual = _medidas[_medidaSelecionadaParaGrafico] ?? 0.0;
-    String unidade = _medidaSelecionadaParaGrafico == 'Peso' ? 'kg' : 'cm';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'ÚLTIMA AVALIAÇÃO: ${DateFormat('dd/MM').format(DateTime.now())}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
-              ),
+    return Container(
+      decoration: BoxDecoration(
+        color: background,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isToday ? primary : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          Text(
+            '$dayNumber',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: day == null && !isToday
+                  ? FontWeight.w400
+                  : FontWeight.w800,
+              color: day == null ? Colors.white : Colors.black,
             ),
-            TextButton.icon(
-              onPressed: _abrirEditorMedidas,
-              icon: Icon(
-                Icons.add,
-                size: 16,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              label: Text(
-                'ATUALIZAR',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+          ),
+          if (hasCompleted && hasIncomplete)
+            Positioned(
+              right: 1,
+              bottom: 1,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Colors.orangeAccent,
+                  shape: BoxShape.circle,
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        _buildMedidasRow('Peso', 'Ombros'),
-        _buildMedidasRow('Tórax', 'Cintura'),
-        _buildMedidasRow('Quadril', 'Panturrilha Esq.'),
-        _buildMedidasRow('Braço Esq.', 'Braço Dir.'),
-        _buildMedidasRow('Antebraço Esq.', 'Antebraço Dir.'),
-        _buildMedidasRow('Coxa Esq.', 'Coxa Dir.'),
-
-        const SizedBox(height: 16),
-
-        const Text(
-          'EVOLUÇÃO',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.3),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _medidaSelecionadaParaGrafico,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-
-                  PopupMenuButton<String>(
-                    color: AppColors.surfaceLight,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    onSelected: (String resultado) {
-                      setState(() {
-                        _periodoMedidas = resultado;
-                      });
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return _opcoesDePeriodo.map((String opcao) {
-                        return PopupMenuItem<String>(
-                          value: opcao,
-                          child: Text(
-                            opcao,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        );
-                      }).toList();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Últimos $_periodoMedidas',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.keyboard_arrow_down,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              Text(
-                valorAtual > 0
-                    ? 'Último registro: $valorAtual $unidade'
-                    : 'Sem registros na ficha',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: valorAtual == 0
-                      ? AppColors.textSecondary
-                      : Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              MiniLineChart(
-                values: _gerarDadosSimulados(
-                  _medidaSelecionadaParaGrafico,
-                  _periodoMedidas,
-                ),
-                height: 120,
-              ),
-
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    labelInicio,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    labelMeio,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const Text(
-                    'Hoje',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  List<double> _gerarDadosSimulados(String medida, String periodo) {
-    double valorAtual = _medidas[medida] ?? 0.0;
-    if (valorAtual == 0.0) {
-      return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-    }
-
-    int pontos = 7;
-    if (periodo == '1 mês') {
-      pontos = 4;
-    }
-    if (periodo == '3 meses') {
-      pontos = 6;
-    }
-    if (periodo == '1 ano') {
-      pontos = 12;
-    }
-
-    List<double> dados = [];
-    for (int i = pontos - 1; i >= 0; i--) {
-      if (medida == 'Cintura' || medida == 'Peso') {
-        dados.add(valorAtual + (i * 0.3));
-      } else {
-        dados.add(valorAtual - (i * 0.3));
-      }
-    }
-    return dados;
+  Widget _periodSelector() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<ProgressPeriod>(
+          value: _period,
+          dropdownColor: AppColors.surfaceLight,
+          items: ProgressPeriod.values.map((period) {
+            return DropdownMenuItem<ProgressPeriod>(
+              value: period,
+              child: Text(period.label),
+            );
+          }).toList(),
+          onChanged: (period) {
+            if (period != null) {
+              setState(() {
+                _period = period;
+                _selectedExerciseKey = null;
+              });
+            }
+          },
+        ),
+      ),
+    );
   }
 
-  Widget _buildMedidasRow(String m1, String m2) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: _medidaCard(
-              m1,
-              '${_medidas[m1]} ${m1 == 'Peso' ? 'kg' : 'cm'}',
-            ),
+  Widget _metricCard(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    required String label,
+    required String detail,
+  }) {
+    return _sectionCard(
+      context,
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, size: 21, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _medidaCard(
-              m2,
-              '${_medidas[m2]} ${m2 == 'Peso' ? 'kg' : 'cm'}',
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 13)),
+          const SizedBox(height: 5),
+          Text(
+            detail,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              height: 1.3,
             ),
           ),
         ],
@@ -732,52 +761,41 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _medidaCard(String label, String value) {
-    bool isSelected = _medidaSelecionadaParaGrafico == label;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : AppColors.border,
-          width: isSelected ? 1.5 : 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            setState(() {
-              _medidaSelecionadaParaGrafico = label;
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+  Widget _streakCard(BuildContext context, WorkoutProgressSummary summary) {
+    return _sectionCard(
+      context,
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              Icons.local_fire_department,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
+              children: <Widget>[
+                const Text(
+                  'SEQUÊNCIA DE TREINOS',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : AppColors.textSecondary,
-                    fontWeight: isSelected
-                        ? FontWeight.w700
-                        : FontWeight.normal,
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
-                  value,
+                  '${summary.currentStreak} dias atuais',
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -786,93 +804,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  void _abrirEditorMedidas() {
-    final controllers = _medidas.map(
-      (key, value) => MapEntry(
-        key,
-        TextEditingController(text: value == 0.0 ? '' : value.toString()),
-      ),
-    );
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Atualizar Medidas',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: _medidas.keys.map((key) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TextField(
-                    controller: controllers[key],
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: '$key (${key == 'Peso' ? 'kg' : 'cm'})',
-                      labelStyle: const TextStyle(
-                        color: AppColors.textSecondary,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: AppColors.border),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'CANCELAR',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () {
-              setState(() {
-                for (var key in _medidas.keys) {
-                  String txt = controllers[key]!.text.replaceAll(',', '.');
-                  if (txt.isNotEmpty) {
-                    _medidas[key] = double.tryParse(txt) ?? _medidas[key]!;
-                  }
-                }
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text(
-              'SALVAR',
-              style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            'Recorde: ${summary.longestStreak}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
             ),
           ),
         ],
@@ -880,311 +816,609 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _buildTreinos(BuildContext context) {
-    final history = ref.watch(workoutControllerProvider).history;
-
-    if (history.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(30),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          children: const [
-            Icon(Icons.history, size: 48, color: AppColors.textSecondary),
-            SizedBox(height: 16),
-            Text(
-              'Nenhum treino registrado.',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Finalize uma sessão de treino para que ela apareça aqui no seu histórico.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, height: 1.4),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: history.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = history[index];
-        final dataFormatada = DateFormat("dd/MM/yyyy").format(item.date);
-
-        return Dismissible(
-          key: Key(item.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.redAccent,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.delete_outline,
-              color: Colors.white,
-              size: 28,
+  Widget _comparisonCard(BuildContext context, ProgressComparison comparison) {
+    return _sectionCard(
+      context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'COMPARAÇÃO COM O PERÍODO ANTERIOR',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
             ),
           ),
-          onDismissed: (direction) {
-            ref
-                .read(workoutControllerProvider.notifier)
-                .deleteHistoryItem(item.id);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Treino excluído do histórico!'),
-                backgroundColor: Colors.redAccent,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          },
-          child: Material(
-            color:
-                Colors.transparent, // Deixa a cor do Container brilhar por trás
-            child: InkWell(
-              borderRadius: BorderRadius.circular(
-                14,
-              ), // Respeita a borda arredondada
-              onTap: () {
-                Navigator.push(
+          const SizedBox(height: 14),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _comparisonItem(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        WorkoutHistoryDetailScreen(workout: item),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface, // O fundo agora fica aqui
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.fitness_center,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.routineName,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            dataFormatada,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item.duration,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${item.totalExercises} exercícios',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  'Treinos',
+                  comparison.workoutsChange,
                 ),
               ),
-            ),
+              Expanded(
+                child: _comparisonItem(
+                  context,
+                  'Dias ativos',
+                  comparison.activeDaysChange,
+                ),
+              ),
+              Expanded(
+                child: _comparisonItem(
+                  context,
+                  'Volume',
+                  comparison.volumeChange,
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  Widget _buildDesempenho(BuildContext context) {
-    final history = ref.watch(workoutControllerProvider).history;
-
-    Map<String, Map<String, dynamic>> personalRecords = {};
-
-    for (var workout in history) {
-      for (var exercise in workout.exercises) {
-        for (var set in exercise.sets) {
-          if (set.weight > 0) {
-            final currentRecord = personalRecords[exercise.exerciseName];
-
-            if (currentRecord == null || set.weight > currentRecord['weight']) {
-              personalRecords[exercise.exerciseName] = {
-                'weight': set.weight,
-                'date': workout.date,
-              };
-            }
-          }
-        }
-      }
-    }
-
-    final prList = personalRecords.entries.toList();
-    prList.sort((a, b) => b.value['weight'].compareTo(a.value['weight']));
+  Widget _comparisonItem(BuildContext context, String label, double? change) {
+    final positive = change == null || change >= 0;
+    final color = positive
+        ? Theme.of(context).colorScheme.primary
+        : Colors.orangeAccent;
+    final value = change == null
+        ? 'NOVO'
+        : '${change >= 0 ? '+' : ''}${change.toStringAsFixed(0)}%';
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'RECORDES PESSOAIS (PR)',
+      children: <Widget>[
+        Text(
+          value,
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.5,
+            color: color,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 12),
-        const Text(
-          'Suas maiores cargas registradas. Continue superando seus limites!',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-            height: 1.4,
-          ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
         ),
-        const SizedBox(height: 20),
+      ],
+    );
+  }
 
-        if (prList.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
+  Widget _chartCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required List<double> values,
+    required String emptyMessage,
+    required String trailing,
+  }) {
+    return _sectionCard(
+      context,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              Text(
+                trailing,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
             ),
-            child: Column(
-              children: const [
-                Icon(
-                  Icons.emoji_events_outlined,
-                  size: 48,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Nenhum recorde ainda.',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Conclua treinos registrando os pesos utilizados para que seus recordes apareçam aqui automaticamente.',
+          ),
+          const SizedBox(height: 16),
+          if (values.length >= 2)
+            MiniLineChart(values: values, height: 130, showDots: true)
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28),
+              child: Center(
+                child: Text(
+                  emptyMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _workoutCard(BuildContext context, WorkoutHistoryItem item) {
+    final incomplete = item.isIncomplete;
+    final color = incomplete
+        ? Colors.orangeAccent
+        : Theme.of(context).colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: color.withValues(alpha: 0.32)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    incomplete
+                        ? Icons.pending_actions_rounded
+                        : Icons.check_circle_rounded,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        item.routineName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat("dd/MM/yyyy 'às' HH:mm").format(item.date),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 5,
+                        children: <Widget>[
+                          _miniTag('${item.totalSets} séries'),
+                          _miniTag(_formatVolume(item.totalVolume)),
+                          _miniTag('${item.totalExercises} exercícios'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      item.duration,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      incomplete ? 'INCOMPLETO' : 'CONCLUÍDO',
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          )
-        else
-          ...prList.map((record) {
-            final exerciseName = record.key;
-            final weight = record.value['weight'] as double;
-            final date = record.value['date'] as DateTime;
+          ),
+        ),
+      ),
+    );
+  }
 
-            String weightStr = weight % 1 == 0
-                ? weight.toStringAsFixed(0)
-                : weight.toStringAsFixed(1);
-            String dateStr = DateFormat("dd MMM").format(date);
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
+  Widget _statusCounter(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          children: <Widget>[
+            Text(
+              '$value',
+              style: TextStyle(
+                color: color,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.emoji_events, color: Colors.amber),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _measurementOverview(
+    BuildContext context,
+    BodyMeasurementEntry entry,
+    PulseSettings settings,
+  ) {
+    final visibleTypes = BodyMeasurementType.values
+        .where((type) => entry.valueFor(type) != null)
+        .toList();
+
+    return _sectionCard(
+      context,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: visibleTypes.map((type) {
+          final value = entry.valueFor(type)!;
+          return SizedBox(
+            width: (MediaQuery.sizeOf(context).width - 94) / 2,
+            child: _smallMetric(
+              type.label.toUpperCase(),
+              '${_displayMeasurement(value, type, settings)} ${_measurementUnit(type, settings)}',
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _profileWeightCard(BuildContext context, PulseSettings settings) {
+    final weight = settings.profile.weightKg;
+
+    return _sectionCard(
+      context,
+      child: Row(
+        children: <Widget>[
+          Icon(
+            Icons.monitor_weight_outlined,
+            color: Theme.of(context).colorScheme.primary,
+            size: 30,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text(
+                  'PESO DO PERFIL',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          exerciseName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Alcançado em $dateStr',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  weight > 0
+                      ? '${_displayMeasurement(weight, BodyMeasurementType.weight, settings)} ${_measurementUnit(BodyMeasurementType.weight, settings)}'
+                      : 'Não informado',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
                   ),
+                ),
+              ],
+            ),
+          ),
+          const Text(
+            'Registre uma avaliação\npara criar o histórico.',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _measurementHistoryCard(
+    BuildContext context,
+    BodyMeasurementEntry entry,
+    PulseSettings settings,
+  ) {
+    final values = BodyMeasurementType.values
+        .where((type) => entry.valueFor(type) != null)
+        .take(3)
+        .map((type) {
+          final value = entry.valueFor(type)!;
+          return '${type.label}: ${_displayMeasurement(value, type, settings)} ${_measurementUnit(type, settings)}';
+        })
+        .join(' • ');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(13),
+        child: ListTile(
+          title: Text(
+            DateFormat("dd/MM/yyyy 'às' HH:mm").format(entry.recordedAt),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          subtitle: Text(
+            values,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+            ),
+          ),
+          trailing: IconButton(
+            tooltip: 'Excluir avaliação',
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            onPressed: () => _deleteMeasurement(context, entry),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _recordCard(BuildContext context, PersonalRecord record) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _sectionCard(
+        context,
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.14),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events, color: Colors.amber),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
                   Text(
-                    '$weightStr kg',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.primary,
+                    record.exerciseName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${record.reps} repetições • ${DateFormat('dd/MM/yyyy').format(record.date)}',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
                     ),
                   ),
                 ],
               ),
-            );
-          }),
+            ),
+            Text(
+              _formatWeight(record.weight),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _smallMetric(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _changeLabel(BuildContext context, String label, double? change) {
+    final positive = change == null || change >= 0;
+    final color = positive
+        ? Theme.of(context).colorScheme.primary
+        : Colors.orangeAccent;
+    final value = change == null
+        ? 'novo registro'
+        : '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}%';
+
+    return Row(
+      children: <Widget>[
+        Icon(
+          positive ? Icons.trending_up : Icons.trending_down,
+          color: color,
+          size: 17,
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '$value em relação à $label',
+          style: TextStyle(color: color, fontSize: 11),
+        ),
       ],
+    );
+  }
+
+  Widget _sectionCard(
+    BuildContext context, {
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(17),
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _emptyState({
+    required IconData icon,
+    required String title,
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: <Widget>[
+          const SizedBox(height: 2),
+          Icon(icon, size: 42, color: AppColors.textSecondary),
+          const SizedBox(height: 13),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              height: 1.4,
+              fontSize: 12,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...<Widget>[
+            const SizedBox(height: 16),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _legendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
+        ),
+      ],
+    );
+  }
+
+  Widget _miniTag(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: AppColors.textSecondary, fontSize: 9),
+      ),
     );
   }
 
@@ -1217,61 +1451,392 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
     );
   }
 
-  Widget _statCard(
-    IconData icon,
-    String value,
-    String label,
-    String sub,
-    double progress,
-  ) {
-    double safeProgress = progress > 1.0 ? 1.0 : progress;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+  Future<void> _openMeasurementEditor(
+    BuildContext context, {
+    required PulseSettings settings,
+    required BodyMeasurementEntry? latest,
+  }) async {
+    final entry = await showModalBottomSheet<BodyMeasurementEntry>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      useSafeArea: true,
+      builder: (_) => _MeasurementEditorSheet(
+        latest: latest,
+        profileWeightKg: settings.profile.weightKg,
+        measurementSystem: settings.measurementSystem,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
-          const SizedBox(height: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
+    );
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: safeProgress,
-              backgroundColor: AppColors.surfaceLight,
-              color: Theme.of(context).colorScheme.primary,
-              minHeight: 4,
-            ),
-          ),
-          const SizedBox(height: 6),
+    if (entry == null) {
+      return;
+    }
 
-          Text(
-            sub,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
+    try {
+      await ref.read(bodyMeasurementsControllerProvider.notifier).save(entry);
+
+      final weight = entry.weightKg;
+      if (weight != null && weight > 0) {
+        await ref
+            .read(settingsControllerProvider.notifier)
+            .updateProfile(settings.profile.copyWith(weightKg: weight));
+      }
+
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Avaliação corporal salva.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível salvar a avaliação.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteMeasurement(
+    BuildContext context,
+    BodyMeasurementEntry entry,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir avaliação?'),
+        content: Text(
+          'O registro de ${DateFormat('dd/MM/yyyy').format(entry.recordedAt)} será removido.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(
+              'Excluir',
+              style: TextStyle(color: Colors.redAccent),
             ),
           ),
         ],
       ),
     );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await ref
+        .read(bodyMeasurementsControllerProvider.notifier)
+        .delete(entry.id);
+  }
+
+  double _displayMeasurement(
+    double value,
+    BodyMeasurementType type,
+    PulseSettings settings,
+  ) {
+    if (settings.measurementSystem == MeasurementSystem.metric) {
+      return value;
+    }
+
+    return type.isWeight ? value * 2.2046226218 : value / 2.54;
+  }
+
+  String _measurementUnit(BodyMeasurementType type, PulseSettings settings) {
+    if (settings.measurementSystem == MeasurementSystem.metric) {
+      return type.isWeight ? 'kg' : 'cm';
+    }
+
+    return type.isWeight ? 'lbs' : 'in';
+  }
+
+  String _monthYearLabel(DateTime date) {
+    const months = <String>[
+      'JANEIRO',
+      'FEVEREIRO',
+      'MARÇO',
+      'ABRIL',
+      'MAIO',
+      'JUNHO',
+      'JULHO',
+      'AGOSTO',
+      'SETEMBRO',
+      'OUTUBRO',
+      'NOVEMBRO',
+      'DEZEMBRO',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatDuration(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    }
+    return '${minutes}m';
+  }
+
+  String _formatVolume(double volume) {
+    if (volume >= 1000) {
+      return '${(volume / 1000).toStringAsFixed(1)} t';
+    }
+    return '${volume.toStringAsFixed(0)} kg';
+  }
+
+  String _formatWeight(double weight) {
+    if (weight <= 0) {
+      return '-- kg';
+    }
+    final value = weight % 1 == 0
+        ? weight.toStringAsFixed(0)
+        : weight.toStringAsFixed(1);
+    return '$value kg';
+  }
+}
+
+class _MeasurementEditorSheet extends StatefulWidget {
+  const _MeasurementEditorSheet({
+    required this.latest,
+    required this.profileWeightKg,
+    required this.measurementSystem,
+  });
+
+  final BodyMeasurementEntry? latest;
+  final double profileWeightKg;
+  final MeasurementSystem measurementSystem;
+
+  @override
+  State<_MeasurementEditorSheet> createState() =>
+      _MeasurementEditorSheetState();
+}
+
+class _MeasurementEditorSheetState extends State<_MeasurementEditorSheet> {
+  late final Map<BodyMeasurementType, TextEditingController> _controllers;
+  late DateTime _recordedAt;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordedAt = DateTime.now();
+    _controllers = <BodyMeasurementType, TextEditingController>{
+      for (final type in BodyMeasurementType.values)
+        type: TextEditingController(text: _initialValue(type)),
+    };
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String _initialValue(BodyMeasurementType type) {
+    final value =
+        widget.latest?.valueFor(type) ??
+        (type.isWeight && widget.profileWeightKg > 0
+            ? widget.profileWeightKg
+            : null);
+    if (value == null) {
+      return '';
+    }
+
+    final displayed = widget.measurementSystem == MeasurementSystem.metric
+        ? value
+        : type.isWeight
+        ? value * 2.2046226218
+        : value / 2.54;
+    return displayed.toStringAsFixed(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        14,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Nova avaliação corporal',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Preencha somente as medidas que você aferiu. Os dados ficam salvos localmente.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.calendar_today_outlined),
+              title: const Text('Data da avaliação'),
+              subtitle: Text(
+                DateFormat("dd/MM/yyyy 'às' HH:mm").format(_recordedAt),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _selectDate,
+            ),
+            const Divider(color: AppColors.border),
+            const SizedBox(height: 8),
+            ...BodyMeasurementType.values.map(_field),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _submit,
+                child: _saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('SALVAR AVALIAÇÃO'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _field(BodyMeasurementType type) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 11),
+      child: TextField(
+        controller: _controllers[type],
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textInputAction: TextInputAction.next,
+        decoration: InputDecoration(
+          labelText: type.label,
+          suffixText: widget.measurementSystem == MeasurementSystem.metric
+              ? (type.isWeight ? 'kg' : 'cm')
+              : (type.isWeight ? 'lbs' : 'in'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _recordedAt,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (date == null || !mounted) {
+      return;
+    }
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_recordedAt),
+    );
+    if (!mounted) {
+      return;
+    }
+
+    final selectedTime = time ?? TimeOfDay.fromDateTime(_recordedAt);
+    setState(() {
+      _recordedAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        selectedTime.hour,
+        selectedTime.minute,
+      );
+    });
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+
+    final values = <BodyMeasurementType, double?>{
+      for (final type in BodyMeasurementType.values)
+        type: _toStorageValue(_parse(_controllers[type]!.text), type),
+    };
+
+    if (values.values.every((value) => value == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Informe pelo menos uma medida válida.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    final entry = BodyMeasurementEntry(
+      id: 'measurement_${DateTime.now().microsecondsSinceEpoch}',
+      recordedAt: _recordedAt,
+      weightKg: values[BodyMeasurementType.weight],
+      shouldersCm: values[BodyMeasurementType.shoulders],
+      chestCm: values[BodyMeasurementType.chest],
+      waistCm: values[BodyMeasurementType.waist],
+      hipsCm: values[BodyMeasurementType.hips],
+      leftArmCm: values[BodyMeasurementType.leftArm],
+      rightArmCm: values[BodyMeasurementType.rightArm],
+      leftForearmCm: values[BodyMeasurementType.leftForearm],
+      rightForearmCm: values[BodyMeasurementType.rightForearm],
+      leftThighCm: values[BodyMeasurementType.leftThigh],
+      rightThighCm: values[BodyMeasurementType.rightThigh],
+      leftCalfCm: values[BodyMeasurementType.leftCalf],
+      rightCalfCm: values[BodyMeasurementType.rightCalf],
+    );
+
+    Navigator.pop(context, entry);
+  }
+
+  double? _toStorageValue(double? value, BodyMeasurementType type) {
+    if (value == null || widget.measurementSystem == MeasurementSystem.metric) {
+      return value;
+    }
+
+    return type.isWeight ? value / 2.2046226218 : value * 2.54;
+  }
+
+  double? _parse(String text) {
+    final value = double.tryParse(text.trim().replaceAll(',', '.'));
+    if (value == null || value <= 0) {
+      return null;
+    }
+    return value;
   }
 }

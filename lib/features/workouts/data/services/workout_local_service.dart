@@ -376,6 +376,7 @@ class WorkoutLocalService {
       await transaction.delete('workout_history');
       await transaction.delete('routines');
       await transaction.delete('custom_exercises');
+      await transaction.delete('body_measurements');
       await transaction.delete(
         'app_metadata',
         where: 'key = ?',
