@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
 import '../../domain/models/active_workout_session.dart';
+import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../state/workout_state.dart';
@@ -142,6 +143,15 @@ class WorkoutController extends Notifier<WorkoutState> {
 
   void importRoutine(WorkoutRoutine routine) {
     ref.read(workoutCatalogControllerProvider.notifier).importRoutine(routine);
+  }
+
+  Future<WorkoutHistoryItem> addCardioSession({
+    required CardioLog cardio,
+    String? sessionName,
+  }) {
+    return ref
+        .read(workoutHistoryControllerProvider.notifier)
+        .addCardioSession(cardio: cardio, sessionName: sessionName);
   }
 
   Future<void> deleteHistoryItem(String id) {

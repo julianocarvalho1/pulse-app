@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 3;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -222,6 +222,7 @@ class PulseDatabase {
     ''');
 
     await _createBodyMeasurementsTable(db);
+    await _createWorkoutHistoryCardioTable(db);
   }
 
   Future<void> _upgradeSchema(
@@ -232,6 +233,38 @@ class PulseDatabase {
     if (oldVersion < 2) {
       await _createBodyMeasurementsTable(db);
     }
+
+    if (oldVersion < 3) {
+      await _createWorkoutHistoryCardioTable(db);
+    }
+  }
+
+  Future<void> _createWorkoutHistoryCardioTable(DatabaseExecutor db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_history_cardio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        history_id TEXT NOT NULL,
+        sort_order INTEGER NOT NULL,
+        modality TEXT NOT NULL,
+        planned_duration_minutes INTEGER NOT NULL DEFAULT 0,
+        actual_duration_minutes INTEGER NOT NULL,
+        distance_km REAL,
+        average_speed_kmh REAL,
+        incline_percent REAL,
+        resistance_level REAL,
+        perceived_effort INTEGER,
+        average_heart_rate_bpm INTEGER,
+        notes TEXT NOT NULL DEFAULT '',
+        FOREIGN KEY (history_id)
+          REFERENCES workout_history (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS workout_history_cardio_order_index
+      ON workout_history_cardio (history_id, sort_order)
+    ''');
   }
 
   Future<void> _createBodyMeasurementsTable(DatabaseExecutor db) async {

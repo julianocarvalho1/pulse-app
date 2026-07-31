@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/pulse_database.dart';
 import '../../../../models/exercise.dart';
 import '../../domain/models/active_workout_session.dart';
+import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../../domain/models/workout_session_status.dart';
@@ -179,6 +180,32 @@ class WorkoutLocalService {
         );
       }
 
+      final cardioRows = await db.query(
+        'workout_history_cardio',
+        where: 'history_id = ?',
+        whereArgs: <Object?>[historyId],
+        orderBy: 'sort_order ASC',
+      );
+
+      final cardioLogs = cardioRows
+          .map(
+            (row) => CardioLog(
+              modality: CardioModality.fromStorage(row['modality']),
+              plannedDurationMinutes: _readInt(row['planned_duration_minutes']),
+              actualDurationMinutes: _readInt(row['actual_duration_minutes']),
+              distanceKm: _readNullableDouble(row['distance_km']),
+              averageSpeedKmh: _readNullableDouble(row['average_speed_kmh']),
+              inclinePercent: _readNullableDouble(row['incline_percent']),
+              resistanceLevel: _readNullableDouble(row['resistance_level']),
+              perceivedEffort: _readNullableInt(row['perceived_effort']),
+              averageHeartRateBpm: _readNullableInt(
+                row['average_heart_rate_bpm'],
+              ),
+              notes: row['notes']?.toString() ?? '',
+            ),
+          )
+          .toList(growable: false);
+
       history.add(
         WorkoutHistoryItem(
           id: historyId,
@@ -188,6 +215,7 @@ class WorkoutLocalService {
           ),
           duration: historyRow['duration']?.toString() ?? '',
           exercises: exerciseLogs,
+          cardio: cardioLogs,
           notes: historyRow['notes']?.toString() ?? '',
           status: WorkoutSessionStatus.fromStorage(historyRow['status']),
         ),
@@ -427,6 +455,32 @@ class WorkoutLocalService {
 
       await batch.commit(noResult: true);
     }
+
+    if (item.cardio.isNotEmpty) {
+      final cardioBatch = executor.batch();
+      for (
+        var cardioIndex = 0;
+        cardioIndex < item.cardio.length;
+        cardioIndex++
+      ) {
+        final entry = item.cardio[cardioIndex];
+        cardioBatch.insert('workout_history_cardio', <String, Object?>{
+          'history_id': item.id,
+          'sort_order': cardioIndex,
+          'modality': entry.modality.storageValue,
+          'planned_duration_minutes': entry.plannedDurationMinutes,
+          'actual_duration_minutes': entry.actualDurationMinutes,
+          'distance_km': entry.distanceKm,
+          'average_speed_kmh': entry.averageSpeedKmh,
+          'incline_percent': entry.inclinePercent,
+          'resistance_level': entry.resistanceLevel,
+          'perceived_effort': entry.perceivedEffort,
+          'average_heart_rate_bpm': entry.averageHeartRateBpm,
+          'notes': entry.notes,
+        });
+      }
+      await cardioBatch.commit(noResult: true);
+    }
   }
 
   Map<String, Object?> _exerciseToRow(
@@ -484,5 +538,28 @@ class WorkoutLocalService {
     }
 
     return double.tryParse((value?.toString() ?? '').replaceAll(',', '.')) ?? 0;
+  }
+
+  int? _readNullableInt(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value.toString());
+  }
+
+  double? _readNullableDouble(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value.toString().replaceAll(',', '.'));
   }
 }

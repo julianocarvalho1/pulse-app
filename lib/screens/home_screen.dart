@@ -8,6 +8,7 @@ import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../models/exercise.dart';
+import 'cardio_entry_screen.dart';
 import 'workout_session_screen.dart';
 import 'workout_plan_screen.dart';
 import 'routine_detail_screen.dart';
@@ -72,21 +73,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final diferencaDias = DateTime.now().difference(ultimoTreino.date).inDays;
 
       if (diferencaDias == 0) {
-        statusTreinoMsg =
-            'Parabéns! Você treinou hoje e garantiu sua evolução.';
+        statusTreinoMsg = ultimoTreino.isCardioOnly
+            ? 'Cardio registrado hoje. Consistência também conta fora da musculação.'
+            : 'Parabéns! Você treinou hoje e garantiu sua evolução.';
       } else if (diferencaDias == 1) {
         statusTreinoMsg =
-            'Seu último treino foi ontem. Hora de manter a consistência!';
+            'Sua última atividade foi ontem. Hora de manter a consistência!';
       } else {
         statusTreinoMsg =
             'Já se passaram $diferencaDias dias desde o seu último registro.';
+      }
+
+      if (ultimoTreino.isCardioOnly) {
+        final cardio = ultimoTreino.cardio.first;
+        final distanceLabel = cardio.distanceKm == null
+            ? ''
+            : ' • ${cardio.distanceKm!.toStringAsFixed(1).replaceAll('.', ',')} km';
+        analiseRitmoMsg =
+            '${cardio.modality.label}: ${cardio.actualDurationMinutes} minutos registrados$distanceLabel.';
       }
 
       final partes = ultimoTreino.duration.split(':');
       final minutosDuracao = int.parse(partes[0]);
       final totalExercicios = ultimoTreino.totalExercises;
 
-      if (totalExercicios > 0) {
+      if (!ultimoTreino.isCardioOnly && totalExercicios > 0) {
         final tempoPorExercicio = minutosDuracao / totalExercicios;
 
         if (minutosDuracao < 10 && totalExercicios >= 3) {
@@ -151,7 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _buildNotificationItem(
               Icons.military_tech,
               'Marcos Alcançados',
-              'Total de $totalTreinos treino(s) registrado(s).',
+              'Total de $totalTreinos atividade(s) registrada(s).',
             ),
           ],
         ),
@@ -1078,6 +1089,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
 
                     const SizedBox(height: 24),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () async {
+                          final saved = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute<bool>(
+                              builder: (_) => const CardioEntryScreen(),
+                            ),
+                          );
+                          if (saved == true && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Cardio salvo no histórico com sucesso.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primarySoft,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  Icons.directions_run_rounded,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      'REGISTRAR CARDIO',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    const Text(
+                                      'Esteira, bike, corrida e mais',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      'Salve duração e métricas reais sem estimar calorias.',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 11,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
                     GestureDetector(
                       onTap: () =>
                           _mostrarModalTreinoDinamico(context, provider),

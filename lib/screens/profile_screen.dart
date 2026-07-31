@@ -107,7 +107,7 @@ class ProfileScreen extends ConsumerWidget {
                       Expanded(
                         child: _ProfileMetric(
                           value: '$completedHistoryCount',
-                          label: 'Treinos',
+                          label: 'Sessões',
                           icon: Icons.check_circle_outline,
                         ),
                       ),
@@ -134,7 +134,7 @@ class ProfileScreen extends ConsumerWidget {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          'TREINOS RECENTES',
+                          'ATIVIDADES RECENTES',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -213,11 +213,18 @@ class ProfileScreen extends ConsumerWidget {
   ) {
     final formattedDate = DateFormat('dd/MM/yyyy').format(item.date);
     final isIncomplete = item.isIncomplete;
+    final isCardio = item.isCardioOnly;
     final statusColor = isIncomplete ? AppColors.warning : AppColors.success;
-    final statusIcon = isIncomplete
+    final statusIcon = isCardio
+        ? Icons.directions_run_rounded
+        : isIncomplete
         ? Icons.pending_actions_rounded
         : Icons.check_circle;
-    final statusLabel = isIncomplete ? 'INCOMPLETO' : 'CONCLUÍDO';
+    final statusLabel = isCardio
+        ? 'CARDIO'
+        : isIncomplete
+        ? 'INCOMPLETO'
+        : 'CONCLUÍDO';
 
     return Dismissible(
       key: Key(item.id),
@@ -234,7 +241,7 @@ class ProfileScreen extends ConsumerWidget {
       onDismissed: (_) {
         controller.deleteHistoryItem(item.id);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Treino excluído do histórico.')),
+          const SnackBar(content: Text('Registro excluído do histórico.')),
         );
       },
       child: Material(
@@ -323,7 +330,9 @@ class ProfileScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
                     Text(
-                      item.duration,
+                      isCardio
+                          ? '${item.totalCardioMinutes} min'
+                          : item.duration,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -332,7 +341,11 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${item.totalExercises} exerc.',
+                      isCardio
+                          ? (item.cardio.length == 1
+                                ? item.cardio.first.modality.label
+                                : '${item.cardio.length} atividades')
+                          : '${item.totalExercises} exerc.',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,

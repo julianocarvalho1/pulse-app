@@ -54,6 +54,15 @@ void main() {
       'recorded_at_ms': DateTime(2026, 7, 31).millisecondsSinceEpoch,
       'weight_kg': 78.5,
     });
+    await db.insert('workout_history_cardio', <String, Object?>{
+      'history_id': 'history-a',
+      'sort_order': 0,
+      'modality': 'treadmill',
+      'planned_duration_minutes': 30,
+      'actual_duration_minutes': 28,
+      'distance_km': 4.2,
+      'notes': '',
+    });
 
     await preferences.setString('user_name', 'Juliano');
     await preferences.setString('settings_theme_mode', 'light');
@@ -75,6 +84,7 @@ void main() {
 
     expect(await db.query('routines'), hasLength(1));
     expect(await db.query('workout_history'), hasLength(1));
+    expect(await db.query('workout_history_cardio'), hasLength(1));
     expect(await db.query('body_measurements'), hasLength(1));
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
@@ -105,5 +115,20 @@ void main() {
       () => service.inspectBytes(bytes),
       throwsA(isA<PulseBackupException>()),
     );
+  });
+
+  test('aceita backup anterior sem a tabela de cardio', () async {
+    final bytes = await service.exportBytes();
+    final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+    final tables = decoded['tables'] as Map<String, dynamic>;
+    tables.remove('workout_history_cardio');
+
+    final legacyBytes = Uint8List.fromList(utf8.encode(jsonEncode(decoded)));
+
+    expect(() => service.inspectBytes(legacyBytes), returnsNormally);
+    await service.importBytes(legacyBytes);
+
+    final db = await database.database;
+    expect(await db.query('workout_history_cardio'), isEmpty);
   });
 }

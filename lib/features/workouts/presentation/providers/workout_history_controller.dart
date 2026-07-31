@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../../domain/models/workout_session_status.dart';
@@ -32,6 +33,7 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
     required String routineName,
     required String duration,
     required List<ExerciseLog> exercises,
+    List<CardioLog> cardio = const <CardioLog>[],
     required String notes,
     required WorkoutSessionStatus status,
   }) async {
@@ -41,6 +43,7 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
       date: DateTime.now(),
       duration: duration,
       exercises: exercises,
+      cardio: cardio,
       notes: notes,
       status: status,
     );
@@ -61,6 +64,27 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
       debugPrintStack(stackTrace: stackTrace);
       rethrow;
     }
+  }
+
+  Future<WorkoutHistoryItem> addCardioSession({
+    required CardioLog cardio,
+    String? sessionName,
+  }) {
+    final now = DateTime.now();
+    final duration =
+        '${cardio.actualDurationMinutes.toString().padLeft(2, '0')}:00';
+
+    return addWorkout(
+      id: 'cardio_${now.microsecondsSinceEpoch}',
+      routineName: sessionName?.trim().isNotEmpty == true
+          ? sessionName!.trim()
+          : 'Cardio • ${cardio.modality.label}',
+      duration: duration,
+      exercises: const <ExerciseLog>[],
+      cardio: <CardioLog>[cardio],
+      notes: '',
+      status: WorkoutSessionStatus.completed,
+    );
   }
 
   Future<void> deleteHistoryItem(String id) async {

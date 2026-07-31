@@ -1023,6 +1023,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _workoutCard(BuildContext context, WorkoutHistoryItem item) {
     final incomplete = item.isIncomplete;
+    final isCardio = item.isCardioOnly;
     final color = incomplete
         ? Colors.orangeAccent
         : Theme.of(context).colorScheme.primary;
@@ -1057,7 +1058,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    incomplete
+                    isCardio
+                        ? Icons.directions_run_rounded
+                        : incomplete
                         ? Icons.pending_actions_rounded
                         : Icons.check_circle_rounded,
                     color: color,
@@ -1087,11 +1090,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 5,
-                        children: <Widget>[
-                          _miniTag('${item.totalSets} séries'),
-                          _miniTag(_formatVolume(item.totalVolume)),
-                          _miniTag('${item.totalExercises} exercícios'),
-                        ],
+                        children: isCardio
+                            ? <Widget>[
+                                _miniTag('${item.totalCardioMinutes} min'),
+                                if (item.totalCardioDistanceKm > 0)
+                                  _miniTag(
+                                    '${_formatCardioNumber(item.totalCardioDistanceKm)} km',
+                                  ),
+                                _miniTag(
+                                  item.cardio.length == 1
+                                      ? item.cardio.first.modality.label
+                                      : '${item.cardio.length} atividades',
+                                ),
+                              ]
+                            : <Widget>[
+                                _miniTag('${item.totalSets} séries'),
+                                _miniTag(_formatVolume(item.totalVolume)),
+                                _miniTag('${item.totalExercises} exercícios'),
+                              ],
                       ),
                     ],
                   ),
@@ -1109,7 +1125,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      incomplete ? 'INCOMPLETO' : 'CONCLUÍDO',
+                      isCardio
+                          ? 'CARDIO'
+                          : incomplete
+                          ? 'INCOMPLETO'
+                          : 'CONCLUÍDO',
                       style: TextStyle(
                         color: color,
                         fontSize: 9,
@@ -1124,6 +1144,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         ),
       ),
     );
+  }
+
+  String _formatCardioNumber(double value) {
+    final hasDecimals = value != value.roundToDouble();
+    return value.toStringAsFixed(hasDecimals ? 1 : 0).replaceAll('.', ',');
   }
 
   Widget _statusCounter(

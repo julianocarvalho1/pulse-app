@@ -24,6 +24,10 @@ class PulseBackupService {
     'usarBiometria',
   };
 
+  static const Set<String> _optionalBackupTables = <String>{
+    'workout_history_cardio',
+  };
+
   static const List<String> _exportTableOrder = <String>[
     'app_metadata',
     'custom_exercises',
@@ -32,6 +36,7 @@ class PulseBackupService {
     'workout_history',
     'workout_history_exercises',
     'workout_history_sets',
+    'workout_history_cardio',
     'active_session',
     'active_session_exercises',
     'active_session_sets',
@@ -43,6 +48,7 @@ class PulseBackupService {
     'active_session_exercises',
     'active_session',
     'workout_history_sets',
+    'workout_history_cardio',
     'workout_history_exercises',
     'workout_history',
     'routine_exercises',
@@ -101,6 +107,21 @@ class PulseBackupService {
       'reps',
       'weight',
     ],
+    'workout_history_cardio': <String>[
+      'id',
+      'history_id',
+      'sort_order',
+      'modality',
+      'planned_duration_minutes',
+      'actual_duration_minutes',
+      'distance_km',
+      'average_speed_kmh',
+      'incline_percent',
+      'resistance_level',
+      'perceived_effort',
+      'average_heart_rate_bpm',
+      'notes',
+    ],
     'active_session': <String>[
       'id',
       'routine_name',
@@ -157,6 +178,12 @@ class PulseBackupService {
         'workout_history': <String>['id', 'routine_name', 'date_ms'],
         'workout_history_exercises': <String>['history_id', 'exercise_id'],
         'workout_history_sets': <String>['history_exercise_id', 'set_order'],
+        'workout_history_cardio': <String>[
+          'history_id',
+          'sort_order',
+          'modality',
+          'actual_duration_minutes',
+        ],
         'active_session': <String>['id', 'routine_name', 'started_at_ms'],
         'active_session_exercises': <String>['session_id', 'exercise_id'],
         'active_session_sets': <String>['session_exercise_id', 'set_order'],
@@ -304,6 +331,10 @@ class PulseBackupService {
     final tables = <String, List<Map<String, Object?>>>{};
     for (final table in _exportTableOrder) {
       final rawRows = rawTables[table];
+      if (rawRows == null && _optionalBackupTables.contains(table)) {
+        tables[table] = <Map<String, Object?>>[];
+        continue;
+      }
       if (rawRows is! List) {
         throw PulseBackupException(
           'A seção "$table" do backup está ausente ou corrompida.',

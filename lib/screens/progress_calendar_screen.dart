@@ -376,6 +376,7 @@ class _ProgressCalendarScreenState
           ),
           children: day.items.map((item) {
             final incomplete = item.isIncomplete;
+            final isCardio = item.isCardioOnly;
             final color = incomplete
                 ? Colors.orangeAccent
                 : Theme.of(context).colorScheme.primary;
@@ -383,7 +384,9 @@ class _ProgressCalendarScreenState
             return ListTile(
               contentPadding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
               leading: Icon(
-                incomplete
+                isCardio
+                    ? Icons.directions_run_rounded
+                    : incomplete
                     ? Icons.pending_actions_rounded
                     : Icons.check_circle_rounded,
                 color: color,
@@ -393,7 +396,9 @@ class _ProgressCalendarScreenState
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
-                '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
+                isCardio
+                    ? '${DateFormat('HH:mm').format(item.date)} • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}'
+                    : '${DateFormat('HH:mm').format(item.date)} • ${item.duration} • ${item.totalSets} séries',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right),
@@ -542,6 +547,7 @@ class _ProgressCalendarScreenState
                 const SizedBox(height: 14),
                 ...day.items.map((item) {
                   final incomplete = item.isIncomplete;
+                  final isCardio = item.isCardioOnly;
                   final color = incomplete
                       ? Colors.orangeAccent
                       : Theme.of(context).colorScheme.primary;
@@ -549,14 +555,18 @@ class _ProgressCalendarScreenState
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(
-                      incomplete
+                      isCardio
+                          ? Icons.directions_run_rounded
+                          : incomplete
                           ? Icons.pending_actions_rounded
                           : Icons.check_circle_rounded,
                       color: color,
                     ),
                     title: Text(item.routineName),
                     subtitle: Text(
-                      '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
+                      isCardio
+                          ? '${DateFormat('HH:mm').format(item.date)} • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}'
+                          : '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     trailing: const Icon(Icons.chevron_right),

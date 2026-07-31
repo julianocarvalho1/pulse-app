@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/core/database/pulse_database.dart';
 import 'package:pulse/features/workouts/data/services/workout_local_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
@@ -153,5 +154,40 @@ void main() {
     expect(await service.loadActiveSession(), isNull);
     final history = await service.loadHistory();
     expect(history.single.id, historyItem.id);
+  });
+
+  test('persiste cardio integrado ao histórico', () async {
+    final historyItem = WorkoutHistoryItem(
+      id: 'cardio-history-1',
+      routineName: 'Cardio • Esteira',
+      date: DateTime(2026, 7, 31, 13, 30),
+      duration: '35:00',
+      exercises: const <ExerciseLog>[],
+      cardio: const <CardioLog>[
+        CardioLog(
+          modality: CardioModality.treadmill,
+          plannedDurationMinutes: 40,
+          actualDurationMinutes: 35,
+          distanceKm: 4.8,
+          averageSpeedKmh: 8.2,
+          inclinePercent: 2,
+          perceivedEffort: 7,
+          averageHeartRateBpm: 145,
+          notes: 'Ritmo moderado.',
+        ),
+      ],
+    );
+
+    await service.saveHistory(<WorkoutHistoryItem>[historyItem]);
+
+    final loadedHistory = await service.loadHistory();
+    final loaded = loadedHistory.single;
+
+    expect(loaded.isCardioOnly, isTrue);
+    expect(loaded.totalCardioMinutes, 35);
+    expect(loaded.totalCardioDistanceKm, 4.8);
+    expect(loaded.cardio.single.modality, CardioModality.treadmill);
+    expect(loaded.cardio.single.averageHeartRateBpm, 145);
+    expect(loaded.cardio.single.notes, 'Ritmo moderado.');
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_session_status.dart';
@@ -76,5 +77,44 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('detalhes de cardio mostram métricas reais sem calorias', (
+    tester,
+  ) async {
+    final workout = WorkoutHistoryItem(
+      id: 'cardio-1',
+      routineName: 'Cardio • Bicicleta',
+      date: DateTime(2026, 7, 31, 14),
+      duration: '42:00',
+      exercises: const <ExerciseLog>[],
+      cardio: const <CardioLog>[
+        CardioLog(
+          modality: CardioModality.stationaryBike,
+          plannedDurationMinutes: 45,
+          actualDurationMinutes: 42,
+          distanceKm: 16.4,
+          averageSpeedKmh: 23.4,
+          perceivedEffort: 8,
+          averageHeartRateBpm: 148,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildPulseLightTheme(pulsePalettes[1].lightPrimary),
+        home: WorkoutHistoryDetailScreen(workout: workout),
+      ),
+    );
+
+    expect(find.text('Detalhes do cardio'), findsOneWidget);
+    expect(find.text('CARDIO'), findsOneWidget);
+    expect(find.text('Bicicleta'), findsOneWidget);
+    expect(find.text('42 min realizados'), findsOneWidget);
+    expect(find.text('16,4 km'), findsWidgets);
+    expect(find.text('Esforço 8/10'), findsOneWidget);
+    expect(find.textContaining('calorias'), findsNothing);
+    expect(find.text('EXERCÍCIOS REALIZADOS'), findsNothing);
   });
 }

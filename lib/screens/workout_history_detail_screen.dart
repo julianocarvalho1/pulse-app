@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
 import '../features/workouts/domain/models/workout_set.dart';
@@ -21,8 +22,14 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
     final statusColor = isIncomplete
         ? AppColors.warning
         : Theme.of(context).colorScheme.primary;
-    final statusLabel = isIncomplete ? 'INCOMPLETO' : 'CONCLUÍDO';
-    final statusIcon = isIncomplete
+    final statusLabel = workout.isCardioOnly
+        ? 'CARDIO'
+        : isIncomplete
+        ? 'INCOMPLETO'
+        : 'CONCLUÍDO';
+    final statusIcon = workout.isCardioOnly
+        ? Icons.directions_run_rounded
+        : isIncomplete
         ? Icons.pending_actions_rounded
         : Icons.check_circle_rounded;
 
@@ -42,7 +49,7 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Detalhes do treino',
+          workout.isCardioOnly ? 'Detalhes do cardio' : 'Detalhes do treino',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -77,24 +84,51 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 _NotesCard(notes: workout.notes),
               ],
-              const SizedBox(height: 26),
-              Row(
-                children: [
-                  const Expanded(child: _SectionTitle('EXERCÍCIOS REALIZADOS')),
-                  Text(
-                    '${workout.totalExercises}',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+              if (workout.cardio.isNotEmpty) ...[
+                const SizedBox(height: 26),
+                Row(
+                  children: <Widget>[
+                    const Expanded(child: _SectionTitle('CARDIO REALIZADO')),
+                    Text(
+                      '${workout.totalCardioActivities}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: workout.cardio.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) => _CardioHistoryCard(
+                    entry: workout.cardio[index],
+                    index: index,
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (workout.exercises.isEmpty)
-                const _EmptyExerciseDetails()
-              else
+                ),
+              ],
+              if (workout.exercises.isNotEmpty) ...[
+                const SizedBox(height: 26),
+                Row(
+                  children: <Widget>[
+                    const Expanded(
+                      child: _SectionTitle('EXERCÍCIOS REALIZADOS'),
+                    ),
+                    Text(
+                      '${workout.totalExercises}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -107,6 +141,11 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                     );
                   },
                 ),
+              ],
+              if (workout.exercises.isEmpty && workout.cardio.isEmpty) ...[
+                const SizedBox(height: 26),
+                const _EmptyExerciseDetails(),
+              ],
             ],
           ),
         ),
@@ -230,31 +269,63 @@ class _WorkoutSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
-              children: [
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.timer_outlined,
-                    value: workout.duration,
-                    label: 'Duração',
-                  ),
-                ),
-                const _MetricDivider(),
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.fitness_center_outlined,
-                    value: '${workout.totalExercises}',
-                    label: 'Exercícios',
-                  ),
-                ),
-                const _MetricDivider(),
-                Expanded(
-                  child: _SummaryMetric(
-                    icon: Icons.format_list_numbered_rounded,
-                    value: '${workout.totalSets}',
-                    label: 'Séries',
-                  ),
-                ),
-              ],
+              children: workout.isCardioOnly
+                  ? <Widget>[
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.timer_outlined,
+                          value: '${workout.totalCardioMinutes} min',
+                          label: 'Duração',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.directions_run_rounded,
+                          value: '${workout.totalCardioActivities}',
+                          label: 'Atividades',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.route_outlined,
+                          value: workout.totalCardioDistanceKm > 0
+                              ? '${_formatDecimal(workout.totalCardioDistanceKm)} km'
+                              : '—',
+                          label: 'Distância',
+                        ),
+                      ),
+                    ]
+                  : <Widget>[
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.timer_outlined,
+                          value: workout.duration,
+                          label: 'Duração',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.fitness_center_outlined,
+                          value: '${workout.totalExercises}',
+                          label: 'Exercícios',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: workout.cardio.isEmpty
+                              ? Icons.format_list_numbered_rounded
+                              : Icons.directions_run_rounded,
+                          value: workout.cardio.isEmpty
+                              ? '${workout.totalSets}'
+                              : '${workout.totalCardioMinutes} min',
+                          label: workout.cardio.isEmpty ? 'Séries' : 'Cardio',
+                        ),
+                      ),
+                    ],
             ),
           ),
           if (isIncomplete) ...[
@@ -409,6 +480,181 @@ class _NotesCard extends StatelessWidget {
                 fontSize: 13,
                 height: 1.4,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CardioHistoryCard extends StatelessWidget {
+  const _CardioHistoryCard({required this.entry, required this.index});
+
+  final CardioLog entry;
+  final int index;
+
+  IconData get _icon {
+    return switch (entry.modality) {
+      CardioModality.treadmill => Icons.directions_run_rounded,
+      CardioModality.stationaryBike => Icons.pedal_bike_rounded,
+      CardioModality.elliptical => Icons.sync_alt_rounded,
+      CardioModality.stairClimber => Icons.stairs_rounded,
+      CardioModality.rowing => Icons.rowing_rounded,
+      CardioModality.walking => Icons.directions_walk_rounded,
+      CardioModality.running => Icons.directions_run_rounded,
+      CardioModality.other => Icons.favorite_outline_rounded,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = <Widget>[
+      _CardioMetricChip(
+        icon: Icons.timer_outlined,
+        label: '${entry.actualDurationMinutes} min realizados',
+      ),
+      if (entry.plannedDurationMinutes > 0)
+        _CardioMetricChip(
+          icon: Icons.flag_outlined,
+          label: '${entry.plannedDurationMinutes} min planejados',
+        ),
+      if (entry.distanceKm != null && entry.distanceKm! > 0)
+        _CardioMetricChip(
+          icon: Icons.route_outlined,
+          label: '${_formatDecimal(entry.distanceKm!)} km',
+        ),
+      if (entry.averageSpeedKmh != null && entry.averageSpeedKmh! > 0)
+        _CardioMetricChip(
+          icon: Icons.speed_rounded,
+          label: '${_formatDecimal(entry.averageSpeedKmh!)} km/h',
+        ),
+      if (entry.inclinePercent != null)
+        _CardioMetricChip(
+          icon: Icons.trending_up_rounded,
+          label: '${_formatDecimal(entry.inclinePercent!)}% inclinação',
+        ),
+      if (entry.resistanceLevel != null)
+        _CardioMetricChip(
+          icon: Icons.tune_rounded,
+          label: 'Resistência ${_formatDecimal(entry.resistanceLevel!)}',
+        ),
+      if (entry.perceivedEffort != null)
+        _CardioMetricChip(
+          icon: Icons.bolt_rounded,
+          label: 'Esforço ${entry.perceivedEffort}/10',
+        ),
+      if (entry.averageHeartRateBpm != null)
+        _CardioMetricChip(
+          icon: Icons.favorite_rounded,
+          label: '${entry.averageHeartRateBpm} bpm',
+        ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primaryBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _icon,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 23,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      entry.modality.label,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Cardio ${index + 1}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(spacing: 7, runSpacing: 7, children: metrics),
+          if (entry.notes.trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 13),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(11),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Text(
+                entry.notes,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CardioMetricChip extends StatelessWidget {
+  const _CardioMetricChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.primaryBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -586,6 +832,11 @@ class _SetHistoryRow extends StatelessWidget {
     final hasDecimals = weight != weight.roundToDouble();
     return '${weight.toStringAsFixed(hasDecimals ? 1 : 0)} kg';
   }
+}
+
+String _formatDecimal(double value) {
+  final hasDecimals = value != value.roundToDouble();
+  return value.toStringAsFixed(hasDecimals ? 1 : 0).replaceAll('.', ',');
 }
 
 class _EmptyExerciseDetails extends StatelessWidget {
