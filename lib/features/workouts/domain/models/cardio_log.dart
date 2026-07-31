@@ -35,6 +35,55 @@ enum CardioModality {
 }
 
 @immutable
+class RoutineCardio {
+  const RoutineCardio({
+    required this.id,
+    required this.modality,
+    required this.plannedDurationMinutes,
+    this.notes = '',
+  });
+
+  final String id;
+  final CardioModality modality;
+  final int plannedDurationMinutes;
+  final String notes;
+
+  RoutineCardio copyWith({
+    String? id,
+    CardioModality? modality,
+    int? plannedDurationMinutes,
+    String? notes,
+  }) {
+    return RoutineCardio(
+      id: id ?? this.id,
+      modality: modality ?? this.modality,
+      plannedDurationMinutes:
+          plannedDurationMinutes ?? this.plannedDurationMinutes,
+      notes: notes ?? this.notes,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'modality': modality.storageValue,
+      'plannedDurationMinutes': plannedDurationMinutes,
+      'notes': notes,
+    };
+  }
+
+  factory RoutineCardio.fromMap(Map<String, dynamic> map) {
+    return RoutineCardio(
+      id: map['id']?.toString() ?? '',
+      modality: CardioModality.fromStorage(map['modality']),
+      plannedDurationMinutes:
+          CardioLog._readInt(map['plannedDurationMinutes']) ?? 0,
+      notes: map['notes']?.toString() ?? '',
+    );
+  }
+}
+
+@immutable
 class CardioLog {
   const CardioLog({
     required this.modality,

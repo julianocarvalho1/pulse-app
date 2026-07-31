@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/data/services/workout_feedback_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
@@ -44,6 +45,20 @@ void main() {
     name: 'Treino B',
     focus: 'Superiores',
     exercises: const <Exercise>[secondExercise],
+  );
+
+  final routineWithCardio = WorkoutRoutine(
+    id: 'routine-cardio',
+    name: 'Treino com cardio',
+    focus: 'Condicionamento',
+    exercises: const <Exercise>[secondExercise],
+    cardio: const <RoutineCardio>[
+      RoutineCardio(
+        id: 'cardio-1',
+        modality: CardioModality.stationaryBike,
+        plannedDurationMinutes: 20,
+      ),
+    ],
   );
 
   setUp(() {
@@ -245,6 +260,108 @@ void main() {
     expect(repository.history, hasLength(1));
     expect(repository.history.single.isIncomplete, isFalse);
     expect(repository.clearActiveSessionCalls, 1);
+  });
+
+  test('inicia, persiste e salva cardio planejado dentro da sessão', () async {
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[routineWithCardio],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    expect(controller.startRoutine(routineWithCardio), isTrue);
+
+    final initialCardio = controller.activeSession!.cardio.single;
+    expect(initialCardio.modality, CardioModality.stationaryBike);
+    expect(initialCardio.plannedDurationMinutes, 20);
+    expect(initialCardio.isCompleted, isFalse);
+
+    controller.saveActiveSessionProgress(
+      setsStatus: <int, List<bool>>{
+        0: <bool>[true, true, true],
+      },
+      weights: <int, List<String>>{
+        0: <String>['40', '40', '40'],
+      },
+      reps: <int, List<String>>{
+        0: <String>['10', '10', '10'],
+      },
+      notes: '',
+    );
+    controller.updateActiveCardio(
+      initialCardio.copyWith(
+        actualDurationMinutes: 18,
+        distanceKm: 6.2,
+        isCompleted: true,
+      ),
+    );
+
+    final saved = await controller.finishWorkout(
+      '35:00',
+      isIncomplete: false,
+      logs: <ExerciseLog>[
+        ExerciseLog(
+          exerciseId: secondExercise.id,
+          exerciseName: secondExercise.name,
+          sets: const <ExerciseSet>[
+            ExerciseSet(reps: 10, weight: 40),
+            ExerciseSet(reps: 10, weight: 40),
+            ExerciseSet(reps: 10, weight: 40),
+          ],
+        ),
+      ],
+      cardio: <CardioLog>[controller.activeSession!.cardio.single.toLog()],
+    );
+
+    expect(saved, isTrue);
+    expect(repository.history, hasLength(1));
+    expect(repository.history.single.cardio, hasLength(1));
+    expect(repository.history.single.cardio.single.actualDurationMinutes, 18);
+    expect(repository.history.single.cardio.single.distanceKm, 6.2);
+    expect(repository.history.single.isIncomplete, isFalse);
+  });
+
+  test('permite finalizar sessão composta somente por cardio', () async {
+    final cardioOnlyRoutine = WorkoutRoutine(
+      id: 'cardio-only',
+      name: 'Cardio leve',
+      focus: 'Condicionamento',
+      exercises: const <Exercise>[],
+      cardio: const <RoutineCardio>[
+        RoutineCardio(
+          id: 'walk-1',
+          modality: CardioModality.walking,
+          plannedDurationMinutes: 30,
+        ),
+      ],
+    );
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[cardioOnlyRoutine],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    controller.startRoutine(cardioOnlyRoutine);
+    final entry = controller.activeSession!.cardio.single.copyWith(
+      actualDurationMinutes: 25,
+      isCompleted: true,
+    );
+    controller.updateActiveCardio(entry);
+
+    final saved = await controller.finishWorkout(
+      '25:00',
+      isIncomplete: false,
+      logs: const <ExerciseLog>[],
+      cardio: <CardioLog>[entry.toLog()],
+    );
+
+    expect(saved, isTrue);
+    expect(repository.history.single.isCardioOnly, isTrue);
+    expect(repository.history.single.isIncomplete, isFalse);
   });
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/models/exercise.dart';
 
 void main() {
@@ -31,6 +32,16 @@ void main() {
           ],
         ),
       ],
+      cardio: const <ActiveCardioEntry>[
+        ActiveCardioEntry(
+          id: 'cardio-1',
+          modality: CardioModality.elliptical,
+          plannedDurationMinutes: 20,
+          actualDurationMinutes: 18,
+          perceivedEffort: 7,
+          isCompleted: true,
+        ),
+      ],
     );
 
     final restored = ActiveWorkoutSession.fromMap(session.toMap());
@@ -41,5 +52,8 @@ void main() {
     expect(restored.exercises.single.exercise.id, 'supino');
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
     expect(restored.exercises.single.sets.last.repsText, '9');
+    expect(restored.cardio.single.modality, CardioModality.elliptical);
+    expect(restored.cardio.single.actualDurationMinutes, 18);
+    expect(restored.cardio.single.isCompleted, isTrue);
   });
 }

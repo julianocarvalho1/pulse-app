@@ -2,12 +2,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../features/workouts/domain/models/active_workout_session.dart';
+import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../theme/app_theme.dart';
+import '../widgets/active_cardio_session_card.dart';
 import 'exercises_screen.dart';
 
 class SessionStateCache {
@@ -22,6 +25,14 @@ class SessionStateCache {
     reps.clear();
     sessionKey = null;
   }
+}
+
+enum _WorkoutExitAction { minimize, discard }
+
+class _FinishDialogResult {
+  const _FinishDialogResult(this.notes);
+
+  final String notes;
 }
 
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
@@ -40,6 +51,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   Timer? _sessionSaveDebounce;
   bool _notesInitialized = false;
   bool _isSubmittingFinish = false;
+  bool _isExitDialogOpen = false;
+  bool _isFinishDialogOpen = false;
+  bool _isRouteClosing = false;
 
   @override
   void initState() {
@@ -49,6 +63,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
   @override
   void dispose() {
+    _isRouteClosing = true;
+    _notesController.removeListener(_scheduleSessionSave);
     for (final controllers in _weightControllers.values) {
       for (final controller in controllers) {
         controller.dispose();
@@ -648,11 +664,36 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     }
   }
 
-  void _confirmExit(WorkoutController provider) {
-    showDialog(
+  Future<void> _waitForTransientUiToSettle() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future<void>.delayed(Duration.zero);
+    await WidgetsBinding.instance.endOfFrame;
+
+    if (mounted) {
+      await Future<void>.delayed(const Duration(milliseconds: 90));
+    }
+  }
+
+  Future<void> _confirmExit(WorkoutController provider) async {
+    if (!mounted ||
+        _isRouteClosing ||
+        _isSubmittingFinish ||
+        _isExitDialogOpen ||
+        _isFinishDialogOpen) {
+      return;
+    }
+
+    _isExitDialogOpen = true;
+    await _waitForTransientUiToSettle();
+
+    if (!mounted) {
+      return;
+    }
+
+    final action = await showDialog<_WorkoutExitAction>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
         title: Text(
           'Pausar ou Encerrar?',
           style: TextStyle(
@@ -666,15 +707,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              _sessionSaveDebounce?.cancel();
-              _persistSessionNow();
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-            },
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_WorkoutExitAction.minimize),
             child: Text(
               'Minimizar',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              style: TextStyle(
+                color: Theme.of(dialogContext).colorScheme.primary,
+              ),
             ),
           ),
           ElevatedButton(
@@ -682,17 +721,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
             ),
-            onPressed: () async {
-              await provider.cancelWorkout();
-              SessionStateCache.clear();
-
-              if (!ctx.mounted || !mounted) {
-                return;
-              }
-
-              Navigator.pop(ctx);
-              Navigator.pop(context);
-            },
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_WorkoutExitAction.discard),
             child: const Text(
               'Descartar Treino',
               style: TextStyle(fontWeight: FontWeight.w800),
@@ -701,6 +731,36 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ],
       ),
     );
+
+    if (mounted) {
+      _isExitDialogOpen = false;
+    }
+
+    if (!mounted || action == null) {
+      return;
+    }
+
+    // O diálogo e o teclado precisam sair completamente antes de alterar o
+    // provider ou remover a tela que contém os campos da sessão.
+    await _waitForTransientUiToSettle();
+
+    if (!mounted || _isRouteClosing) {
+      return;
+    }
+
+    _isRouteClosing = true;
+    _sessionSaveDebounce?.cancel();
+
+    if (action == _WorkoutExitAction.minimize) {
+      _persistSessionNow();
+    } else {
+      await provider.cancelWorkout();
+      SessionStateCache.clear();
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   bool _allSetsCompleted() {
@@ -779,42 +839,67 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     return workoutLogs;
   }
 
-  void _showNoCompletedSetsDialog(WorkoutController provider) {
-    showDialog<void>(
+  List<CardioLog> _buildCardioLogs(WorkoutController provider) {
+    final entries =
+        provider.activeSession?.cardio ?? const <ActiveCardioEntry>[];
+    return entries
+        .where((entry) => entry.isCompleted && entry.actualDurationMinutes > 0)
+        .map((entry) => entry.toLog())
+        .toList(growable: false);
+  }
+
+  int _completedCardioCount(WorkoutController provider) {
+    return provider.activeSession?.cardio
+            .where((entry) => entry.isCompleted)
+            .length ??
+        0;
+  }
+
+  bool _allCardioCompleted(WorkoutController provider) {
+    final entries =
+        provider.activeSession?.cardio ?? const <ActiveCardioEntry>[];
+    return entries.isEmpty || entries.every((entry) => entry.isCompleted);
+  }
+
+  Future<void> _showNoCompletedSetsDialog(WorkoutController provider) async {
+    if (!mounted || _isFinishDialogOpen || _isRouteClosing) {
+      return;
+    }
+
+    _isFinishDialogOpen = true;
+    await _waitForTransientUiToSettle();
+
+    if (!mounted) {
+      return;
+    }
+
+    final shouldDiscard = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
         title: Text(
-          'Nenhuma série concluída',
+          'Nenhuma atividade concluída',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           ),
         ),
         content: Text(
-          'Para salvar no histórico, conclua pelo menos uma série. Você pode continuar o treino ou descartá-lo.',
+          'Para salvar no histórico, conclua pelo menos uma série ou uma atividade de cardio. Você pode continuar o treino ou descartá-lo.',
           style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(
               'Continuar treino',
-              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              style: TextStyle(
+                color: Theme.of(dialogContext).colorScheme.primary,
+              ),
             ),
           ),
           TextButton(
-            onPressed: () async {
-              await provider.cancelWorkout();
-              SessionStateCache.clear();
-
-              if (!dialogContext.mounted || !mounted) {
-                return;
-              }
-
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text(
               'Descartar',
               style: TextStyle(color: Colors.redAccent),
@@ -823,33 +908,63 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ],
       ),
     );
+
+    if (mounted) {
+      _isFinishDialogOpen = false;
+    }
+
+    if (!mounted || shouldDiscard != true) {
+      return;
+    }
+
+    await _waitForTransientUiToSettle();
+
+    if (!mounted || _isRouteClosing) {
+      return;
+    }
+
+    _isRouteClosing = true;
+    _sessionSaveDebounce?.cancel();
+    await provider.cancelWorkout();
+    SessionStateCache.clear();
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   Future<void> _finishAndClose({
-    required BuildContext dialogContext,
     required WorkoutController provider,
     required List<ExerciseLog> logs,
+    required List<CardioLog> cardio,
     required bool isIncomplete,
+    required String notes,
   }) async {
-    if (_isSubmittingFinish) {
+    if (_isSubmittingFinish || _isRouteClosing || !mounted) {
       return;
     }
 
     _isSubmittingFinish = true;
+    _sessionSaveDebounce?.cancel();
+    final duration = _formatTime(ref.read(workoutDurationProvider));
+    final successColor = Theme.of(context).colorScheme.primary;
+    final messenger = ScaffoldMessenger.of(context);
+
     final saved = await provider.finishWorkout(
-      _formatTime(ref.read(workoutDurationProvider)),
+      duration,
       isIncomplete: isIncomplete,
       logs: logs,
-      notes: _notesController.text,
+      cardio: cardio,
+      notes: notes,
     );
 
-    if (!dialogContext.mounted || !mounted) {
+    if (!mounted) {
       return;
     }
 
     if (!saved) {
       _isSubmittingFinish = false;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Não foi possível salvar o treino. Tente novamente.'),
           backgroundColor: Colors.redAccent,
@@ -858,11 +973,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       return;
     }
 
-    final messenger = ScaffoldMessenger.of(context);
+    _isRouteClosing = true;
     SessionStateCache.clear();
-    Navigator.pop(dialogContext);
-    Navigator.pop(context);
+    await WidgetsBinding.instance.endOfFrame;
 
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.of(context).pop();
     messenger.showSnackBar(
       SnackBar(
         content: Text(
@@ -870,56 +989,103 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               ? 'Treino salvo como incompleto.'
               : 'Treino concluído e salvo com sucesso!',
         ),
-        backgroundColor: isIncomplete
-            ? Colors.orange
-            : Theme.of(context).colorScheme.primary,
+        backgroundColor: isIncomplete ? Colors.orange : successColor,
       ),
     );
   }
 
-  void _confirmFinish(WorkoutController provider) {
-    _persistSessionNow();
-
-    final workoutLogs = _buildWorkoutLogs(provider);
-    final completedSets = _completedSetsCount();
-
-    if (workoutLogs.isEmpty || completedSets == 0) {
-      _showNoCompletedSetsDialog(provider);
+  Future<void> _confirmFinish(WorkoutController provider) async {
+    if (!mounted ||
+        _isSubmittingFinish ||
+        _isRouteClosing ||
+        _isFinishDialogOpen ||
+        _isExitDialogOpen) {
       return;
     }
 
-    if (!_allSetsCompleted()) {
-      showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          title: Text(
-            'Salvar treino incompleto?',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
+    _persistSessionNow();
+
+    final workoutLogs = _buildWorkoutLogs(provider);
+    final cardioLogs = _buildCardioLogs(provider);
+    final completedSets = _completedSetsCount();
+    final completedCardio = _completedCardioCount(provider);
+    final activeSession = provider.activeSession;
+    final hasStrength = activeSession?.exercises.isNotEmpty ?? false;
+    final hasCardio = activeSession?.cardio.isNotEmpty ?? false;
+    final allStrengthCompleted = !hasStrength || _allSetsCompleted();
+    final allCardioCompleted = _allCardioCompleted(provider);
+
+    if (workoutLogs.isEmpty && cardioLogs.isEmpty) {
+      await _showNoCompletedSetsDialog(provider);
+      return;
+    }
+
+    final isIncomplete = !allStrengthCompleted || !allCardioCompleted;
+    var draftNotes = _notesController.text;
+
+    _isFinishDialogOpen = true;
+    await _waitForTransientUiToSettle();
+
+    if (!mounted) {
+      return;
+    }
+
+    final result = await showDialog<_FinishDialogResult>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).colorScheme.surface,
+        title: Text(
+          isIncomplete ? 'Salvar treino incompleto?' : 'Finalizar treino?',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
           ),
-          content: Column(
+        ),
+        content: SingleChildScrollView(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '$completedSets séries foram concluídas. As séries pendentes ficarão identificadas no histórico.',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
+              if (isIncomplete) ...[
+                Text(
+                  [
+                    if (hasStrength) '$completedSets séries concluídas',
+                    if (hasCardio)
+                      '$completedCardio cardio concluído${completedCardio == 1 ? '' : 's'}',
+                  ].join(' • '),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'As atividades pendentes não serão registradas e o treino ficará marcado como incompleto.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ] else
+                Text(
+                  hasCardio
+                      ? 'Todas as etapas planejadas foram concluídas. Confirme para salvar a sessão no histórico.'
+                      : 'Todas as séries foram concluídas. Confirme para salvar a sessão no histórico.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _notesController,
+              TextFormField(
+                initialValue: draftNotes,
+                onChanged: (value) => draftNotes = value,
                 style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
                 maxLines: 2,
                 decoration: InputDecoration(
-                  hintText: 'Anotação sobre o treino (opcional)',
+                  hintText: isIncomplete
+                      ? 'Anotação sobre o treino (opcional)'
+                      : 'Como foi o treino? (opcional)',
                   hintStyle: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).scaffoldBackgroundColor,
+                  fillColor: Theme.of(dialogContext).scaffoldBackgroundColor,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: AppColors.border),
@@ -927,118 +1093,68 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(dialogContext).colorScheme.primary,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'Continuar treino',
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.black,
-              ),
-              onPressed: ref.read(workoutControllerProvider).isFinishing
-                  ? null
-                  : () => _finishAndClose(
-                      dialogContext: dialogContext,
-                      provider: provider,
-                      logs: workoutLogs,
-                      isIncomplete: true,
-                    ),
-              child: const Text(
-                'Salvar como incompleto',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: Text(
-          'Finalizar treino?',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Todas as séries foram concluídas. Confirme para salvar a sessão no histórico.',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _notesController,
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
-              maxLines: 2,
-              decoration: InputDecoration(
-                hintText: 'Como foi o treino? (opcional)',
-                hintStyle: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).scaffoldBackgroundColor,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(
-              'Cancelar',
-              style: TextStyle(color: AppColors.textSecondary),
+              isIncomplete ? 'Continuar treino' : 'Cancelar',
+              style: TextStyle(
+                color: isIncomplete
+                    ? Theme.of(dialogContext).colorScheme.primary
+                    : AppColors.textSecondary,
+              ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: AppColors.onPrimary,
+              backgroundColor: isIncomplete
+                  ? Colors.orange
+                  : Theme.of(dialogContext).colorScheme.primary,
+              foregroundColor: isIncomplete
+                  ? Colors.black
+                  : AppColors.onPrimary,
             ),
-            onPressed: ref.read(workoutControllerProvider).isFinishing
-                ? null
-                : () => _finishAndClose(
-                    dialogContext: dialogContext,
-                    provider: provider,
-                    logs: workoutLogs,
-                    isIncomplete: false,
-                  ),
-            child: const Text(
-              'Salvar treino',
-              style: TextStyle(fontWeight: FontWeight.w800),
+            onPressed: () => Navigator.of(
+              dialogContext,
+            ).pop(_FinishDialogResult(draftNotes)),
+            child: Text(
+              isIncomplete ? 'Salvar como incompleto' : 'Salvar treino',
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ],
       ),
+    );
+
+    if (mounted) {
+      _isFinishDialogOpen = false;
+    }
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    // O provider só é encerrado depois que a rota do diálogo deixou a árvore.
+    await _waitForTransientUiToSettle();
+
+    if (!mounted || _isRouteClosing) {
+      return;
+    }
+
+    await _finishAndClose(
+      provider: provider,
+      logs: workoutLogs,
+      cardio: cardioLogs,
+      isIncomplete: isIncomplete,
+      notes: result.notes,
     );
   }
 
@@ -1166,6 +1282,17 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     final sessionProgress = ref.watch(workoutSessionProgressProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
     final exercises = workoutState.currentWorkoutExercises;
+    final activeCardio =
+        workoutState.activeSession?.cardio ?? const <ActiveCardioEntry>[];
+    final completedCardio = activeCardio
+        .where((entry) => entry.isCompleted)
+        .length;
+    final totalSteps = sessionProgress.totalSets + activeCardio.length;
+    final completedSteps = sessionProgress.completedSets + completedCardio;
+    final combinedFraction = totalSteps == 0
+        ? 0.0
+        : (completedSteps / totalSteps).clamp(0, 1).toDouble();
+    final combinedPercentage = (combinedFraction * 100).round();
     _initializeSets();
 
     return PopScope(
@@ -1174,7 +1301,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         if (didPop) {
           return;
         }
-        _confirmExit(provider);
+        unawaited(_confirmExit(provider));
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -1183,7 +1310,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => _confirmExit(provider),
+            onPressed: () => unawaited(_confirmExit(provider)),
           ),
           title: Text(
             workoutState.activeRoutineName,
@@ -1246,7 +1373,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${sessionProgress.completedSets}/${sessionProgress.totalSets} séries',
+                              activeCardio.isEmpty
+                                  ? '${sessionProgress.completedSets}/${sessionProgress.totalSets} séries'
+                                  : '$completedSteps/$totalSteps etapas',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 12,
@@ -1254,7 +1383,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                               ),
                             ),
                             Text(
-                              '${sessionProgress.percentage}%',
+                              '${activeCardio.isEmpty ? sessionProgress.percentage : combinedPercentage}%',
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontSize: 12,
@@ -1267,7 +1396,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(999),
                           child: LinearProgressIndicator(
-                            value: sessionProgress.fraction,
+                            value: activeCardio.isEmpty
+                                ? sessionProgress.fraction
+                                : combinedFraction,
                             minHeight: 7,
                             backgroundColor: AppColors.border,
                             valueColor: AlwaysStoppedAnimation<Color>(
@@ -1283,7 +1414,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: exercises.isEmpty
+              child: exercises.isEmpty && activeCardio.isEmpty
                   ? Center(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
@@ -1314,9 +1445,19 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         horizontal: 16,
                         vertical: 8,
                       ),
-                      itemCount: exercises
-                          .length, // <-- Alterado de exercises.length + 1 para exercises.length
+                      itemCount: exercises.length + activeCardio.length,
                       itemBuilder: (context, index) {
+                        if (index >= exercises.length) {
+                          final cardioIndex = index - exercises.length;
+                          final entry = activeCardio[cardioIndex];
+                          return ActiveCardioSessionCard(
+                            key: ValueKey<String>('active-cardio-${entry.id}'),
+                            entry: entry,
+                            index: cardioIndex,
+                            onChanged: provider.updateActiveCardio,
+                          );
+                        }
+
                         final ex = exercises[index];
                         final sets = SessionStateCache.setsStatus[index]!;
 
@@ -2171,7 +2312,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         ),
                         onPressed: workoutState.isFinishing
                             ? null
-                            : () => _confirmFinish(provider),
+                            : () => unawaited(_confirmFinish(provider)),
                         child: Text(
                           workoutState.isFinishing
                               ? 'SALVANDO...'

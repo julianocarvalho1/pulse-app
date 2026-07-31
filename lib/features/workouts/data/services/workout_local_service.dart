@@ -75,6 +75,13 @@ class WorkoutLocalService {
         orderBy: 'sort_order ASC',
       );
 
+      final cardioRows = await db.query(
+        'routine_cardio',
+        where: 'routine_id = ?',
+        whereArgs: <Object?>[routineRow['id']],
+        orderBy: 'sort_order ASC',
+      );
+
       routines.add(
         WorkoutRoutine(
           id: routineRow['id']?.toString() ?? '',
@@ -82,6 +89,18 @@ class WorkoutLocalService {
           focus: routineRow['focus']?.toString() ?? '',
           groupName: routineRow['group_name']?.toString() ?? '',
           exercises: exerciseRows.map(_exerciseFromRow).toList(),
+          cardio: cardioRows
+              .map(
+                (row) => RoutineCardio(
+                  id: row['cardio_id']?.toString() ?? '',
+                  modality: CardioModality.fromStorage(row['modality']),
+                  plannedDurationMinutes: _readInt(
+                    row['planned_duration_minutes'],
+                  ),
+                  notes: row['notes']?.toString() ?? '',
+                ),
+              )
+              .toList(growable: false),
         ),
       );
     }
@@ -129,6 +148,26 @@ class WorkoutLocalService {
         }
 
         await batch.commit(noResult: true);
+
+        if (routine.cardio.isNotEmpty) {
+          final cardioBatch = transaction.batch();
+          for (
+            var cardioIndex = 0;
+            cardioIndex < routine.cardio.length;
+            cardioIndex++
+          ) {
+            final entry = routine.cardio[cardioIndex];
+            cardioBatch.insert('routine_cardio', <String, Object?>{
+              'routine_id': routine.id,
+              'cardio_id': entry.id,
+              'sort_order': cardioIndex,
+              'modality': entry.modality.storageValue,
+              'planned_duration_minutes': entry.plannedDurationMinutes,
+              'notes': entry.notes,
+            });
+          }
+          await cardioBatch.commit(noResult: true);
+        }
       }
     });
   }
@@ -327,6 +366,13 @@ class WorkoutLocalService {
       );
     }
 
+    final cardioRows = await db.query(
+      'active_session_cardio',
+      where: 'session_id = ?',
+      whereArgs: <Object?>[sessionId],
+      orderBy: 'sort_order ASC',
+    );
+
     return ActiveWorkoutSession(
       id: sessionId,
       routineName: sessionRow['routine_name']?.toString() ?? 'Treino do Dia',
@@ -335,6 +381,26 @@ class WorkoutLocalService {
       ),
       elapsedSeconds: _readInt(sessionRow['elapsed_seconds']),
       exercises: activeExercises,
+      cardio: cardioRows
+          .map(
+            (row) => ActiveCardioEntry(
+              id: row['cardio_id']?.toString() ?? '',
+              modality: CardioModality.fromStorage(row['modality']),
+              plannedDurationMinutes: _readInt(row['planned_duration_minutes']),
+              actualDurationMinutes: _readInt(row['actual_duration_minutes']),
+              distanceKm: _readNullableDouble(row['distance_km']),
+              averageSpeedKmh: _readNullableDouble(row['average_speed_kmh']),
+              inclinePercent: _readNullableDouble(row['incline_percent']),
+              resistanceLevel: _readNullableDouble(row['resistance_level']),
+              perceivedEffort: _readNullableInt(row['perceived_effort']),
+              averageHeartRateBpm: _readNullableInt(
+                row['average_heart_rate_bpm'],
+              ),
+              notes: row['notes']?.toString() ?? '',
+              isCompleted: _readInt(row['is_completed']) == 1,
+            ),
+          )
+          .toList(growable: false),
       notes: sessionRow['notes']?.toString() ?? '',
     );
   }
@@ -387,6 +453,34 @@ class WorkoutLocalService {
         }
 
         await batch.commit(noResult: true);
+      }
+
+      if (session.cardio.isNotEmpty) {
+        final cardioBatch = transaction.batch();
+        for (
+          var cardioIndex = 0;
+          cardioIndex < session.cardio.length;
+          cardioIndex++
+        ) {
+          final entry = session.cardio[cardioIndex];
+          cardioBatch.insert('active_session_cardio', <String, Object?>{
+            'session_id': session.id,
+            'cardio_id': entry.id,
+            'sort_order': cardioIndex,
+            'modality': entry.modality.storageValue,
+            'planned_duration_minutes': entry.plannedDurationMinutes,
+            'actual_duration_minutes': entry.actualDurationMinutes,
+            'distance_km': entry.distanceKm,
+            'average_speed_kmh': entry.averageSpeedKmh,
+            'incline_percent': entry.inclinePercent,
+            'resistance_level': entry.resistanceLevel,
+            'perceived_effort': entry.perceivedEffort,
+            'average_heart_rate_bpm': entry.averageHeartRateBpm,
+            'notes': entry.notes,
+            'is_completed': entry.isCompleted ? 1 : 0,
+          });
+        }
+        await cardioBatch.commit(noResult: true);
       }
     });
   }

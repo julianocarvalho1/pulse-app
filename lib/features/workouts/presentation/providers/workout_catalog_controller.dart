@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
 import '../../data/catalogs/pre_made_workout_catalog.dart';
+import '../../domain/models/cardio_log.dart';
 import 'workout_library_controller.dart';
 
 final workoutCatalogControllerProvider =
@@ -35,6 +36,7 @@ class WorkoutCatalogController extends Notifier<List<WorkoutProgram>> {
             focus: routine.focus,
             groupName: program.name,
             exercises: List<Exercise>.from(routine.exercises),
+            cardio: List<RoutineCardio>.from(routine.cardio),
           ),
         )
         .toList();
@@ -59,6 +61,7 @@ class WorkoutCatalogController extends Notifier<List<WorkoutProgram>> {
       focus: routine.focus,
       groupName: '',
       exercises: List<Exercise>.from(routine.exercises),
+      cardio: List<RoutineCardio>.from(routine.cardio),
     );
 
     ref

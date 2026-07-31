@@ -106,11 +106,12 @@ class WorkoutController extends Notifier<WorkoutState> {
     String name,
     String focus,
     String groupName,
-    List<Exercise> exercises,
-  ) {
+    List<Exercise> exercises, {
+    List<RoutineCardio> cardio = const <RoutineCardio>[],
+  }) {
     ref
         .read(workoutLibraryControllerProvider.notifier)
-        .createRoutine(name, focus, groupName, exercises);
+        .createRoutine(name, focus, groupName, exercises, cardio: cardio);
   }
 
   void updateRoutine(
@@ -118,11 +119,25 @@ class WorkoutController extends Notifier<WorkoutState> {
     String newName,
     String newFocus,
     String newGroupName,
-    List<Exercise> newExercises,
-  ) {
+    List<Exercise> newExercises, {
+    List<RoutineCardio>? newCardio,
+  }) {
     ref
         .read(workoutLibraryControllerProvider.notifier)
-        .updateRoutine(id, newName, newFocus, newGroupName, newExercises);
+        .updateRoutine(
+          id,
+          newName,
+          newFocus,
+          newGroupName,
+          newExercises,
+          newCardio: newCardio,
+        );
+  }
+
+  void updateRoutineCardio(String id, List<RoutineCardio> cardio) {
+    ref
+        .read(workoutLibraryControllerProvider.notifier)
+        .updateRoutineCardio(id, cardio);
   }
 
   void deleteRoutine(String id) {
@@ -194,6 +209,12 @@ class WorkoutController extends Notifier<WorkoutState> {
         .addExerciseToWorkout(exercise);
   }
 
+  void updateActiveCardio(ActiveCardioEntry entry) {
+    ref
+        .read(workoutSessionControllerProvider.notifier)
+        .updateActiveCardio(entry);
+  }
+
   void saveActiveSessionProgress({
     required Map<int, List<bool>> setsStatus,
     required Map<int, List<String>> weights,
@@ -214,6 +235,7 @@ class WorkoutController extends Notifier<WorkoutState> {
     String duration, {
     required bool isIncomplete,
     required List<ExerciseLog> logs,
+    List<CardioLog> cardio = const <CardioLog>[],
     String notes = '',
   }) {
     return ref
@@ -222,6 +244,7 @@ class WorkoutController extends Notifier<WorkoutState> {
           duration,
           isIncomplete: isIncomplete,
           logs: logs,
+          cardio: cardio,
           notes: notes,
         );
   }

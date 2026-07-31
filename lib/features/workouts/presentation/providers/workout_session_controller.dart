@@ -7,6 +7,7 @@ import '../../../../models/exercise.dart';
 import '../../data/mappers/legacy_workout_mapper.dart';
 import '../../data/services/workout_feedback_service.dart';
 import '../../domain/models/active_workout_session.dart';
+import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
 import '../../domain/models/workout_session_progress.dart';
 import '../../domain/models/workout_session_status.dart';
@@ -257,6 +258,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     return _beginWorkout(
       routineName: 'Treino Livre',
       exercises: const <Exercise>[],
+      cardio: const <RoutineCardio>[],
       replaceActive: replaceActive,
     );
   }
@@ -265,6 +267,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     return _beginWorkout(
       routineName: routine.name,
       exercises: routine.exercises,
+      cardio: routine.cardio,
       replaceActive: replaceActive,
     );
   }
@@ -272,6 +275,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   bool _beginWorkout({
     required String routineName,
     required List<Exercise> exercises,
+    required List<RoutineCardio> cardio,
     required bool replaceActive,
   }) {
     if (state.isWorkoutActive && !replaceActive) {
@@ -289,6 +293,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       startedAt: now,
       elapsedSeconds: 0,
       exercises: _buildActiveExercises(workoutExercises),
+      cardio: cardio.map(ActiveCardioEntry.fromRoutine).toList(growable: false),
     );
 
     _activeSessionSnapshot = session;
@@ -351,6 +356,28 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       exercises: updatedExercises,
       activeSession: updatedSession,
     );
+    unawaited(_persistActiveSession());
+  }
+
+  void updateActiveCardio(ActiveCardioEntry entry) {
+    final session = activeSession;
+
+    if (session == null) {
+      return;
+    }
+
+    final index = session.cardio.indexWhere((item) => item.id == entry.id);
+    if (index < 0) {
+      return;
+    }
+
+    final updatedCardio = List<ActiveCardioEntry>.from(session.cardio);
+    updatedCardio[index] = entry;
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      cardio: updatedCardio,
+    );
+    state = state.copyWith(activeSession: _activeSessionSnapshot);
     unawaited(_persistActiveSession());
   }
 
@@ -420,17 +447,25 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     String duration, {
     required bool isIncomplete,
     required List<ExerciseLog> logs,
+    List<CardioLog> cardio = const <CardioLog>[],
     String notes = '',
   }) async {
     final session = activeSession;
 
-    if (session == null || state.isFinishing || logs.isEmpty) {
+    if (session == null ||
+        state.isFinishing ||
+        (logs.isEmpty && cardio.isEmpty)) {
       return false;
     }
 
     state = state.copyWith(isFinishing: true);
     final progress = WorkoutSessionProgress.fromSession(session);
-    final effectiveIncomplete = isIncomplete || !progress.isComplete;
+    final strengthComplete = session.exercises.isEmpty || progress.isComplete;
+    final cardioComplete =
+        session.cardio.isEmpty ||
+        session.cardio.every((entry) => entry.isCompleted);
+    final effectiveIncomplete =
+        isIncomplete || !strengthComplete || !cardioComplete;
 
     try {
       await ref
@@ -440,6 +475,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
             routineName: state.routineName,
             duration: duration,
             exercises: logs,
+            cardio: cardio,
             notes: notes,
             status: effectiveIncomplete
                 ? WorkoutSessionStatus.incomplete

@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
 import 'exercises_screen.dart';
 import 'routine_detail_screen.dart';
+import 'routine_editor_screen.dart';
 
 class WorkoutPlanScreen extends ConsumerWidget {
   const WorkoutPlanScreen({super.key});
@@ -79,213 +80,6 @@ class WorkoutPlanScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  // =========================================================
-  //  MODAL DE EDIÇÃO (Trazido para funcionar direto da lista)
-  // =========================================================
-  void _openEditRoutineModal(
-    BuildContext context,
-    WorkoutController provider,
-    WorkoutRoutine routine,
-  ) {
-    final nameCtrl = TextEditingController(text: routine.name);
-    final focusCtrl = TextEditingController(text: routine.focus);
-    List<Exercise> currentExercises = List.from(routine.exercises);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setStateModal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Editar Ficha de Treino',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: AppColors.textPrimary),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nameCtrl,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: TextStyle(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: focusCtrl,
-                      style: TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: TextStyle(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'GERENCIAR EXERCÍCIOS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: currentExercises.length,
-                      onReorderItem: (oldIndex, newIndex) {
-                        setStateModal(() {
-                          final item = currentExercises.removeAt(oldIndex);
-                          currentExercises.insert(newIndex, item);
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final ex = currentExercises[index];
-                        return Container(
-                          key: ValueKey('${ex.id}_$index'),
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.drag_handle,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            title: Text(
-                              ex.name,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${ex.reps} • ${ex.rest}',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setStateModal(() {
-                                  currentExercises.removeAt(index);
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary,
-                          foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          provider.updateRoutine(
-                            routine.id,
-                            nameCtrl.text.trim().isEmpty
-                                ? routine.name
-                                : nameCtrl.text.trim(),
-                            focusCtrl.text.trim().isEmpty
-                                ? routine.focus
-                                : focusCtrl.text.trim(),
-                            routine.groupName,
-                            currentExercises,
-                          );
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Ficha atualizada com sucesso!',
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'SALVAR ALTERAÇÕES',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -508,7 +302,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              Icons.fitness_center,
+              _routineIcon(routine.type),
               color: Theme.of(context).colorScheme.primary,
               size: 20,
             ),
@@ -522,7 +316,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
             ),
           ),
           subtitle: Text(
-            '${routine.exercises.length} exercício(s) • Foco: ${routine.focus}',
+            '${routine.typeLabel} • ${routine.activitySummary} • ${routine.focus}',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -539,8 +333,12 @@ class WorkoutPlanScreen extends ConsumerWidget {
                   ),
                 );
               } else if (value == 'edit') {
-                // AQUI: Agora ele abre o modal de edição imediatamente!
-                _openEditRoutineModal(context, provider, routine);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<bool>(
+                    builder: (_) => RoutineEditorScreen(routine: routine),
+                  ),
+                );
               } else if (value == 'delete') {
                 provider.deleteRoutine(routine.id);
               }
@@ -580,6 +378,14 @@ class WorkoutPlanScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  IconData _routineIcon(RoutineType type) {
+    return switch (type) {
+      RoutineType.strength => Icons.fitness_center_rounded,
+      RoutineType.cardio => Icons.directions_run_rounded,
+      RoutineType.mixed => Icons.sports_gymnastics_rounded,
+    };
   }
 
   // =========================================================

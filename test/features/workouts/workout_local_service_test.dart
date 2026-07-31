@@ -45,6 +45,14 @@ void main() {
       focus: 'Peito',
       groupName: 'Hipertrofia',
       exercises: const [exercise],
+      cardio: const <RoutineCardio>[
+        RoutineCardio(
+          id: 'routine-cardio-1',
+          modality: CardioModality.treadmill,
+          plannedDurationMinutes: 20,
+          notes: 'Após a musculação.',
+        ),
+      ],
     );
 
     await service.saveRoutines([routine]);
@@ -53,6 +61,12 @@ void main() {
 
     expect(loadedRoutines, hasLength(1));
     expect(loadedRoutines.single.exercises.single.id, 'p1');
+    expect(loadedRoutines.single.cardio, hasLength(1));
+    expect(
+      loadedRoutines.single.cardio.single.modality,
+      CardioModality.treadmill,
+    );
+    expect(loadedRoutines.single.cardio.single.plannedDurationMinutes, 20);
 
     final historyItem = WorkoutHistoryItem(
       id: 'history-1',
@@ -93,6 +107,16 @@ void main() {
           ],
         ),
       ],
+      cardio: const <ActiveCardioEntry>[
+        ActiveCardioEntry(
+          id: 'routine-cardio-1',
+          modality: CardioModality.treadmill,
+          plannedDurationMinutes: 20,
+          actualDurationMinutes: 18,
+          distanceKm: 2.5,
+          isCompleted: true,
+        ),
+      ],
     );
 
     await service.saveActiveSession(activeSession);
@@ -102,6 +126,10 @@ void main() {
     expect(restoredSession, isNotNull);
     expect(restoredSession!.elapsedSeconds, 80);
     expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
+    expect(restoredSession.cardio, hasLength(1));
+    expect(restoredSession.cardio.single.actualDurationMinutes, 18);
+    expect(restoredSession.cardio.single.distanceKm, 2.5);
+    expect(restoredSession.cardio.single.isCompleted, isTrue);
   });
 
   test('finaliza histórico e remove sessão ativa na mesma transação', () async {

@@ -33,6 +33,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     initializeDateFormatting('pt_BR', null);
   }
 
+  String _routineStartLabel(RoutineType type) {
+    return switch (type) {
+      RoutineType.strength => 'INICIAR TREINO',
+      RoutineType.cardio => 'INICIAR CARDIO',
+      RoutineType.mixed => 'INICIAR TREINO MISTO',
+    };
+  }
+
+  IconData _routineIcon(RoutineType type) {
+    return switch (type) {
+      RoutineType.strength => Icons.fitness_center_rounded,
+      RoutineType.cardio => Icons.directions_run_rounded,
+      RoutineType.mixed => Icons.sports_gymnastics_rounded,
+    };
+  }
+
   String _obterSaudacao(String nome) {
     final hora = DateTime.now().hour;
     final nomeNormalizado = nome.trim();
@@ -903,7 +919,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Foco: ${rotinaDoDia.focus}',
+                                      '${rotinaDoDia.typeLabel} • ${rotinaDoDia.focus}',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: AppColors.textSecondary,
@@ -920,7 +936,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  Icons.fitness_center,
+                                  _routineIcon(rotinaDoDia.type),
                                   color: Theme.of(context).colorScheme.primary,
                                   size: 30,
                                 ),
@@ -969,17 +985,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text(
-                                'INICIAR TREINO',
-                                style: TextStyle(
+                                _routineStartLabel(rotinaDoDia.type),
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Icon(Icons.play_arrow, size: 20),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.play_arrow, size: 20),
                             ],
                           ),
                         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/exercise.dart';
 import 'program_builder_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/routine_type_selector.dart';
 
 // ============================================================
 //  TELA: SETUP DO PROGRAMA (PASSO 1)
@@ -24,6 +25,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
   // A divisão padrão será ABC
   String _selectedSplit = 'ABC';
+  RoutineType _selectedRoutineType = RoutineType.strength;
 
   // Opções de divisão de treino disponíveis
   final List<String> _splits = ['Full Body', 'AB', 'ABC', 'ABCD', 'ABCDE'];
@@ -71,6 +73,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           programName: programName,
           programFocus: programFocus,
           splitType: _selectedSplit,
+          defaultRoutineType: _selectedRoutineType,
         ),
       ),
     );
@@ -170,9 +173,27 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             ),
             const SizedBox(height: 32),
 
+            Text(
+              'PASSO 2: TIPO PADRÃO DAS FICHAS',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 14),
+            RoutineTypeSelector(
+              value: _selectedRoutineType,
+              onChanged: (value) {
+                setState(() => _selectedRoutineType = value);
+              },
+            ),
+            const SizedBox(height: 32),
+
             // DIVISÃO DO TREINO
             Text(
-              'PASSO 2: DIVISÃO DO TREINO',
+              'PASSO 3: DIVISÃO DO TREINO',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
@@ -220,28 +241,32 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: AppColors.onPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.border)),
           ),
-          onPressed: _nextStep,
-          child: const Text(
-            'AVANÇAR E MONTAR FICHAS',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: AppColors.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _nextStep,
+            child: const Text(
+              'AVANÇAR E MONTAR FICHAS',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
           ),
         ),
       ),

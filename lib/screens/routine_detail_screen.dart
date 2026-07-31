@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import 'routine_editor_screen.dart';
 import 'workout_session_screen.dart';
 
 class RoutineDetailScreen extends ConsumerStatefulWidget {
@@ -17,208 +19,30 @@ class RoutineDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
-  void _openEditRoutineModal(
-    BuildContext context,
-    WorkoutController provider,
-    WorkoutRoutine routine,
-  ) {
-    final nameCtrl = TextEditingController(text: routine.name);
-    final focusCtrl = TextEditingController(text: routine.focus);
-    List<Exercise> currentExercises = List.from(routine.exercises);
+  String _startLabel(WorkoutRoutine routine, bool isActive) {
+    if (isActive) {
+      return 'CONTINUAR TREINO INICIADO';
+    }
+    return switch (routine.type) {
+      RoutineType.strength => 'INICIAR ESTE TREINO',
+      RoutineType.cardio => 'INICIAR ESTE CARDIO',
+      RoutineType.mixed => 'INICIAR TREINO MISTO',
+    };
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  Future<void> _openEditor(WorkoutRoutine routine) async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (_) => RoutineEditorScreen(routine: routine),
       ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setStateModal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Editar Ficha de Treino',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: AppColors.textPrimary),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: nameCtrl,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Nome da Ficha (Ex: Treino A)',
-                        labelStyle: TextStyle(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: focusCtrl,
-                      style: TextStyle(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        labelText: 'Foco/Objetivo (Ex: Peito e Tríceps)',
-                        labelStyle: TextStyle(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'GERENCIAR EXERCÍCIOS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: currentExercises.length,
-                      onReorderItem: (oldIndex, newIndex) {
-                        setStateModal(() {
-                          final item = currentExercises.removeAt(oldIndex);
-                          currentExercises.insert(newIndex, item);
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final ex = currentExercises[index];
-                        return Container(
-                          key: ValueKey('${ex.id}_$index'),
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.drag_handle,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            title: Text(
-                              ex.name,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${ex.reps} • ${ex.rest}',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                              ),
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                setStateModal(() {
-                                  currentExercises.removeAt(index);
-                                });
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary,
-                          foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          provider.updateRoutine(
-                            routine.id,
-                            nameCtrl.text.trim().isEmpty
-                                ? routine.name
-                                : nameCtrl.text.trim(),
-                            focusCtrl.text.trim().isEmpty
-                                ? routine.focus
-                                : focusCtrl.text.trim(),
-                            routine.groupName,
-                            currentExercises,
-                          );
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'Ficha atualizada com sucesso!',
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.primary,
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'SALVAR ALTERAÇÕES',
-                          style: TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
+
+    if ((updated ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ficha atualizada com sucesso.')),
+      );
+    }
   }
 
   Widget _buildRoutineExerciseCard(
@@ -400,6 +224,99 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
     );
   }
 
+  IconData _cardioIcon(CardioModality modality) {
+    return switch (modality) {
+      CardioModality.treadmill => Icons.directions_run_rounded,
+      CardioModality.stationaryBike => Icons.pedal_bike_rounded,
+      CardioModality.elliptical => Icons.sync_alt_rounded,
+      CardioModality.stairClimber => Icons.stairs_rounded,
+      CardioModality.rowing => Icons.rowing_rounded,
+      CardioModality.walking => Icons.directions_walk_rounded,
+      CardioModality.running => Icons.directions_run_rounded,
+      CardioModality.other => Icons.favorite_outline_rounded,
+    };
+  }
+
+  Widget _buildRoutineCardioCard(
+    BuildContext context,
+    RoutineCardio cardio,
+    int index,
+  ) {
+    return Container(
+      key: ValueKey<String>(cardio.id),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              _cardioIcon(cardio.modality),
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  cardio.modality.label,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${cardio.plannedDurationMinutes} min planejados',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (cardio.notes.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    cardio.notes,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Text(
+            routineIndexLabel(index),
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String routineIndexLabel(int index) => 'C${index + 1}';
+
   void _handleStartRoutine(
     BuildContext context,
     WorkoutController provider,
@@ -488,12 +405,17 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               Icons.edit,
               color: Theme.of(context).colorScheme.primary,
             ),
-            onPressed: () => _openEditRoutineModal(context, provider, routine),
+            onPressed: () => _openEditor(routine),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.paddingOf(context).bottom + 120,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -551,7 +473,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${routine.exercises.length} Exercícios nesta ficha',
+                        '${routine.typeLabel} • ${routine.activitySummary}',
                         style: TextStyle(
                           fontSize: 13,
                           color: AppColors.textSecondary,
@@ -564,58 +486,122 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              'LISTA DE EXERCÍCIOS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 1.0,
+            if (routine.exercises.isNotEmpty) ...[
+              Text(
+                'LISTA DE EXERCÍCIOS',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.0,
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: routine.exercises.length,
+                itemBuilder: (context, index) {
+                  return _buildRoutineExerciseCard(context, routine, index);
+                },
+              ),
+            ],
             const SizedBox(height: 12),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: routine.exercises.length,
-              itemBuilder: (context, index) {
-                return _buildRoutineExerciseCard(context, routine, index);
-              },
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'CARDIO DA FICHA',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _openEditor(routine),
+                  icon: Icon(
+                    routine.cardio.isEmpty
+                        ? Icons.add_rounded
+                        : Icons.edit_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    routine.cardio.isEmpty ? 'Adicionar' : 'Gerenciar',
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            if (routine.cardio.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  'Nenhum cardio planejado para esta ficha.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: routine.cardio.length,
+                itemBuilder: (context, index) => _buildRoutineCardioCard(
+                  context,
+                  routine.cardio[index],
+                  index,
+                ),
+              ),
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: AppColors.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+      floatingActionButton: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: AppColors.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 4,
               ),
-              elevation: 4,
-            ),
-            onPressed: () => _handleStartRoutine(context, provider, routine),
-            icon: Icon(
-              workoutState.isWorkoutActive &&
-                      workoutState.activeRoutineName == routine.name
-                  ? Icons.play_circle_filled
-                  : Icons.play_arrow,
-            ),
-            label: Text(
-              workoutState.isWorkoutActive &&
-                      workoutState.activeRoutineName == routine.name
-                  ? 'CONTINUAR TREINO INICIADO'
-                  : 'INICIAR ESTE TREINO',
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                letterSpacing: 0.5,
+              onPressed: () => _handleStartRoutine(context, provider, routine),
+              icon: Icon(
+                workoutState.isWorkoutActive &&
+                        workoutState.activeRoutineName == routine.name
+                    ? Icons.play_circle_filled
+                    : Icons.play_arrow,
+              ),
+              label: Text(
+                _startLabel(
+                  routine,
+                  workoutState.isWorkoutActive &&
+                      workoutState.activeRoutineName == routine.name,
+                ),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ),

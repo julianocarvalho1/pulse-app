@@ -2016,10 +2016,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   }
 
   String _formatVolume(double volume) {
-    if (volume >= 1000) {
-      return '${(volume / 1000).toStringAsFixed(1)} t';
-    }
-    return '${volume.toStringAsFixed(0)} kg';
+    return '${NumberFormat('#,##0', 'pt_BR').format(volume)} kg';
   }
 
   String _formatExactVolume(double volume) {

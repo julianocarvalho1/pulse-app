@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../../../../models/exercise.dart';
+import 'cardio_log.dart';
 
 @immutable
 class ActiveWorkoutSet {
@@ -109,6 +110,143 @@ class ActiveWorkoutExercise {
 }
 
 @immutable
+class ActiveCardioEntry {
+  const ActiveCardioEntry({
+    required this.id,
+    required this.modality,
+    required this.plannedDurationMinutes,
+    this.actualDurationMinutes = 0,
+    this.distanceKm,
+    this.averageSpeedKmh,
+    this.inclinePercent,
+    this.resistanceLevel,
+    this.perceivedEffort,
+    this.averageHeartRateBpm,
+    this.notes = '',
+    this.isCompleted = false,
+  });
+
+  factory ActiveCardioEntry.fromRoutine(RoutineCardio cardio) {
+    return ActiveCardioEntry(
+      id: cardio.id,
+      modality: cardio.modality,
+      plannedDurationMinutes: cardio.plannedDurationMinutes,
+      notes: cardio.notes,
+    );
+  }
+
+  final String id;
+  final CardioModality modality;
+  final int plannedDurationMinutes;
+  final int actualDurationMinutes;
+  final double? distanceKm;
+  final double? averageSpeedKmh;
+  final double? inclinePercent;
+  final double? resistanceLevel;
+  final int? perceivedEffort;
+  final int? averageHeartRateBpm;
+  final String notes;
+  final bool isCompleted;
+
+  CardioLog toLog() {
+    return CardioLog(
+      modality: modality,
+      plannedDurationMinutes: plannedDurationMinutes,
+      actualDurationMinutes: actualDurationMinutes,
+      distanceKm: distanceKm,
+      averageSpeedKmh: averageSpeedKmh,
+      inclinePercent: inclinePercent,
+      resistanceLevel: resistanceLevel,
+      perceivedEffort: perceivedEffort,
+      averageHeartRateBpm: averageHeartRateBpm,
+      notes: notes,
+    );
+  }
+
+  ActiveCardioEntry copyWith({
+    String? id,
+    CardioModality? modality,
+    int? plannedDurationMinutes,
+    int? actualDurationMinutes,
+    double? distanceKm,
+    bool clearDistance = false,
+    double? averageSpeedKmh,
+    bool clearAverageSpeed = false,
+    double? inclinePercent,
+    bool clearIncline = false,
+    double? resistanceLevel,
+    bool clearResistance = false,
+    int? perceivedEffort,
+    bool clearPerceivedEffort = false,
+    int? averageHeartRateBpm,
+    bool clearAverageHeartRate = false,
+    String? notes,
+    bool? isCompleted,
+  }) {
+    return ActiveCardioEntry(
+      id: id ?? this.id,
+      modality: modality ?? this.modality,
+      plannedDurationMinutes:
+          plannedDurationMinutes ?? this.plannedDurationMinutes,
+      actualDurationMinutes:
+          actualDurationMinutes ?? this.actualDurationMinutes,
+      distanceKm: clearDistance ? null : distanceKm ?? this.distanceKm,
+      averageSpeedKmh: clearAverageSpeed
+          ? null
+          : averageSpeedKmh ?? this.averageSpeedKmh,
+      inclinePercent: clearIncline
+          ? null
+          : inclinePercent ?? this.inclinePercent,
+      resistanceLevel: clearResistance
+          ? null
+          : resistanceLevel ?? this.resistanceLevel,
+      perceivedEffort: clearPerceivedEffort
+          ? null
+          : perceivedEffort ?? this.perceivedEffort,
+      averageHeartRateBpm: clearAverageHeartRate
+          ? null
+          : averageHeartRateBpm ?? this.averageHeartRateBpm,
+      notes: notes ?? this.notes,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'modality': modality.storageValue,
+      'plannedDurationMinutes': plannedDurationMinutes,
+      'actualDurationMinutes': actualDurationMinutes,
+      'distanceKm': distanceKm,
+      'averageSpeedKmh': averageSpeedKmh,
+      'inclinePercent': inclinePercent,
+      'resistanceLevel': resistanceLevel,
+      'perceivedEffort': perceivedEffort,
+      'averageHeartRateBpm': averageHeartRateBpm,
+      'notes': notes,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory ActiveCardioEntry.fromMap(Map<String, dynamic> map) {
+    return ActiveCardioEntry(
+      id: map['id']?.toString() ?? '',
+      modality: CardioModality.fromStorage(map['modality']),
+      plannedDurationMinutes: _readInt(map['plannedDurationMinutes'], 0),
+      actualDurationMinutes: _readInt(map['actualDurationMinutes'], 0),
+      distanceKm: _readNullableDouble(map['distanceKm']),
+      averageSpeedKmh: _readNullableDouble(map['averageSpeedKmh']),
+      inclinePercent: _readNullableDouble(map['inclinePercent']),
+      resistanceLevel: _readNullableDouble(map['resistanceLevel']),
+      perceivedEffort: _readNullableInt(map['perceivedEffort']),
+      averageHeartRateBpm: _readNullableInt(map['averageHeartRateBpm']),
+      notes: map['notes']?.toString() ?? '',
+      isCompleted: map['isCompleted'] == true || map['isCompleted'] == 1,
+    );
+  }
+}
+
+@immutable
 class ActiveWorkoutSession {
   ActiveWorkoutSession({
     required this.id,
@@ -116,9 +254,13 @@ class ActiveWorkoutSession {
     required this.startedAt,
     required this.elapsedSeconds,
     required List<ActiveWorkoutExercise> exercises,
+    List<ActiveCardioEntry> cardio = const <ActiveCardioEntry>[],
     this.notes = '',
   }) : exercises = UnmodifiableListView<ActiveWorkoutExercise>(
          List<ActiveWorkoutExercise>.from(exercises),
+       ),
+       cardio = UnmodifiableListView<ActiveCardioEntry>(
+         List<ActiveCardioEntry>.from(cardio),
        );
 
   final String id;
@@ -126,6 +268,7 @@ class ActiveWorkoutSession {
   final DateTime startedAt;
   final int elapsedSeconds;
   final List<ActiveWorkoutExercise> exercises;
+  final List<ActiveCardioEntry> cardio;
   final String notes;
 
   ActiveWorkoutSession copyWith({
@@ -134,6 +277,7 @@ class ActiveWorkoutSession {
     DateTime? startedAt,
     int? elapsedSeconds,
     List<ActiveWorkoutExercise>? exercises,
+    List<ActiveCardioEntry>? cardio,
     String? notes,
   }) {
     return ActiveWorkoutSession(
@@ -142,6 +286,7 @@ class ActiveWorkoutSession {
       startedAt: startedAt ?? this.startedAt,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       exercises: exercises ?? this.exercises,
+      cardio: cardio ?? this.cardio,
       notes: notes ?? this.notes,
     );
   }
@@ -153,12 +298,14 @@ class ActiveWorkoutSession {
       'startedAt': startedAt.toIso8601String(),
       'elapsedSeconds': elapsedSeconds,
       'exercises': exercises.map((exercise) => exercise.toMap()).toList(),
+      'cardio': cardio.map((entry) => entry.toMap()).toList(),
       'notes': notes,
     };
   }
 
   factory ActiveWorkoutSession.fromMap(Map<String, dynamic> map) {
     final rawExercises = map['exercises'];
+    final rawCardio = map['cardio'];
 
     return ActiveWorkoutSession(
       id: map['id']?.toString() ?? 'active',
@@ -177,6 +324,16 @@ class ActiveWorkoutSession {
                 )
                 .toList()
           : const <ActiveWorkoutExercise>[],
+      cardio: rawCardio is List
+          ? rawCardio
+                .whereType<Map>()
+                .map(
+                  (entry) => ActiveCardioEntry.fromMap(
+                    Map<String, dynamic>.from(entry),
+                  ),
+                )
+                .toList()
+          : const <ActiveCardioEntry>[],
       notes: map['notes']?.toString() ?? '',
     );
   }
@@ -192,4 +349,27 @@ int _readInt(Object? value, int fallback) {
   }
 
   return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+int? _readNullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value.toString());
+}
+
+double? _readNullableDouble(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is num) {
+    return value.toDouble();
+  }
+  return double.tryParse(value.toString().replaceAll(',', '.'));
 }

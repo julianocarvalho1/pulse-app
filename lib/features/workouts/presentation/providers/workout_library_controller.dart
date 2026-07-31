@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
+import '../../domain/models/cardio_log.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../state/workout_library_state.dart';
 import 'workout_dependencies.dart';
@@ -70,8 +71,9 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
     String name,
     String focus,
     String groupName,
-    List<Exercise> exercises,
-  ) {
+    List<Exercise> exercises, {
+    List<RoutineCardio> cardio = const <RoutineCardio>[],
+  }) {
     final uniqueId =
         '${DateTime.now().millisecondsSinceEpoch}_${name.hashCode}_${exercises.length}';
 
@@ -81,6 +83,7 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
       focus: focus,
       groupName: groupName,
       exercises: exercises,
+      cardio: cardio,
     );
 
     final updatedRoutines = <WorkoutRoutine>[...state.routines, routine];
@@ -107,8 +110,9 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
     String newName,
     String newFocus,
     String newGroupName,
-    List<Exercise> newExercises,
-  ) {
+    List<Exercise> newExercises, {
+    List<RoutineCardio>? newCardio,
+  }) {
     final index = state.routines.indexWhere((routine) => routine.id == id);
 
     if (index < 0) {
@@ -121,10 +125,28 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
       focus: newFocus,
       groupName: newGroupName,
       exercises: newExercises,
+      cardio: newCardio,
     );
 
     state = state.copyWith(routines: updatedRoutines);
     _persist(() => _repository.saveRoutines(updatedRoutines), 'salvar fichas');
+  }
+
+  void updateRoutineCardio(String id, List<RoutineCardio> cardio) {
+    final index = state.routines.indexWhere((routine) => routine.id == id);
+
+    if (index < 0) {
+      return;
+    }
+
+    final updatedRoutines = List<WorkoutRoutine>.from(state.routines);
+    updatedRoutines[index] = updatedRoutines[index].copyWith(cardio: cardio);
+
+    state = state.copyWith(routines: updatedRoutines);
+    _persist(
+      () => _repository.saveRoutines(updatedRoutines),
+      'salvar cardio da ficha',
+    );
   }
 
   void deleteRoutine(String id) {

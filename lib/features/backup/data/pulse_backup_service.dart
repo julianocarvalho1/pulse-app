@@ -26,6 +26,8 @@ class PulseBackupService {
 
   static const Set<String> _optionalBackupTables = <String>{
     'workout_history_cardio',
+    'routine_cardio',
+    'active_session_cardio',
   };
 
   static const List<String> _exportTableOrder = <String>[
@@ -33,6 +35,7 @@ class PulseBackupService {
     'custom_exercises',
     'routines',
     'routine_exercises',
+    'routine_cardio',
     'workout_history',
     'workout_history_exercises',
     'workout_history_sets',
@@ -40,17 +43,20 @@ class PulseBackupService {
     'active_session',
     'active_session_exercises',
     'active_session_sets',
+    'active_session_cardio',
     'body_measurements',
   ];
 
   static const List<String> _deleteTableOrder = <String>[
     'active_session_sets',
+    'active_session_cardio',
     'active_session_exercises',
     'active_session',
     'workout_history_sets',
     'workout_history_cardio',
     'workout_history_exercises',
     'workout_history',
+    'routine_cardio',
     'routine_exercises',
     'routines',
     'custom_exercises',
@@ -84,6 +90,15 @@ class PulseBackupService {
       'rest',
       'is_superset',
       'custom_note',
+    ],
+    'routine_cardio': <String>[
+      'id',
+      'routine_id',
+      'cardio_id',
+      'sort_order',
+      'modality',
+      'planned_duration_minutes',
+      'notes',
     ],
     'workout_history': <String>[
       'id',
@@ -150,6 +165,23 @@ class PulseBackupService {
       'reps_text',
       'is_completed',
     ],
+    'active_session_cardio': <String>[
+      'id',
+      'session_id',
+      'cardio_id',
+      'sort_order',
+      'modality',
+      'planned_duration_minutes',
+      'actual_duration_minutes',
+      'distance_km',
+      'average_speed_kmh',
+      'incline_percent',
+      'resistance_level',
+      'perceived_effort',
+      'average_heart_rate_bpm',
+      'notes',
+      'is_completed',
+    ],
     'body_measurements': <String>[
       'id',
       'recorded_at_ms',
@@ -175,6 +207,13 @@ class PulseBackupService {
         'custom_exercises': <String>['id', 'name'],
         'routines': <String>['id', 'name'],
         'routine_exercises': <String>['routine_id', 'exercise_id'],
+        'routine_cardio': <String>[
+          'routine_id',
+          'cardio_id',
+          'sort_order',
+          'modality',
+          'planned_duration_minutes',
+        ],
         'workout_history': <String>['id', 'routine_name', 'date_ms'],
         'workout_history_exercises': <String>['history_id', 'exercise_id'],
         'workout_history_sets': <String>['history_exercise_id', 'set_order'],
@@ -187,6 +226,15 @@ class PulseBackupService {
         'active_session': <String>['id', 'routine_name', 'started_at_ms'],
         'active_session_exercises': <String>['session_id', 'exercise_id'],
         'active_session_sets': <String>['session_exercise_id', 'set_order'],
+        'active_session_cardio': <String>[
+          'session_id',
+          'cardio_id',
+          'sort_order',
+          'modality',
+          'planned_duration_minutes',
+          'actual_duration_minutes',
+          'is_completed',
+        ],
         'body_measurements': <String>['id', 'recorded_at_ms'],
       };
 

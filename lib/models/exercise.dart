@@ -2,6 +2,33 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
+import '../features/workouts/domain/models/cardio_log.dart';
+
+enum RoutineType {
+  strength,
+  cardio,
+  mixed;
+
+  String get label {
+    return switch (this) {
+      RoutineType.strength => 'Musculação',
+      RoutineType.cardio => 'Cardio',
+      RoutineType.mixed => 'Misto',
+    };
+  }
+
+  String get description {
+    return switch (this) {
+      RoutineType.strength => 'Exercícios com séries e repetições.',
+      RoutineType.cardio => 'Somente atividades de cardio.',
+      RoutineType.mixed => 'Musculação seguida de cardio.',
+    };
+  }
+
+  bool get includesStrength => this != RoutineType.cardio;
+  bool get includesCardio => this != RoutineType.strength;
+}
+
 @immutable
 class Exercise {
   const Exercise({
@@ -81,8 +108,12 @@ class WorkoutRoutine {
     required this.focus,
     this.groupName = '',
     required List<Exercise> exercises,
+    List<RoutineCardio> cardio = const <RoutineCardio>[],
   }) : exercises = UnmodifiableListView<Exercise>(
          List<Exercise>.from(exercises),
+       ),
+       cardio = UnmodifiableListView<RoutineCardio>(
+         List<RoutineCardio>.from(cardio),
        );
 
   final String id;
@@ -90,6 +121,34 @@ class WorkoutRoutine {
   final String focus;
   final String groupName;
   final List<Exercise> exercises;
+  final List<RoutineCardio> cardio;
+
+  int get totalActivities => exercises.length + cardio.length;
+
+  RoutineType get type {
+    if (exercises.isNotEmpty && cardio.isNotEmpty) {
+      return RoutineType.mixed;
+    }
+    if (cardio.isNotEmpty) {
+      return RoutineType.cardio;
+    }
+    return RoutineType.strength;
+  }
+
+  String get typeLabel => type.label;
+
+  String get activitySummary {
+    final parts = <String>[];
+    if (exercises.isNotEmpty) {
+      parts.add(
+        '${exercises.length} exercício${exercises.length == 1 ? '' : 's'}',
+      );
+    }
+    if (cardio.isNotEmpty) {
+      parts.add('${cardio.length} cardio');
+    }
+    return parts.isEmpty ? 'Sem atividades' : parts.join(' • ');
+  }
 
   WorkoutRoutine copyWith({
     String? id,
@@ -97,6 +156,7 @@ class WorkoutRoutine {
     String? focus,
     String? groupName,
     List<Exercise>? exercises,
+    List<RoutineCardio>? cardio,
   }) {
     return WorkoutRoutine(
       id: id ?? this.id,
@@ -104,6 +164,7 @@ class WorkoutRoutine {
       focus: focus ?? this.focus,
       groupName: groupName ?? this.groupName,
       exercises: exercises ?? this.exercises,
+      cardio: cardio ?? this.cardio,
     );
   }
 
@@ -114,11 +175,13 @@ class WorkoutRoutine {
       'focus': focus,
       'groupName': groupName,
       'exercises': exercises.map((exercise) => exercise.toMap()).toList(),
+      'cardio': cardio.map((entry) => entry.toMap()).toList(),
     };
   }
 
   factory WorkoutRoutine.fromMap(Map<String, dynamic> map) {
     final rawExercises = map['exercises'];
+    final rawCardio = map['cardio'];
 
     return WorkoutRoutine(
       id: map['id']?.toString() ?? '',
@@ -134,6 +197,15 @@ class WorkoutRoutine {
                 )
                 .toList()
           : const <Exercise>[],
+      cardio: rawCardio is List
+          ? rawCardio
+                .whereType<Map>()
+                .map(
+                  (entry) =>
+                      RoutineCardio.fromMap(Map<String, dynamic>.from(entry)),
+                )
+                .toList()
+          : const <RoutineCardio>[],
     );
   }
 }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/routine_type_selector.dart';
 
 // ============================================================
 //  TELA: CONSTRUTOR DO PROGRAMA (PASSO 2)
@@ -13,12 +15,14 @@ class ProgramBuilderScreen extends ConsumerStatefulWidget {
   final String programName;
   final String programFocus;
   final String splitType;
+  final RoutineType defaultRoutineType;
 
   const ProgramBuilderScreen({
     super.key,
     required this.programName,
     required this.programFocus,
     required this.splitType,
+    this.defaultRoutineType = RoutineType.strength,
   });
 
   @override
@@ -28,6 +32,7 @@ class ProgramBuilderScreen extends ConsumerStatefulWidget {
 
 class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
   final List<WorkoutRoutine> _draftRoutines = [];
+  final Map<String, RoutineType> _draftTypes = <String, RoutineType>{};
 
   @override
   void initState() {
@@ -55,16 +60,20 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
       ];
     }
 
-    for (var name in routineNames) {
+    for (var index = 0; index < routineNames.length; index++) {
+      final name = routineNames[index];
+      final id =
+          '${DateTime.now().microsecondsSinceEpoch}_${index}_${name.hashCode}';
       _draftRoutines.add(
         WorkoutRoutine(
-          id: DateTime.now().millisecondsSinceEpoch.toString() + name,
+          id: id,
           name: name,
           focus: widget.programFocus,
           groupName: widget.programName,
-          exercises: [],
+          exercises: const <Exercise>[],
         ),
       );
+      _draftTypes[id] = widget.defaultRoutineType;
     }
   }
 
@@ -667,15 +676,277 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
     );
   }
 
+  void _updateDraftIdentity(int routineIndex, {String? name, String? focus}) {
+    final current = _draftRoutines[routineIndex];
+    _draftRoutines[routineIndex] = current.copyWith(
+      name: name ?? current.name,
+      focus: focus ?? current.focus,
+    );
+  }
+
+  Future<void> _changeDraftType(int routineIndex, RoutineType nextType) async {
+    final routine = _draftRoutines[routineIndex];
+    final currentType = _draftTypes[routine.id] ?? routine.type;
+    if (currentType == nextType) {
+      return;
+    }
+
+    if (nextType == RoutineType.cardio && routine.exercises.isNotEmpty) {
+      final confirmed = await _confirmContentRemoval(
+        title: 'Remover musculação desta ficha?',
+        message:
+            'Ao escolher Cardio, os exercícios de musculação desta ficha serão removidos.',
+      );
+      if (!confirmed || !mounted) {
+        return;
+      }
+      setState(() {
+        _draftTypes[routine.id] = nextType;
+        _draftRoutines[routineIndex] = routine.copyWith(
+          exercises: const <Exercise>[],
+        );
+      });
+      return;
+    }
+
+    if (nextType == RoutineType.strength && routine.cardio.isNotEmpty) {
+      final confirmed = await _confirmContentRemoval(
+        title: 'Remover cardio desta ficha?',
+        message:
+            'Ao escolher Musculação, as etapas de cardio desta ficha serão removidas.',
+      );
+      if (!confirmed || !mounted) {
+        return;
+      }
+      setState(() {
+        _draftTypes[routine.id] = nextType;
+        _draftRoutines[routineIndex] = routine.copyWith(
+          cardio: const <RoutineCardio>[],
+        );
+      });
+      return;
+    }
+
+    setState(() => _draftTypes[routine.id] = nextType);
+  }
+
+  Future<bool> _confirmContentRemoval({
+    required String title,
+    required String message,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('CANCELAR'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('REMOVER'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _editDraftCardio(
+    int routineIndex, {
+    RoutineCardio? existing,
+  }) async {
+    var modality = existing?.modality ?? CardioModality.treadmill;
+    final durationController = TextEditingController(
+      text: existing?.plannedDurationMinutes.toString() ?? '20',
+    );
+    final notesController = TextEditingController(text: existing?.notes ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showModalBottomSheet<RoutineCardio>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom +
+                MediaQuery.paddingOf(context).bottom +
+                20,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          existing == null
+                              ? 'Adicionar cardio'
+                              : 'Editar cardio',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<CardioModality>(
+                    initialValue: modality,
+                    decoration: const InputDecoration(
+                      labelText: 'Modalidade',
+                      prefixIcon: Icon(Icons.directions_run_rounded),
+                    ),
+                    items: CardioModality.values
+                        .map(
+                          (item) => DropdownMenuItem<CardioModality>(
+                            value: item,
+                            child: Text(item.label),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setSheetState(() => modality = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: durationController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Duração planejada',
+                      suffixText: 'min',
+                      prefixIcon: Icon(Icons.timer_outlined),
+                    ),
+                    validator: (value) {
+                      final minutes = int.tryParse(value?.trim() ?? '');
+                      if (minutes == null || minutes <= 0) {
+                        return 'Informe uma duração maior que zero.';
+                      }
+                      if (minutes > 600) {
+                        return 'Use uma duração de até 600 minutos.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: notesController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Orientação opcional',
+                      hintText: 'Ex.: ritmo moderado após a musculação',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (!(formKey.currentState?.validate() ?? false)) {
+                          return;
+                        }
+                        Navigator.pop(
+                          sheetContext,
+                          RoutineCardio(
+                            id:
+                                existing?.id ??
+                                'routine_cardio_${DateTime.now().microsecondsSinceEpoch}',
+                            modality: modality,
+                            plannedDurationMinutes: int.parse(
+                              durationController.text.trim(),
+                            ),
+                            notes: notesController.text.trim(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.check_rounded),
+                      label: const Text('SALVAR CARDIO'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    durationController.dispose();
+    notesController.dispose();
+
+    if (result == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      final routine = _draftRoutines[routineIndex];
+      final updated = List<RoutineCardio>.from(routine.cardio);
+      final existingIndex = updated.indexWhere((item) => item.id == result.id);
+      if (existingIndex >= 0) {
+        updated[existingIndex] = result;
+      } else {
+        updated.add(result);
+      }
+      _draftRoutines[routineIndex] = routine.copyWith(cardio: updated);
+    });
+  }
+
   void _saveProgram() {
+    for (final routine in _draftRoutines) {
+      final type = _draftTypes[routine.id] ?? routine.type;
+      if (routine.name.trim().isEmpty) {
+        _showBuilderMessage('Todas as fichas precisam de um nome.');
+        return;
+      }
+      if (type.includesStrength && routine.exercises.isEmpty) {
+        _showBuilderMessage(
+          'Adicione ao menos um exercício em ${routine.name}.',
+        );
+        return;
+      }
+      if (type.includesCardio && routine.cardio.isEmpty) {
+        _showBuilderMessage(
+          'Adicione ao menos uma etapa de cardio em ${routine.name}.',
+        );
+        return;
+      }
+    }
+
     final provider = ref.read(workoutControllerProvider.notifier);
 
-    for (var routine in _draftRoutines) {
+    for (final routine in _draftRoutines) {
+      final type = _draftTypes[routine.id] ?? routine.type;
       provider.createRoutine(
-        routine.name,
-        routine.focus,
+        routine.name.trim(),
+        routine.focus.trim().isEmpty ? 'Geral' : routine.focus.trim(),
         routine.groupName,
-        routine.exercises,
+        type.includesStrength ? routine.exercises : const <Exercise>[],
+        cardio: type.includesCardio ? routine.cardio : const <RoutineCardio>[],
       );
     }
 
@@ -687,6 +958,12 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+
+  void _showBuilderMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -703,281 +980,410 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         ),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.paddingOf(context).bottom + 110,
+        ),
         itemCount: _draftRoutines.length,
         separatorBuilder: (_, _) => const SizedBox(height: 20),
         itemBuilder: (context, index) {
           final routine = _draftRoutines[index];
+          final type = _draftTypes[routine.id] ?? routine.type;
 
           return Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // CABEÇALHO DO TREINO (Sem Lápis, mas arrumado visualmente)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.view_day,
-                        color: Theme.of(context).colorScheme.primary,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(
+                      width: 42,
+                      height: 42,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 8),
+                      child: Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'FICHA ${index + 1}',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.7,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            type.label,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  key: ValueKey<String>('name-${routine.id}'),
+                  initialValue: routine.name,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome da ficha',
+                    prefixIcon: Icon(Icons.edit_note_rounded),
+                  ),
+                  onChanged: (value) {
+                    _updateDraftIdentity(index, name: value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  key: ValueKey<String>('focus-${routine.id}'),
+                  initialValue: routine.focus,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Foco ou objetivo',
+                    prefixIcon: Icon(Icons.track_changes_rounded),
+                  ),
+                  onChanged: (value) {
+                    _updateDraftIdentity(index, focus: value);
+                  },
+                ),
+                const SizedBox(height: 20),
+                RoutineTypeSelector(
+                  value: type,
+                  onChanged: (value) => _changeDraftType(index, value),
+                ),
+                if (type.includesStrength) ...<Widget>[
+                  const SizedBox(height: 24),
+                  Row(
+                    children: <Widget>[
                       Expanded(
                         child: Text(
-                          routine.name,
+                          'MUSCULAÇÃO',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            fontSize: 16,
+                            letterSpacing: 0.6,
                           ),
+                        ),
+                      ),
+                      Text(
+                        '${routine.exercises.length} exercício${routine.exercises.length == 1 ? '' : 's'}',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                if (routine.exercises.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Center(
-                      child: Text(
-                        'Nenhum exercício adicionado.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                  const SizedBox(height: 10),
+                  if (routine.exercises.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
                       ),
-                    ),
-                  )
-                else
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: routine.exercises.length,
-                    itemBuilder: (ctx, i) {
-                      final ex = routine.exercises[i];
-                      final bool isDropset = ex.reps.toUpperCase().contains(
+                      child: Text(
+                        'Adicione os exercícios de musculação desta ficha.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                  else
+                    ...routine.exercises.asMap().entries.map((entry) {
+                      final exerciseIndex = entry.key;
+                      final exercise = entry.value;
+                      final isDropset = exercise.reps.toUpperCase().contains(
                         'DROPSET',
                       );
-                      final bool startsBiset =
-                          ex.isSuperset && i < routine.exercises.length - 1;
-                      final bool continuesBiset =
-                          i > 0 && routine.exercises[i - 1].isSuperset;
-                      final bool isBiset = startsBiset || continuesBiset;
-
-                      return Container(
-                        margin: EdgeInsets.only(bottom: startsBiset ? 2 : 0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(continuesBiset ? 2 : 10),
-                            bottom: Radius.circular(startsBiset ? 2 : 10),
-                          ),
-                          border: isBiset
-                              ? Border.all(
-                                  color: Colors.orangeAccent.withValues(
-                                    alpha: 0.65,
-                                  ),
-                                  width: 1.2,
-                                )
-                              : null,
-                          color: isBiset
-                              ? Colors.orangeAccent.withValues(alpha: 0.05)
-                              : Colors.transparent,
-                        ),
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  ex.name,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
+                      final isBiset =
+                          exercise.isSuperset ||
+                          (exerciseIndex > 0 &&
+                              routine.exercises[exerciseIndex - 1].isSuperset);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Material(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(color: AppColors.border),
+                            ),
+                            title: Text(
+                              exercise.name,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                               ),
-                              if (isDropset)
-                                Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                            ),
+                            subtitle: Text(
+                              '${ExerciseCatalog.standardizedMuscle(exercise.muscle)} • ${exercise.reps} • ${exercise.rest}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            leading: isBiset || isDropset
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isDropset
+                                          ? Colors.redAccent.withValues(
+                                              alpha: 0.14,
+                                            )
+                                          : Colors.orangeAccent.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: Text(
+                                      isDropset ? 'DROP' : 'BI',
+                                      style: TextStyle(
+                                        color: isDropset
+                                            ? Colors.redAccent
+                                            : Colors.orange.shade800,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.fitness_center_rounded,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
-                                  decoration: BoxDecoration(
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                IconButton(
+                                  tooltip: 'Editar exercício',
+                                  onPressed: () => _showExerciseConfigDialog(
+                                    index,
+                                    exercise,
+                                    editIndex: exerciseIndex,
+                                  ),
+                                  icon: const Icon(Icons.edit_outlined),
+                                ),
+                                IconButton(
+                                  tooltip: 'Remover exercício',
+                                  onPressed: () {
+                                    setState(() {
+                                      final current = _draftRoutines[index];
+                                      final updated = List<Exercise>.from(
+                                        current.exercises,
+                                      );
+                                      if (exerciseIndex > 0 &&
+                                          updated[exerciseIndex - 1]
+                                              .isSuperset) {
+                                        updated[exerciseIndex -
+                                            1] = updated[exerciseIndex - 1]
+                                            .copyWith(isSuperset: false);
+                                      }
+                                      updated.removeAt(exerciseIndex);
+                                      if (updated.isNotEmpty &&
+                                          updated.last.isSuperset) {
+                                        updated[updated.length - 1] = updated
+                                            .last
+                                            .copyWith(isSuperset: false);
+                                      }
+                                      _draftRoutines[index] = current.copyWith(
+                                        exercises: updated,
+                                      );
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete_outline_rounded,
                                     color: Colors.redAccent,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'DROPSET',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
                                   ),
                                 ),
-                              if (isBiset)
-                                Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orangeAccent,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    startsBiset ? 'BI-SET 1/2' : 'BI-SET 2/2',
-                                    style: const TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${ExerciseCatalog.standardizedMuscle(ex.muscle)} • ${ex.reps.replaceAll(RegExp(r'\s*\+\s*DROPSET', caseSensitive: false), '').replaceAll(RegExp(r'\s*\+\s*BISET', caseSensitive: false), '')} • ${ex.rest}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              if (ex.description.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Obs: ${ex.description}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // AQUI ESTÁ O LÁPIS DIRETO NO EXERCÍCIO
-                              IconButton(
-                                icon: Icon(
-                                  Icons.edit,
-                                  color: AppColors.textSecondary,
-                                  size: 20,
-                                ),
-                                onPressed: () => _showExerciseConfigDialog(
-                                  index,
-                                  ex,
-                                  editIndex: i,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.redAccent,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    final updatedExercises =
-                                        List<Exercise>.from(routine.exercises);
-
-                                    // Se o removido era a segunda parte,
-                                    // desfaz a ligação no exercício anterior.
-                                    if (i > 0 &&
-                                        updatedExercises[i - 1].isSuperset) {
-                                      updatedExercises[i -
-                                          1] = updatedExercises[i - 1].copyWith(
-                                        isSuperset: false,
-                                      );
-                                    }
-
-                                    updatedExercises.removeAt(i);
-
-                                    // Nunca deixa o último exercício apontando
-                                    // para um próximo exercício inexistente.
-                                    if (updatedExercises.isNotEmpty &&
-                                        updatedExercises.last.isSuperset) {
-                                      updatedExercises[updatedExercises.length -
-                                          1] = updatedExercises.last.copyWith(
-                                        isSuperset: false,
-                                      );
-                                    }
-
-                                    _draftRoutines[index] = routine.copyWith(
-                                      exercises: updatedExercises,
-                                    );
-                                  });
-                                },
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
-                    },
-                  ),
-
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
+                    }),
+                  const SizedBox(height: 4),
+                  SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.textPrimary,
-                        side: BorderSide(color: AppColors.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
                       onPressed: () => _showExerciseSelector(index),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('INSERIR EXERCÍCIO'),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('ADICIONAR EXERCÍCIO'),
                     ),
                   ),
-                ),
+                ],
+                if (type.includesCardio) ...<Widget>[
+                  const SizedBox(height: 24),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          'CARDIO',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${routine.cardio.length} etapa${routine.cardio.length == 1 ? '' : 's'}',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  if (routine.cardio.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        type == RoutineType.mixed
+                            ? 'Adicione o cardio que será feito após a musculação.'
+                            : 'Adicione as atividades de cardio desta ficha.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                  else
+                    ...routine.cardio.asMap().entries.map((entry) {
+                      final cardioIndex = entry.key;
+                      final cardio = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Material(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          child: ListTile(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(color: AppColors.border),
+                            ),
+                            onTap: () =>
+                                _editDraftCardio(index, existing: cardio),
+                            leading: Icon(
+                              Icons.directions_run_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            title: Text(
+                              cardio.modality.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${cardio.plannedDurationMinutes} min planejados',
+                            ),
+                            trailing: IconButton(
+                              tooltip: 'Remover cardio',
+                              onPressed: () {
+                                setState(() {
+                                  final current = _draftRoutines[index];
+                                  final updated = List<RoutineCardio>.from(
+                                    current.cardio,
+                                  )..removeAt(cardioIndex);
+                                  _draftRoutines[index] = current.copyWith(
+                                    cardio: updated,
+                                  );
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _editDraftCardio(index),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('ADICIONAR CARDIO'),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
         },
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: AppColors.onPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.border)),
           ),
-          onPressed: _saveProgram,
-          child: const Text(
-            'SALVAR PROGRAMA COMPLETO',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: AppColors.onPrimary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _saveProgram,
+            child: const Text(
+              'SALVAR PROGRAMA COMPLETO',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
           ),
         ),
       ),

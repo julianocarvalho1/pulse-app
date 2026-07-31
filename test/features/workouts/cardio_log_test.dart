@@ -29,4 +29,20 @@ void main() {
   test('modalidade desconhecida usa Outro', () {
     expect(CardioModality.fromStorage('desconhecida'), CardioModality.other);
   });
+
+  test('serializa cardio planejado da ficha', () {
+    const planned = RoutineCardio(
+      id: 'planned-1',
+      modality: CardioModality.rowing,
+      plannedDurationMinutes: 15,
+      notes: 'Ritmo leve.',
+    );
+
+    final restored = RoutineCardio.fromMap(planned.toMap());
+
+    expect(restored.id, 'planned-1');
+    expect(restored.modality, CardioModality.rowing);
+    expect(restored.plannedDurationMinutes, 15);
+    expect(restored.notes, 'Ritmo leve.');
+  });
 }
