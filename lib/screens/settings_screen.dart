@@ -6,11 +6,11 @@ import '../features/auth/presentation/providers/auth_controller.dart';
 import '../features/onboarding/domain/onboarding_profile.dart';
 import '../features/onboarding/presentation/providers/onboarding_controller.dart';
 import '../features/onboarding/presentation/screens/onboarding_screen.dart';
-import '../features/progress/presentation/providers/progress_controller.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import 'data_backup_screen.dart';
 import 'personal_data_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -417,6 +417,26 @@ class _SettingsContent extends ConsumerWidget {
               context,
               children: [
                 ListTile(
+                  leading: _iconBox(context, Icons.cloud_sync_outlined),
+                  title: const Text(
+                    'Dados e backup',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: const Text(
+                    'Exportar, importar ou apagar dados do aparelho.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DataBackupScreen(),
+                      ),
+                    );
+                  },
+                ),
+                Divider(color: AppColors.border, height: 1),
+                ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text(
                     'Sobre o PULSE',
@@ -437,76 +457,11 @@ class _SettingsContent extends ConsumerWidget {
                     );
                   },
                 ),
-                Divider(color: AppColors.border, height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.delete_forever,
-                    color: Colors.redAccent,
-                  ),
-                  title: const Text(
-                    'Apagar todos os dados',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Remove perfil, fichas, histórico e preferências deste aparelho.',
-                  ),
-                  onTap: () => _confirmFactoryReset(context, ref),
-                ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _confirmFactoryReset(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Apagar todos os dados?'),
-        content: const Text(
-          'Essa ação apagará perfil, fichas, histórico e preferências salvas neste aparelho. Não será possível desfazer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Apagar tudo'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !context.mounted) {
-      return;
-    }
-
-    await ref.read(workoutControllerProvider.notifier).factoryReset();
-    await ref.read(bodyMeasurementsControllerProvider.notifier).clearAll();
-    await ref
-        .read(settingsControllerProvider.notifier)
-        .resetToDefaults(clearStorage: false);
-    await ref.read(authControllerProvider.notifier).resetAfterFactoryReset();
-    ref.read(onboardingControllerProvider.notifier).resetAfterFactoryReset();
-
-    if (!context.mounted) {
-      return;
-    }
-
-    Navigator.of(context).popUntil((route) => route.isFirst);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Os dados locais do PULSE foram apagados.')),
     );
   }
 
