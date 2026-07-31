@@ -347,6 +347,98 @@ void main() {
     expect(repository.activeSession?.exercises.single.exercise.id, 'p12');
   });
 
+  test('migra duplicidade p13 em fichas histórico e sessão', () async {
+    const duplicateExercise = Exercise(
+      id: 'p13',
+      name: 'Crucifixo na Máquina',
+      muscle: 'Peito',
+      description: 'Descrição preservada.',
+      reps: '4x 12',
+      rest: '75 seg',
+      customNote: 'Nota preservada',
+    );
+    final duplicateRoutine = WorkoutRoutine(
+      id: 'duplicate-routine',
+      name: 'Treino duplicado',
+      focus: 'Peito',
+      exercises: const <Exercise>[duplicateExercise],
+    );
+    final duplicateHistory = WorkoutHistoryItem(
+      id: 'duplicate-history',
+      routineName: duplicateRoutine.name,
+      date: DateTime(2026, 7, 31),
+      duration: '20 min',
+      exercises: <ExerciseLog>[
+        ExerciseLog(
+          exerciseId: 'p13',
+          exerciseName: 'Crucifixo na Máquina',
+          sets: const <ExerciseSet>[ExerciseSet(reps: 12, weight: 30)],
+        ),
+      ],
+    );
+    final duplicateSession = ActiveWorkoutSession(
+      id: 'duplicate-active',
+      routineName: duplicateRoutine.name,
+      startedAt: DateTime(2026, 7, 31),
+      elapsedSeconds: 0,
+      exercises: <ActiveWorkoutExercise>[
+        ActiveWorkoutExercise(
+          exercise: duplicateExercise,
+          sets: const <ActiveWorkoutSet>[
+            ActiveWorkoutSet(setNumber: 1, weightText: '30', repsText: '12'),
+          ],
+        ),
+      ],
+    );
+    final repository =
+        _FakeWorkoutRepository(routines: <WorkoutRoutine>[duplicateRoutine])
+          ..history = <WorkoutHistoryItem>[duplicateHistory]
+          ..activeSession = duplicateSession;
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(workoutControllerProvider.notifier).initialization;
+
+    final migratedRoutineExercise = container
+        .read(workoutControllerProvider)
+        .myRoutines
+        .single
+        .exercises
+        .single;
+    final migratedLog = container
+        .read(workoutHistoryControllerProvider)
+        .items
+        .single
+        .exercises
+        .single;
+    final migratedSessionExercise = container
+        .read(workoutSessionControllerProvider)
+        .activeSession
+        ?.exercises
+        .single
+        .exercise;
+
+    expect(migratedRoutineExercise.id, 'p9');
+    expect(migratedRoutineExercise.name, 'Voador Peitoral na Máquina');
+    expect(migratedRoutineExercise.reps, duplicateExercise.reps);
+    expect(migratedRoutineExercise.rest, duplicateExercise.rest);
+    expect(migratedRoutineExercise.customNote, duplicateExercise.customNote);
+    expect(migratedLog.exerciseId, 'p9');
+    expect(migratedLog.exerciseName, 'Voador Peitoral na Máquina');
+    expect(migratedLog.sets.single.weight, 30);
+    expect(migratedSessionExercise?.id, 'p9');
+    expect(repository.routines.single.exercises.single.id, 'p9');
+    expect(repository.history.single.exercises.single.exerciseId, 'p9');
+    expect(repository.activeSession?.exercises.single.exercise.id, 'p9');
+  });
+
   test('migra bi-set criado pelo construtor antigo', () async {
     const firstExercise = Exercise(
       id: 'exercise-biset-1',

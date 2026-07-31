@@ -278,227 +278,233 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setStateModal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                top: 24,
-                left: 24,
-                right: 24,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Treino Dinâmico ⚡',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+            return SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: 24,
+                  left: 24,
+                  right: 24,
+                  bottom: MediaQuery.viewInsetsOf(ctx).bottom + 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Treino Dinâmico ⚡',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close, color: AppColors.textPrimary),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      height: 1.4,
+                        IconButton(
+                          icon: Icon(Icons.close, color: AppColors.textPrimary),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                  Text(
-                    'MÚSCULO FOCO',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.5,
+                    Text(
+                      'MÚSCULO FOCO',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        [
-                              'Full Body',
-                              'Peito',
-                              'Costas',
-                              'Pernas',
-                              'Ombros',
-                              'Braços',
-                            ]
-                            .map(
-                              (m) => ChoiceChip(
-                                label: Text(
-                                  m,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          [
+                                'Full Body',
+                                'Peito',
+                                'Costas',
+                                'Pernas',
+                                'Ombros',
+                                'Braços',
+                              ]
+                              .map(
+                                (m) => ChoiceChip(
+                                  label: Text(
+                                    m,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: musculoFoco == m
+                                          ? AppColors.onPrimary
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  selected: musculoFoco == m,
+                                  selectedColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  backgroundColor: AppColors.background,
+                                  side: BorderSide(
                                     color: musculoFoco == m
-                                        ? AppColors.onPrimary
-                                        : AppColors.textPrimary,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : AppColors.border,
                                   ),
+                                  onSelected: (val) =>
+                                      setStateModal(() => musculoFoco = m),
                                 ),
-                                selected: musculoFoco == m,
-                                selectedColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                backgroundColor: AppColors.background,
-                                side: BorderSide(
-                                  color: musculoFoco == m
-                                      ? Theme.of(context).colorScheme.primary
-                                      : AppColors.border,
-                                ),
-                                onSelected: (val) =>
-                                    setStateModal(() => musculoFoco = m),
-                              ),
-                            )
-                            .toList(),
-                  ),
-
-                  const SizedBox(height: 24),
-                  Text(
-                    'DURAÇÃO DO TREINO',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.5,
+                              )
+                              .toList(),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        [
-                              {'label': 'Express (~20m)', 'val': 3},
-                              {'label': 'Padrão (~40m)', 'val': 5},
-                              {'label': 'Intenso (~60m)', 'val': 7},
-                            ]
-                            .map(
-                              (d) => ChoiceChip(
-                                label: Text(
-                                  d['label'] as String,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+
+                    const SizedBox(height: 24),
+                    Text(
+                      'DURAÇÃO DO TREINO',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          [
+                                {'label': 'Express (~20m)', 'val': 3},
+                                {'label': 'Padrão (~40m)', 'val': 5},
+                                {'label': 'Intenso (~60m)', 'val': 7},
+                              ]
+                              .map(
+                                (d) => ChoiceChip(
+                                  label: Text(
+                                    d['label'] as String,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: quantidadeEx == d['val']
+                                          ? AppColors.onPrimary
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  selected: quantidadeEx == d['val'],
+                                  selectedColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  backgroundColor: AppColors.background,
+                                  side: BorderSide(
                                     color: quantidadeEx == d['val']
-                                        ? AppColors.onPrimary
-                                        : AppColors.textPrimary,
+                                        ? Theme.of(context).colorScheme.primary
+                                        : AppColors.border,
+                                  ),
+                                  onSelected: (val) => setStateModal(
+                                    () => quantidadeEx = d['val'] as int,
                                   ),
                                 ),
-                                selected: quantidadeEx == d['val'],
-                                selectedColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                backgroundColor: AppColors.background,
-                                side: BorderSide(
-                                  color: quantidadeEx == d['val']
-                                      ? Theme.of(context).colorScheme.primary
-                                      : AppColors.border,
-                                ),
-                                onSelected: (val) => setStateModal(
-                                  () => quantidadeEx = d['val'] as int,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                  ),
+                              )
+                              .toList(),
+                    ),
 
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                      ),
-                      onPressed: () async {
-                        List<Exercise> pool = provider.allExercises.toList();
+                        onPressed: () async {
+                          List<Exercise> pool = provider.allExercises.toList();
 
-                        if (musculoFoco != 'Full Body') {
-                          pool = pool.where((e) {
-                            String m = e.muscle.toLowerCase();
-                            if (musculoFoco == 'Peito' && m.contains('peito')) {
-                              return true;
-                            }
-                            if (musculoFoco == 'Costas' &&
-                                (m.contains('costas') ||
-                                    m.contains('dorsal'))) {
-                              return true;
-                            }
-                            if (musculoFoco == 'Pernas' &&
-                                (m.contains('perna') ||
-                                    m.contains('quadríceps') ||
-                                    m.contains('glúteo') ||
-                                    m.contains('isquio') ||
-                                    m.contains('panturrilha'))) {
-                              return true;
-                            }
-                            if (musculoFoco == 'Ombros' &&
-                                m.contains('ombro')) {
-                              return true;
-                            }
-                            if (musculoFoco == 'Braços' &&
-                                (m.contains('bíceps') ||
-                                    m.contains('tríceps') ||
-                                    m.contains('antebraço'))) {
-                              return true;
-                            }
-                            return false;
-                          }).toList();
-                        }
+                          if (musculoFoco != 'Full Body') {
+                            pool = pool.where((e) {
+                              String m = e.muscle.toLowerCase();
+                              if (musculoFoco == 'Peito' &&
+                                  m.contains('peito')) {
+                                return true;
+                              }
+                              if (musculoFoco == 'Costas' &&
+                                  (m.contains('costas') ||
+                                      m.contains('dorsal'))) {
+                                return true;
+                              }
+                              if (musculoFoco == 'Pernas' &&
+                                  (m.contains('perna') ||
+                                      m.contains('quadríceps') ||
+                                      m.contains('glúteo') ||
+                                      m.contains('isquio') ||
+                                      m.contains('panturrilha'))) {
+                                return true;
+                              }
+                              if (musculoFoco == 'Ombros' &&
+                                  m.contains('ombro')) {
+                                return true;
+                              }
+                              if (musculoFoco == 'Braços' &&
+                                  (m.contains('bíceps') ||
+                                      m.contains('tríceps') ||
+                                      m.contains('antebraço'))) {
+                                return true;
+                              }
+                              return false;
+                            }).toList();
+                          }
 
-                        if (pool.isEmpty) {
-                          pool = provider.allExercises.toList();
-                        }
+                          if (pool.isEmpty) {
+                            pool = provider.allExercises.toList();
+                          }
 
-                        pool.shuffle();
-                        final selectedExercises = pool
-                            .take(quantidadeEx)
-                            .toList();
+                          pool.shuffle();
+                          final selectedExercises = pool
+                              .take(quantidadeEx)
+                              .toList();
 
-                        final routine = WorkoutRoutine(
-                          id: 'dinamico_${DateTime.now().millisecondsSinceEpoch}',
-                          name: 'Treino Dinâmico: $musculoFoco',
-                          focus: 'Gerado Aleatoriamente',
-                          groupName: 'Treinos Rápidos',
-                          exercises: List<Exercise>.from(selectedExercises),
-                        );
+                          final routine = WorkoutRoutine(
+                            id: 'dinamico_${DateTime.now().millisecondsSinceEpoch}',
+                            name: 'Treino Dinâmico: $musculoFoco',
+                            focus: 'Gerado Aleatoriamente',
+                            groupName: 'Treinos Rápidos',
+                            exercises: List<Exercise>.from(selectedExercises),
+                          );
 
-                        await _iniciarTreinoDinamico(
-                          screenContext: screenContext,
-                          sheetContext: ctx,
-                          provider: provider,
-                          routine: routine,
-                        );
-                      },
-                      icon: const Icon(Icons.bolt),
-                      label: const Text(
-                        'GERAR E INICIAR TREINO',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                          await _iniciarTreinoDinamico(
+                            screenContext: screenContext,
+                            sheetContext: ctx,
+                            provider: provider,
+                            routine: routine,
+                          );
+                        },
+                        icon: const Icon(Icons.bolt),
+                        label: const Text(
+                          'GERAR E INICIAR TREINO',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },

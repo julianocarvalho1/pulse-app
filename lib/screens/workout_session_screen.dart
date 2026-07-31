@@ -112,7 +112,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           'Desça até sentir um alongamento profundo no peitoral.',
           'Suba aproximando os halteres, focando em "esmagar" o peito no topo.',
         ];
-      } else if (id == 'p7' || id == 'p8' || id == 'p9' || id == 'p13') {
+      } else if (id == 'p7' || id == 'p8' || id == 'p9') {
         secondary = 'Deltóide Anterior (Isolamento de Peitoral)';
         steps = [
           'Mantenha os cotovelos com uma leve flexão e "travados" nessa posição durante todo o movimento.',

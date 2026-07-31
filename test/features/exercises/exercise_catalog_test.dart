@@ -65,6 +65,57 @@ void main() {
     expect(normalized.customNote, legacyExercise.customNote);
   });
 
+  test('consolida crucifixo na máquina no voador sem perder prescrição', () {
+    const legacyDuplicate = Exercise(
+      id: 'p13',
+      name: 'Crucifixo na Máquina',
+      muscle: 'Peito',
+      description: 'Execução ajustada pelo usuário.',
+      reps: '4x 12',
+      rest: '75 seg',
+      isSuperset: true,
+      customNote: 'Manter os ombros apoiados',
+    );
+
+    final normalized = ExerciseCatalog.canonicalizeIdentity(legacyDuplicate);
+
+    expect(normalized.id, 'p9');
+    expect(normalized.name, 'Voador Peitoral na Máquina');
+    expect(normalized.description, legacyDuplicate.description);
+    expect(normalized.reps, legacyDuplicate.reps);
+    expect(normalized.rest, legacyDuplicate.rest);
+    expect(normalized.isSuperset, isTrue);
+    expect(normalized.customNote, legacyDuplicate.customNote);
+    expect(ExerciseCatalog.canonicalIdFor('p13'), 'p9');
+    expect(ExerciseCatalog.matches(normalized, 'crucifixo na máquina'), isTrue);
+    expect(exerciseDatabase.any((exercise) => exercise.id == 'p13'), isFalse);
+  });
+
+  test('separa definição canônica da prescrição usada na ficha', () {
+    final prescribed = ExerciseCatalog.prescribedExercise(
+      id: 'p1',
+      description: 'Amplitude ajustada para o atleta.',
+      reps: '5x 5',
+      rest: '120 seg',
+      customNote: 'Sem falha técnica',
+    );
+
+    final definition = ExerciseCatalog.definitionFor(prescribed);
+    final prescription = ExerciseCatalog.prescriptionFor(prescribed);
+
+    expect(definition?.id, 'p1');
+    expect(definition?.name, 'Supino Reto com Barra');
+    expect(definition?.primaryMuscle, 'Peito');
+    expect(definition?.mediaAssetId, 'supino_reto_com_barra');
+    expect(prescription.repsText, '5x 5');
+    expect(prescription.restText, '120 seg');
+    expect(
+      prescription.descriptionOverride,
+      'Amplitude ajustada para o atleta.',
+    );
+    expect(prescription.customNote, 'Sem falha técnica');
+  });
+
   test('não transforma exercícios personalizados em itens do catálogo', () {
     const customExercise = Exercise(
       id: 'custom_123',

@@ -1,48 +1,41 @@
 # PULSE — Auditoria da biblioteca de exercícios
 
-## Estado encontrado
+## Estado após a deduplicação
 
-- 76 exercícios nativos.
-- 10 grupos musculares:
-  - Peito: 13
-  - Costas: 10
-  - Ombros: 9
-  - Trapézio: 2
-  - Bíceps: 6
-  - Antebraço: 2
-  - Tríceps: 9
-  - Pernas: 16
-  - Panturrilha: 3
-  - Abdômen: 6
-- 77 arquivos GIF.
-- 75 mídias efetivamente associadas aos exercícios.
-- 2 GIFs sem uso atual:
+- 75 exercícios nativos canônicos.
+- 10 grupos musculares.
+- 77 arquivos GIF mantidos nesta etapa.
+- 75 mídias associadas aos exercícios canônicos.
+- 2 GIFs continuam sem uso atual:
   - `rosca__scott.gif`
   - `rosca_scott_maquina_livre.gif`
-- Os programas prontos possuíam 18 identificadores próprios (`ex_pm_*`) e nomes paralelos, como `Chest Press`, `Desenvolvimento Militar` e `Crunch Abdominal`.
-- O caminho da mídia era calculado pelo nome em quatro telas diferentes, o que tornava renomeações frágeis.
 
-## Ajustes desta entrega
+## Duplicidade consolidada
 
-- Português adotado como nome principal exibido.
-- Aliases em português e inglês mantidos para busca.
-- Identificadores dos 76 exercícios nativos foram preservados.
-- Identificadores antigos dos programas prontos passam a ser migrados para o exercício correspondente da biblioteca.
-- Fichas, histórico e sessão em andamento são normalizados sem alterar séries, repetições, descanso, observações ou cargas.
-- Exercícios personalizados não são transformados automaticamente.
-- Mídia passou a ser vinculada por identificador estável, não pelo texto do nome.
-- Biblioteca passou a exibir seções por grupo muscular.
-- Busca passou a encontrar nomes como `Chest Press`, `Bench Press`, `Hip Thrust`, `Lat Pulldown`, `Deadlift` e outros aliases.
-- A expressão `Guia Oficial` foi removida da tela de programas.
+`Crucifixo na Máquina` (`p13`) foi consolidado em `Voador Peitoral na Máquina` (`p9`).
 
-## Duplicidade para a próxima entrega
+A decisão foi baseada em três sinais presentes no projeto:
 
-`Voador Peitoral na Máquina` (`p9`) e `Crucifixo na Máquina` (`p13`) usam a mesma mídia e representam movimentos muito próximos. Eles foram mantidos separados nesta entrega para não unir dados sem validação visual e funcional. A próxima entrega pode consolidá-los com migração explícita do identificador `p13` para `p9`.
+1. os dois itens usavam a mesma mídia `peck_deck_voador.gif`;
+2. ambos estavam classificados como isolamento de peito em máquina;
+3. as instruções exibidas nas telas eram as mesmas.
 
-## Próximos passos planejados
+O nome antigo permanece como alias de busca. Na inicialização, fichas, histórico e sessão em andamento com `p13` passam a usar `p9`. Séries, repetições, descanso, observações, cargas e posição na ficha são preservados.
 
-1. Confirmar a consolidação de duplicidades reais.
-2. Separar a definição do exercício da prescrição de séries e descanso.
-3. Padronizar equipamentos e padrões de movimento.
-4. Normalizar e otimizar as mídias.
-5. Adicionar modalidade de cardio com registro próprio.
+Caso uma ficha antiga contenha os dois itens, as duas posições são mantidas para não descartar prescrições diferentes. Ambas passam a apontar para a mesma identidade canônica e o usuário pode remover uma delas ao editar a ficha.
+
+## Estrutura canônica introduzida
+
+A biblioteca agora diferencia explicitamente:
+
+- `ExerciseDefinition`: identidade, nome, músculo principal, descrição-base, modalidade, aliases e mídia;
+- `ExercisePrescription`: repetições, descanso, instrução ajustada, bi-set e observação da ficha.
+
+O modelo legado `Exercise` continua sendo usado na persistência e nas telas como adaptador de compatibilidade. Isso evita uma migração destrutiva do banco atual, mas a fonte canônica da biblioteca já não depende da prescrição de uma ficha.
+
+## Próximos passos
+
+1. Padronizar equipamento e padrão de movimento nas definições.
+2. Normalizar e otimizar as mídias.
+3. Criar fallback visual para mídia ausente.
+4. Adicionar modalidade de cardio e registro próprio.

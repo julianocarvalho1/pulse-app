@@ -1,4 +1,5 @@
 import '../../../models/exercise.dart';
+import 'exercise_definition.dart';
 
 class ExerciseCatalogMetadata {
   const ExerciseCatalogMetadata({
@@ -20,11 +21,7 @@ class ExerciseIdentity {
 class ExerciseCatalog {
   const ExerciseCatalog._();
 
-  static const int version = 1;
-
-  static final Map<String, Exercise> _builtInById = {
-    for (final exercise in exerciseDatabase) exercise.id: exercise,
-  };
+  static const int version = 2;
 
   static const Map<String, String> _legacyIdToCanonicalId = {
     'ex_pm_1': 'p12',
@@ -45,6 +42,7 @@ class ExerciseCatalog {
     'ex_pm_16': 'pe15',
     'ex_pm_17': 'pe6',
     'ex_pm_18': 'ab1',
+    'p13': 'p9',
   };
 
   static const Map<String, ExerciseCatalogMetadata> _metadataById = {
@@ -102,7 +100,14 @@ class ExerciseCatalog {
     ),
     'p9': ExerciseCatalogMetadata(
       mediaAssetId: 'peck_deck_voador',
-      aliases: <String>['Peck Deck', 'Voador', 'Machine Fly'],
+      aliases: <String>[
+        'Peck Deck',
+        'Voador',
+        'Machine Fly',
+        'Crucifixo na Máquina',
+        'Crucifixo Máquina',
+        'Machine Chest Fly',
+      ],
     ),
     'p10': ExerciseCatalogMetadata(
       mediaAssetId: 'crossover_polia_alta',
@@ -115,10 +120,6 @@ class ExerciseCatalog {
     'p12': ExerciseCatalogMetadata(
       mediaAssetId: 'supino_reto_articulado',
       aliases: <String>['Chest Press', 'Supino Máquina', 'Machine Chest Press'],
-    ),
-    'p13': ExerciseCatalogMetadata(
-      mediaAssetId: 'peck_deck_voador',
-      aliases: <String>['Crucifixo Máquina', 'Machine Chest Fly'],
     ),
     'c1': ExerciseCatalogMetadata(
       mediaAssetId: 'puxada_frontal_aberta',
@@ -433,6 +434,22 @@ class ExerciseCatalog {
     ),
   };
 
+  static final Map<String, ExerciseDefinition> _definitionsById = {
+    for (final exercise in exerciseDatabase)
+      exercise.id: ExerciseDefinition(
+        id: exercise.id,
+        name: exercise.name,
+        primaryMuscle: standardizedMuscle(exercise.muscle),
+        description: exercise.description,
+        mediaAssetId:
+            _metadataById[exercise.id]?.mediaAssetId ?? _slugify(exercise.name),
+        aliases: _metadataById[exercise.id]?.aliases ?? const <String>[],
+      ),
+  };
+
+  static List<ExerciseDefinition> get definitions =>
+      List<ExerciseDefinition>.unmodifiable(_definitionsById.values);
+
   static final Map<String, String> _normalizedNameToId =
       _buildNormalizedNameIndex();
 
@@ -444,8 +461,8 @@ class ExerciseCatalog {
     bool isSuperset = false,
     String customNote = '',
   }) {
-    final exercise = _builtInById[id];
-    if (exercise == null) {
+    final definition = definitionForId(id);
+    if (definition == null) {
       throw ArgumentError.value(
         id,
         'id',
@@ -453,18 +470,35 @@ class ExerciseCatalog {
       );
     }
 
-    return exercise.copyWith(
-      description: description,
-      reps: reps,
-      rest: rest,
-      isSuperset: isSuperset,
-      customNote: customNote,
+    return definition.prescribe(
+      ExercisePrescription(
+        descriptionOverride: description,
+        repsText: reps,
+        restText: rest,
+        isSuperset: isSuperset,
+        customNote: customNote,
+      ),
     );
   }
 
+  static ExerciseDefinition? definitionFor(Exercise exercise) {
+    return definitionForId(exercise.id, exerciseName: exercise.name);
+  }
+
+  static ExerciseDefinition? definitionForId(
+    String exerciseId, {
+    String exerciseName = '',
+  }) {
+    final canonicalId = canonicalIdFor(exerciseId, exerciseName: exerciseName);
+    return _definitionsById[canonicalId];
+  }
+
+  static ExercisePrescription prescriptionFor(Exercise exercise) {
+    return ExercisePrescription.fromExercise(exercise);
+  }
+
   static bool hasMetadata(String exerciseId) {
-    final canonicalId = _legacyIdToCanonicalId[exerciseId] ?? exerciseId;
-    return _metadataById.containsKey(canonicalId);
+    return definitionForId(exerciseId) != null;
   }
 
   static String mediaPathFor(Exercise exercise) {
@@ -472,9 +506,9 @@ class ExerciseCatalog {
       exercise.id,
       exerciseName: exercise.name,
     );
-    final mediaAssetId = _metadataById[canonicalId]?.mediaAssetId;
+    final mediaAssetId = _definitionsById[canonicalId]?.mediaAssetId;
 
-    if (mediaAssetId != null) {
+    if (mediaAssetId != null && mediaAssetId.isNotEmpty) {
       return 'assets/images/$mediaAssetId.gif';
     }
 
@@ -491,14 +525,13 @@ class ExerciseCatalog {
       exercise.id,
       exerciseName: exercise.name,
     );
-    final canonicalExercise = _builtInById[canonicalId];
-    final metadata = _metadataById[canonicalId];
+    final definition = _definitionsById[canonicalId];
     final searchableValues = <String>[
       exercise.name,
       exercise.muscle,
-      if (canonicalExercise != null) canonicalExercise.name,
-      if (canonicalExercise != null) canonicalExercise.muscle,
-      ...?metadata?.aliases,
+      if (definition != null) definition.name,
+      if (definition != null) definition.primaryMuscle,
+      ...?definition?.aliases,
     ];
 
     return searchableValues.any((value) => normalize(value).contains(query));
@@ -513,22 +546,22 @@ class ExerciseCatalog {
       exercise.id,
       exerciseName: exercise.name,
     );
-    final canonicalExercise = _builtInById[canonicalId];
+    final definition = _definitionsById[canonicalId];
 
-    if (canonicalExercise == null) {
+    if (definition == null) {
       return exercise;
     }
 
-    if (exercise.id == canonicalExercise.id &&
-        exercise.name == canonicalExercise.name &&
-        exercise.muscle == canonicalExercise.muscle) {
+    if (exercise.id == definition.id &&
+        exercise.name == definition.name &&
+        exercise.muscle == definition.primaryMuscle) {
       return exercise;
     }
 
     return exercise.copyWith(
-      id: canonicalExercise.id,
-      name: canonicalExercise.name,
-      muscle: canonicalExercise.muscle,
+      id: definition.id,
+      name: definition.name,
+      muscle: definition.primaryMuscle,
     );
   }
 
@@ -541,11 +574,11 @@ class ExerciseCatalog {
     }
 
     final canonicalId = canonicalIdFor(exerciseId, exerciseName: exerciseName);
-    final canonicalExercise = _builtInById[canonicalId];
+    final definition = _definitionsById[canonicalId];
 
     return ExerciseIdentity(
-      id: canonicalExercise?.id ?? exerciseId,
-      name: canonicalExercise?.name ?? exerciseName,
+      id: definition?.id ?? exerciseId,
+      name: definition?.name ?? exerciseName,
     );
   }
 
@@ -555,7 +588,7 @@ class ExerciseCatalog {
       return legacyId;
     }
 
-    if (_builtInById.containsKey(exerciseId)) {
+    if (_definitionsById.containsKey(exerciseId)) {
       return exerciseId;
     }
 
@@ -572,7 +605,7 @@ class ExerciseCatalog {
       exerciseName: exercise.name,
     );
     return List<String>.unmodifiable(
-      _metadataById[canonicalId]?.aliases ?? const <String>[],
+      _definitionsById[canonicalId]?.aliases ?? const <String>[],
     );
   }
 
@@ -610,11 +643,10 @@ class ExerciseCatalog {
   static Map<String, String> _buildNormalizedNameIndex() {
     final index = <String, String>{};
 
-    for (final exercise in exerciseDatabase) {
-      index[normalize(exercise.name)] = exercise.id;
-      final aliases = _metadataById[exercise.id]?.aliases ?? const <String>[];
-      for (final alias in aliases) {
-        index.putIfAbsent(normalize(alias), () => exercise.id);
+    for (final definition in _definitionsById.values) {
+      index[normalize(definition.name)] = definition.id;
+      for (final alias in definition.aliases) {
+        index.putIfAbsent(normalize(alias), () => definition.id);
       }
     }
 

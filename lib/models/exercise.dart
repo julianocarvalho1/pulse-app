@@ -300,14 +300,6 @@ final List<Exercise> exerciseDatabase = [
     reps: '3x 10-12',
     rest: '1 a 2 min',
   ),
-  Exercise(
-    id: 'p13',
-    name: 'Crucifixo na Máquina',
-    muscle: 'Peito',
-    description: 'Isolamento na máquina (braços estendidos).',
-    reps: '3x 10-12',
-    rest: '1 min',
-  ),
 
   // COSTAS
   Exercise(
