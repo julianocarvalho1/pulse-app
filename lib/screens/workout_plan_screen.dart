@@ -4,6 +4,7 @@ import '../models/exercise.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
+import 'exercises_screen.dart';
 import 'routine_detail_screen.dart';
 
 class WorkoutPlanScreen extends ConsumerWidget {
@@ -17,12 +18,12 @@ class WorkoutPlanScreen extends ConsumerWidget {
     final preMadePrograms = workoutState.preMadePrograms;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text(
-            'Fichas de Treino',
+            'Treinos',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
           ),
           backgroundColor: AppColors.background,
@@ -33,12 +34,13 @@ class WorkoutPlanScreen extends ConsumerWidget {
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor: AppColors.textSecondary,
             labelStyle: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
             ),
             tabs: const [
-              Tab(text: 'MINHAS FICHAS'),
-              Tab(text: 'CATÁLOGO OFICIAL'),
+              Tab(text: 'FICHAS'),
+              Tab(text: 'PROGRAMAS'),
+              Tab(text: 'EXERCÍCIOS'),
             ],
           ),
         ),
@@ -46,6 +48,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
           children: [
             _buildMyRoutinesTab(context, provider, myRoutines),
             _buildCatalogTab(context, provider, preMadePrograms),
+            const ExercisesScreen(embedded: true),
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(

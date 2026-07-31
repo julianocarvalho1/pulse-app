@@ -4,13 +4,16 @@ import 'package:intl/intl.dart';
 
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
 import 'workout_history_detail_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.onOpenProgress});
+
+  final VoidCallback? onOpenProgress;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,6 +26,7 @@ class ProfileScreen extends ConsumerWidget {
     };
 
     final history = workoutState.history;
+    final recentHistory = history.take(5).toList(growable: false);
     final completedHistoryCount = history
         .where((item) => !item.isIncomplete)
         .length;
@@ -36,237 +40,264 @@ class ProfileScreen extends ConsumerWidget {
             ? workoutState.myRoutines.first
             : null);
     final currentFocus = activeRoutine?.focus ?? 'Mantenha a consistência';
+    final currentWeightLabel = profile.weightKg <= 0
+        ? '—'
+        : settings.measurementSystem == MeasurementSystem.metric
+        ? '${profile.weightKg.toStringAsFixed(1)} kg'
+        : '${(profile.weightKg * 2.2046226218).toStringAsFixed(1)} lbs';
+    final topPadding = MediaQuery.paddingOf(context).top;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'PERFIL',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+    return ColoredBox(
+      color: AppColors.background,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, topPadding + 12, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Perfil',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Configurações',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _profileHeader(context, profile.displayName, currentFocus),
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'MEU HISTÓRICO',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 0.5,
+                IconButton(
+                  tooltip: 'Configurações',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.settings_outlined),
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '$completedHistoryCount completos',
+              ],
+            ),
+            const SizedBox(height: 18),
+            _profileHeader(context, profile.displayName, currentFocus),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _ProfileMetric(
+                    value: '$completedHistoryCount',
+                    label: 'Treinos',
+                    icon: Icons.check_circle_outline,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ProfileMetric(
+                    value: '${workoutState.myRoutines.length}',
+                    label: 'Fichas',
+                    icon: Icons.fitness_center_outlined,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ProfileMetric(
+                    value: currentWeightLabel,
+                    label: 'Peso atual',
+                    icon: Icons.monitor_weight_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'TREINOS RECENTES',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                if (incompleteHistoryCount > 0)
+                  Text(
+                    '$incompleteHistoryCount incompleto${incompleteHistoryCount == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.orangeAccent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (incompleteHistoryCount > 0)
-                    Text(
-                      '$incompleteHistoryCount incompletos',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.orangeAccent,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (recentHistory.isEmpty)
+              _emptyHistory(context)
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: recentHistory.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) => _historyItem(
+                  context,
+                  workoutController,
+                  recentHistory[index],
+                ),
+              ),
+            if (history.isNotEmpty && onOpenProgress != null) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onOpenProgress,
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('Abrir Progresso'),
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          if (history.isEmpty)
-            _emptyHistory(context)
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: history.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final item = history[index];
-                final formattedDate = DateFormat(
-                  'dd/MM/yyyy',
-                ).format(item.date);
-                final isIncomplete = item.isIncomplete;
-                final statusColor = isIncomplete
-                    ? Colors.orangeAccent
-                    : AppColors.success;
-                final statusIcon = isIncomplete
-                    ? Icons.pending_actions_rounded
-                    : Icons.check_circle;
-                final statusLabel = isIncomplete ? 'INCOMPLETO' : 'CONCLUÍDO';
+          ],
+        ),
+      ),
+    );
+  }
 
-                return Dismissible(
-                  key: Key(item.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: AppColors.textPrimary,
-                      size: 28,
-                    ),
-                  ),
-                  onDismissed: (_) {
-                    workoutController.deleteHistoryItem(item.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Treino excluído do histórico.'),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                WorkoutHistoryDetailScreen(workout: item),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                statusIcon,
-                                color: statusColor,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.routineName,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 7,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: statusColor.withValues(
-                                            alpha: 0.14,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          statusLabel,
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
-                                            color: statusColor,
-                                            letterSpacing: 0.4,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 7),
-                                      Text(
-                                        formattedDate,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  item.duration,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: statusColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  '${item.totalExercises} exerc.',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+  Widget _historyItem(
+    BuildContext context,
+    WorkoutController controller,
+    WorkoutHistoryItem item,
+  ) {
+    final formattedDate = DateFormat('dd/MM/yyyy').format(item.date);
+    final isIncomplete = item.isIncomplete;
+    final statusColor = isIncomplete ? Colors.orangeAccent : AppColors.success;
+    final statusIcon = isIncomplete
+        ? Icons.pending_actions_rounded
+        : Icons.check_circle;
+    final statusLabel = isIncomplete ? 'INCOMPLETO' : 'CONCLUÍDO';
+
+    return Dismissible(
+      key: Key(item.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.danger,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      onDismissed: (_) {
+        controller.deleteHistoryItem(item.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Treino excluído do histórico.')),
+        );
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
             ),
-        ],
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(statusIcon, color: statusColor, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.routineName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Wrap(
+                        spacing: 7,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      item.duration,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${item.totalExercises} exerc.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -289,9 +320,7 @@ class ProfileScreen extends ConsumerWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.15),
+              color: AppColors.primarySoft,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -314,7 +343,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Foco: $currentFocus',
+                  'Foco atual: $currentFocus',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -346,7 +375,7 @@ class ProfileScreen extends ConsumerWidget {
             size: 36,
             color: AppColors.textSecondary,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'Nenhum treino concluído ainda.',
             style: TextStyle(
@@ -354,11 +383,53 @@ class ProfileScreen extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             'Seus treinos finalizados aparecerão aqui.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileMetric extends StatelessWidget {
+  const _ProfileMetric({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 7),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
           ),
         ],
       ),

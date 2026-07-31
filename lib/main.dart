@@ -6,7 +6,6 @@ import 'features/auth/presentation/auth_gate.dart';
 import 'features/onboarding/presentation/onboarding_gate.dart';
 import 'features/settings/domain/pulse_settings.dart';
 import 'features/settings/presentation/providers/settings_controller.dart';
-import 'screens/exercises_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/progress_screen.dart';
@@ -16,6 +15,7 @@ import 'widgets/pulse_startup_splash.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   runApp(const ProviderScope(child: PulseApp()));
 }
 
@@ -119,71 +119,80 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _index = 0;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    WorkoutPlanScreen(),
-    ExercisesScreen(),
-    ProgressScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = <Widget>[
+      HomeScreen(
+        onOpenWorkouts: () => _selectTab(1),
+        onOpenProgress: () => _selectTab(2),
+      ),
+      const WorkoutPlanScreen(),
+      const ProgressScreen(),
+      ProfileScreen(onOpenProgress: () => _selectTab(2)),
+    ];
+  }
+
+  void _selectTab(int index) {
+    if (_index == index) {
+      return;
+    }
+    setState(() => _index = index);
+  }
 
   @override
   Widget build(BuildContext context) {
     final systemUiStyle = pulseSystemUiOverlayStyle(
       Theme.of(context).brightness,
-    );
+    ).copyWith(statusBarColor: Colors.transparent);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: systemUiStyle,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          bottom: false,
-          child: IndexedStack(index: _index, children: _screens),
-        ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _index,
-            onTap: (index) {
-              setState(() => _index = index);
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: Theme.of(context).colorScheme.primary,
-            unselectedItemColor: AppColors.textSecondary,
-            selectedFontSize: 11,
-            unselectedFontSize: 11,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Início',
+        body: IndexedStack(index: _index, children: _screens),
+        bottomNavigationBar: ColoredBox(
+          color: AppColors.surface,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.border)),
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.fitness_center),
-                label: 'Treinos',
+              child: NavigationBar(
+                height: 68,
+                backgroundColor: AppColors.surface,
+                indicatorColor: AppColors.primarySoft,
+                selectedIndex: _index,
+                onDestinationSelected: _selectTab,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: const <NavigationDestination>[
+                  NavigationDestination(
+                    icon: Icon(Icons.home_outlined),
+                    selectedIcon: Icon(Icons.home_rounded),
+                    label: 'Hoje',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.fitness_center_outlined),
+                    selectedIcon: Icon(Icons.fitness_center),
+                    label: 'Treinos',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.insights_outlined),
+                    selectedIcon: Icon(Icons.insights_rounded),
+                    label: 'Progresso',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline),
+                    selectedIcon: Icon(Icons.person_rounded),
+                    label: 'Perfil',
+                  ),
+                ],
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.view_list_outlined),
-                activeIcon: Icon(Icons.view_list),
-                label: 'Exercícios',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart),
-                label: 'Progresso',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Perfil',
-              ),
-            ],
+            ),
           ),
         ),
       ),

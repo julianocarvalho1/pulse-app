@@ -12,10 +12,12 @@ import 'workout_session_screen.dart';
 import 'workout_plan_screen.dart';
 import 'routine_detail_screen.dart';
 import 'settings_screen.dart';
-import 'progress_calendar_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onOpenWorkouts, this.onOpenProgress});
+
+  final VoidCallback? onOpenWorkouts;
+  final VoidCallback? onOpenProgress;
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -518,10 +520,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final treinosNaSemana = history
         .where((item) => item.date.isAfter(umaSemanaAtras))
         .length;
-    final exerciciosNaSemana = history
-        .where((item) => item.date.isAfter(umaSemanaAtras))
-        .fold(0, (sum, item) => sum + item.totalExercises);
-
     final rotinaDoDia =
         provider.nextRoutineToTrain ??
         (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
@@ -585,7 +583,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           slivers: [
             SliverAppBar(
-              primary: false,
+              primary: true,
               floating: true,
               snap: true,
               pinned: false,
@@ -910,51 +908,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'O SEU TREINO DE HOJE É',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  RoutineDetailScreen(routine: rotinaDoDia),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  rotinaDoDia.name,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right,
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 28,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -1058,7 +1012,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Fique tranquilo! Preparamos um catálogo com fichas prontas para iniciantes, intermediários e avançados.\n\nEscolha o seu nível e importe uma ficha para iniciar sua jornada.',
+                              'Abra a área de Treinos para criar sua primeira ficha ou importar um programa pronto para o seu nível.',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
@@ -1082,15 +1036,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                   elevation: 0,
                                 ),
-                                icon: const Icon(Icons.search, size: 20),
+                                icon: const Icon(
+                                  Icons.fitness_center,
+                                  size: 20,
+                                ),
                                 label: const Text(
-                                  'EXPLORAR CATÁLOGO',
+                                  'ABRIR TREINOS',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
                                 ),
                                 onPressed: () {
+                                  final openWorkouts = widget.onOpenWorkouts;
+                                  if (openWorkouts != null) {
+                                    openWorkouts();
+                                    return;
+                                  }
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -1201,16 +1163,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ProgressCalendarScreen(),
-                              ),
-                            );
-                          },
+                          onTap: widget.onOpenProgress,
                           child: Text(
-                            'HISTÓRICO DE TREINOS 📅',
+                            'VER PROGRESSO',
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,
@@ -1249,14 +1204,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ? '${DateTime.now().difference(history.first.date).inDays}d'
                                 : '-',
                             label: 'Último treino',
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _SummaryStat(
-                            icon: Icons.checklist,
-                            value: '$exerciciosNaSemana',
-                            label: 'Exercícios',
                           ),
                         ),
                       ],

@@ -452,6 +452,32 @@ ThemeData _buildPulseTheme({
       type: BottomNavigationBarType.fixed,
       elevation: 0,
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: colors.surface,
+      indicatorColor: primaryContainer,
+      elevation: 0,
+      height: 68,
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return IconThemeData(color: primaryColor, size: 24);
+        }
+        return IconThemeData(color: colors.textMuted, size: 23);
+      }),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return TextStyle(
+            color: primaryColor,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          );
+        }
+        return TextStyle(
+          color: colors.textMuted,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        );
+      }),
+    ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: isDark ? colors.surfaceLight : const Color(0xFF2E3742),
       contentTextStyle: const TextStyle(color: Colors.white),
@@ -485,7 +511,7 @@ ThemeData _buildPulseTheme({
 SystemUiOverlayStyle pulseSystemUiOverlayStyle(Brightness brightness) {
   final isDark = brightness == Brightness.dark;
   return SystemUiOverlayStyle(
-    statusBarColor: AppColors.background,
+    statusBarColor: Colors.transparent,
     statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
     statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
     systemStatusBarContrastEnforced: false,

@@ -520,53 +520,57 @@ class _ProgressCalendarScreenState
       backgroundColor: AppColors.surface,
       useSafeArea: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                _fullDateLabel(day.date),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  _fullDateLabel(day.date),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              ...day.items.map((item) {
-                final incomplete = item.isIncomplete;
-                final color = incomplete
-                    ? Colors.orangeAccent
-                    : Theme.of(context).colorScheme.primary;
+                const SizedBox(height: 14),
+                ...day.items.map((item) {
+                  final incomplete = item.isIncomplete;
+                  final color = incomplete
+                      ? Colors.orangeAccent
+                      : Theme.of(context).colorScheme.primary;
 
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    incomplete
-                        ? Icons.pending_actions_rounded
-                        : Icons.check_circle_rounded,
-                    color: color,
-                  ),
-                  title: Text(item.routineName),
-                  subtitle: Text(
-                    '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            WorkoutHistoryDetailScreen(workout: item),
-                      ),
-                    );
-                  },
-                );
-              }),
-            ],
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      incomplete
+                          ? Icons.pending_actions_rounded
+                          : Icons.check_circle_rounded,
+                      color: color,
+                    ),
+                    title: Text(item.routineName),
+                    subtitle: Text(
+                      '${DateFormat('HH:mm').format(item.date)} • ${item.duration}',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              WorkoutHistoryDetailScreen(workout: item),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },

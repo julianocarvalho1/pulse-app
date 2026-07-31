@@ -40,29 +40,34 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
   Widget build(BuildContext context) {
     final summary = ref.watch(workoutProgressSummaryProvider(_period));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'PROGRESSO',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _tabs.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 20),
-              itemBuilder: (context, index) => _tabItem(_tabs[index], index),
+    final topPadding = MediaQuery.paddingOf(context).top;
+
+    return ColoredBox(
+      color: AppColors.background,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, topPadding + 12, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Progresso',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
             ),
-          ),
-          Container(height: 1, color: AppColors.border),
-          const SizedBox(height: 20),
-          _buildTabContent(context, summary),
-        ],
+            const SizedBox(height: 18),
+            SizedBox(
+              height: 36,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _tabs.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 20),
+                itemBuilder: (context, index) => _tabItem(_tabs[index], index),
+              ),
+            ),
+            Container(height: 1, color: AppColors.border),
+            const SizedBox(height: 20),
+            _buildTabContent(context, summary),
+          ],
+        ),
       ),
     );
   }
@@ -1554,98 +1559,102 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
-        return FractionallySizedBox(
-          heightFactor: 0.58,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const SizedBox(height: 10),
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(4),
+        return SafeArea(
+          top: false,
+          minimum: const EdgeInsets.only(bottom: 8),
+          child: FractionallySizedBox(
+            heightFactor: 0.58,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            'Escolher medida',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const Text(
+                              'Escolher medida',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            'Selecione o dado exibido no gráfico de evolução.',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
+                            const SizedBox(height: 3),
+                            Text(
+                              'Selecione o dado exibido no gráfico de evolução.',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Fechar',
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: AppColors.border),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    children: <Widget>[
+                      _measurementTypeGroup(
+                        sheetContext,
+                        title: 'PRINCIPAIS',
+                        types: const <BodyMeasurementType>[
+                          BodyMeasurementType.weight,
+                          BodyMeasurementType.shoulders,
+                          BodyMeasurementType.chest,
+                          BodyMeasurementType.waist,
+                          BodyMeasurementType.hips,
                         ],
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Fechar',
-                      onPressed: () => Navigator.pop(sheetContext),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      _measurementTypeGroup(
+                        sheetContext,
+                        title: 'BRAÇOS',
+                        types: const <BodyMeasurementType>[
+                          BodyMeasurementType.leftArm,
+                          BodyMeasurementType.rightArm,
+                          BodyMeasurementType.leftForearm,
+                          BodyMeasurementType.rightForearm,
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _measurementTypeGroup(
+                        sheetContext,
+                        title: 'PERNAS',
+                        types: const <BodyMeasurementType>[
+                          BodyMeasurementType.leftThigh,
+                          BodyMeasurementType.rightThigh,
+                          BodyMeasurementType.leftCalf,
+                          BodyMeasurementType.rightCalf,
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Divider(height: 1, color: AppColors.border),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                  children: <Widget>[
-                    _measurementTypeGroup(
-                      sheetContext,
-                      title: 'PRINCIPAIS',
-                      types: const <BodyMeasurementType>[
-                        BodyMeasurementType.weight,
-                        BodyMeasurementType.shoulders,
-                        BodyMeasurementType.chest,
-                        BodyMeasurementType.waist,
-                        BodyMeasurementType.hips,
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _measurementTypeGroup(
-                      sheetContext,
-                      title: 'BRAÇOS',
-                      types: const <BodyMeasurementType>[
-                        BodyMeasurementType.leftArm,
-                        BodyMeasurementType.rightArm,
-                        BodyMeasurementType.leftForearm,
-                        BodyMeasurementType.rightForearm,
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _measurementTypeGroup(
-                      sheetContext,
-                      title: 'PERNAS',
-                      types: const <BodyMeasurementType>[
-                        BodyMeasurementType.leftThigh,
-                        BodyMeasurementType.rightThigh,
-                        BodyMeasurementType.leftCalf,
-                        BodyMeasurementType.rightCalf,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -1740,48 +1749,54 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       useSafeArea: true,
-      builder: (sheetContext) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(4),
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            ListTile(
-              leading: Icon(
-                Icons.monitor_weight_outlined,
-                color: Theme.of(context).colorScheme.primary,
+              const SizedBox(height: 14),
+              ListTile(
+                leading: Icon(
+                  Icons.monitor_weight_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: const Text('Registrar peso'),
+                subtitle: const Text(
+                  'Para uma pesagem rápida, sem copiar outras medidas.',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _MeasurementAction.weight),
               ),
-              title: const Text('Registrar peso'),
-              subtitle: const Text(
-                'Para uma pesagem rápida, sem copiar outras medidas.',
+              Divider(color: AppColors.border),
+              ListTile(
+                leading: Icon(
+                  Icons.straighten,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: const Text('Nova avaliação corporal'),
+                subtitle: const Text(
+                  'Registre apenas as regiões medidas hoje.',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _MeasurementAction.bodyAssessment,
+                ),
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _MeasurementAction.weight),
-            ),
-            Divider(color: AppColors.border),
-            ListTile(
-              leading: Icon(
-                Icons.straighten,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              title: const Text('Nova avaliação corporal'),
-              subtitle: const Text('Registre apenas as regiões medidas hoje.'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.pop(
-                sheetContext,
-                _MeasurementAction.bodyAssessment,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1805,9 +1820,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         isScrollControlled: true,
         backgroundColor: AppColors.surface,
         useSafeArea: true,
-        builder: (_) => _WeightEntrySheet(
-          latestWeight: latestWeight,
-          measurementSystem: settings.measurementSystem,
+        builder: (_) => SafeArea(
+          top: false,
+          child: _WeightEntrySheet(
+            latestWeight: latestWeight,
+            measurementSystem: settings.measurementSystem,
+          ),
         ),
       );
     } else {

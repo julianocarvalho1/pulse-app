@@ -6,9 +6,14 @@ import '../theme/app_theme.dart';
 import 'exercise_detail_screen.dart';
 
 class ExercisesScreen extends ConsumerStatefulWidget {
-  final bool isSelecting;
+  const ExercisesScreen({
+    super.key,
+    this.isSelecting = false,
+    this.embedded = false,
+  });
 
-  const ExercisesScreen({super.key, this.isSelecting = false});
+  final bool isSelecting;
+  final bool embedded;
 
   @override
   ConsumerState<ExercisesScreen> createState() => _ExercisesScreenState();
@@ -522,209 +527,199 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           ex.muscle.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
-    return GestureDetector(
-      onTap: () {
-        _searchFocusNode.unfocus();
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          elevation: 0,
-          title: Text(
-            widget.isSelecting
-                ? 'Adicionar ao Treino'
-                : 'Biblioteca de Exercícios',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-          ),
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                autofocus: false,
-                style: TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: 'Buscar por nome ou músculo...',
-                  hintStyle: TextStyle(color: AppColors.textSecondary),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.textSecondary,
-                  ),
+    final content = Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: TextField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            autofocus: false,
+            style: TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Buscar por nome ou músculo...',
+              hintStyle: TextStyle(color: AppColors.textSecondary),
+              prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
 
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: AppColors.textSecondary,
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            _searchFocusNode.unfocus();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: AppColors.textSecondary),
+                      onPressed: () {
+                        _searchController.clear();
+                        _searchFocusNode.unfocus();
+                        setState(() {
+                          _searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
 
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
               ),
             ),
-            Expanded(
-              child: allExercises.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Nenhum exercício encontrado.',
-                        style: TextStyle(color: AppColors.textSecondary),
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+          ),
+        ),
+        Expanded(
+          child: allExercises.isEmpty
+              ? Center(
+                  child: Text(
+                    'Nenhum exercício encontrado.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                  itemCount: allExercises.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final ex = allExercises[index];
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      itemCount: allExercises.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final ex = allExercises[index];
-                        return Container(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        leading: Container(
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: AppColors.border),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            leading: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).scaffoldBackgroundColor,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(9),
-                                child: Image.asset(
-                                  _getImagePath(ex.name),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Center(
-                                        child: Icon(
-                                          Icons.fitness_center,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          size: 24,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              ex.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                                fontSize: 14,
-                              ),
-                            ),
-                            subtitle: Text(
-                              ex.muscle.toUpperCase(),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            trailing: widget.isSelecting
-                                ? Icon(
-                                    Icons.add_circle,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  )
-                                : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.add_circle_outline,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        onPressed: () {
-                                          _searchFocusNode.unfocus();
-                                          _showRoutineSelector(
-                                            context,
-                                            ex,
-                                            provider,
-                                          );
-                                        },
-                                      ),
-                                      Icon(
-                                        Icons.chevron_right,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ],
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(9),
+                            child: Image.asset(
+                              _getImagePath(ex.name),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Center(
+                                    child: Icon(
+                                      Icons.fitness_center,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      size: 24,
+                                    ),
                                   ),
-                            onTap: () {
-                              _searchFocusNode.unfocus();
-                              FocusScope.of(context).unfocus();
-
-                              if (widget.isSelecting) {
-                                _showExerciseConfigDialog(
-                                  context,
-                                  ex,
-                                  provider,
-                                );
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ExerciseDetailScreen(exercise: ex),
-                                  ),
-                                );
-                              }
-                            },
+                            ),
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+                        ),
+                        title: Text(
+                          ex.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          ex.muscle.toUpperCase(),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        trailing: widget.isSelecting
+                            ? Icon(
+                                Icons.add_circle,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.add_circle_outline,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                    onPressed: () {
+                                      _searchFocusNode.unfocus();
+                                      _showRoutineSelector(
+                                        context,
+                                        ex,
+                                        provider,
+                                      );
+                                    },
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ],
+                              ),
+                        onTap: () {
+                          _searchFocusNode.unfocus();
+                          FocusScope.of(context).unfocus();
+
+                          if (widget.isSelecting) {
+                            _showExerciseConfigDialog(context, ex, provider);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    ExerciseDetailScreen(exercise: ex),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
         ),
-      ),
+      ],
     );
+
+    final body = widget.embedded && !widget.isSelecting
+        ? ColoredBox(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: content,
+          )
+        : Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              elevation: 0,
+              title: Text(
+                widget.isSelecting
+                    ? 'Adicionar ao Treino'
+                    : 'Biblioteca de Exercícios',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            body: content,
+          );
+
+    return GestureDetector(onTap: _searchFocusNode.unfocus, child: body);
   }
 }
