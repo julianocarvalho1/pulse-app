@@ -11,7 +11,14 @@ import '../../data/services/pulse_workout_file_service.dart';
 import '../../domain/models/pulse_workout_file.dart';
 
 class PulseWorkoutImportScreen extends ConsumerStatefulWidget {
-  const PulseWorkoutImportScreen({super.key});
+  const PulseWorkoutImportScreen({
+    super.key,
+    this.initialDocument,
+    this.sourceLabel = 'arquivo',
+  });
+
+  final PulseWorkoutDocument? initialDocument;
+  final String sourceLabel;
 
   @override
   ConsumerState<PulseWorkoutImportScreen> createState() =>
@@ -26,6 +33,19 @@ class _PulseWorkoutImportScreenState
   String? _error;
   bool _isPicking = false;
   bool _isImporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialDocument = widget.initialDocument;
+    if (initialDocument != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadDocument(initialDocument);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -67,8 +87,11 @@ class _PulseWorkoutImportScreenState
   }
 
   void _loadPreview(Uint8List bytes) {
+    _loadDocument(_fileService.codec.decode(bytes));
+  }
+
+  void _loadDocument(PulseWorkoutDocument document) {
     final state = ref.read(workoutControllerProvider);
-    final document = _fileService.codec.decode(bytes);
     final preview = _fileService.codec.prepareImport(
       document: document,
       localExercises: state.allExercises,
@@ -137,9 +160,11 @@ class _PulseWorkoutImportScreenState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
-          'Importar arquivo PULSE',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        title: Text(
+          widget.initialDocument == null
+              ? 'Importar arquivo PULSE'
+              : 'Revisar QR Code do PULSE',
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
       ),
       body: ListView(
@@ -152,20 +177,21 @@ class _PulseWorkoutImportScreenState
         children: <Widget>[
           _introCard(context),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _isPicking ? null : _pickFile,
-            icon: _isPicking
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.folder_open_outlined),
-            label: Text(
-              preview == null
-                  ? 'Selecionar arquivo .pulse'
-                  : 'Escolher outro arquivo',
+          if (widget.initialDocument == null)
+            OutlinedButton.icon(
+              onPressed: _isPicking ? null : _pickFile,
+              icon: _isPicking
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.folder_open_outlined),
+              label: Text(
+                preview == null
+                    ? 'Selecionar arquivo .pulse'
+                    : 'Escolher outro arquivo',
+              ),
             ),
-          ),
           if (_error != null) ...<Widget>[
             const SizedBox(height: 12),
             _messageCard(
@@ -273,10 +299,12 @@ class _PulseWorkoutImportScreenState
         children: <Widget>[
           Icon(Icons.ios_share_rounded, color: primary),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Arquivos .pulse podem conter uma ficha ou um programa completo. Confira tudo antes de adicionar ao aplicativo.',
-              style: TextStyle(fontSize: 13, height: 1.4),
+              widget.initialDocument == null
+                  ? 'Arquivos .pulse podem conter uma ficha ou um programa completo. Confira tudo antes de adicionar ao aplicativo.'
+                  : 'O QR Code pode conter uma ficha ou um programa completo. Confira tudo antes de adicionar ao aplicativo.',
+              style: const TextStyle(fontSize: 13, height: 1.4),
             ),
           ),
         ],
@@ -329,7 +357,9 @@ class _PulseWorkoutImportScreenState
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${document.contentType.label} • criado em $createdAt',
+                      widget.initialDocument == null
+                          ? '${document.contentType.label} • criado em $createdAt'
+                          : '${document.contentType.label} • recebido por ${widget.sourceLabel}',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,

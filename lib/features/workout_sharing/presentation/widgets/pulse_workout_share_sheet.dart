@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../theme/app_theme.dart';
 import '../../data/services/pulse_workout_file_service.dart';
 import '../../domain/models/pulse_workout_file.dart';
+import '../screens/pulse_workout_qr_screen.dart';
 
 Future<void> showPulseWorkoutShareSheet(
   BuildContext context,
@@ -30,7 +31,7 @@ Future<void> showPulseWorkoutShareSheet(
           ),
           const SizedBox(height: 6),
           Text(
-            'O arquivo .pulse preserva exercícios, séries, repetições, descansos, observações e cardio.',
+            'Compartilhe por QR Code ou arquivo .pulse, preservando exercícios, séries, repetições, descansos, observações e cardio.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
@@ -38,6 +39,14 @@ Future<void> showPulseWorkoutShareSheet(
             ),
           ),
           const SizedBox(height: 16),
+          _ShareTile(
+            icon: Icons.qr_code_2_rounded,
+            title: 'Mostrar QR Code',
+            subtitle:
+                'O outro aparelho lê pela câmera e revisa antes de salvar.',
+            onTap: () => Navigator.pop(sheetContext, _PulseShareAction.qr),
+          ),
+          const SizedBox(height: 10),
           _ShareTile(
             icon: Icons.share_outlined,
             title: 'Compartilhar arquivo',
@@ -57,6 +66,16 @@ Future<void> showPulseWorkoutShareSheet(
   );
 
   if (action == null || !context.mounted) {
+    return;
+  }
+
+  if (action == _PulseShareAction.qr) {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => PulseWorkoutQrScreen(document: document),
+      ),
+    );
     return;
   }
 
@@ -97,7 +116,7 @@ void _showError(BuildContext context, String message) {
   );
 }
 
-enum _PulseShareAction { share, save }
+enum _PulseShareAction { qr, share, save }
 
 class _ShareTile extends StatelessWidget {
   const _ShareTile({

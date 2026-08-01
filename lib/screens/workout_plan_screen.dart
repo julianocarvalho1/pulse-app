@@ -6,6 +6,7 @@ import '../features/workout_generator/presentation/screens/workout_generator_scr
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
 import '../features/workout_sharing/presentation/screens/pulse_workout_import_screen.dart';
+import '../features/workout_sharing/presentation/screens/pulse_workout_qr_scanner_screen.dart';
 import '../features/workout_sharing/presentation/widgets/pulse_workout_share_sheet.dart';
 import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
@@ -182,6 +183,29 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Conteúdo do PULSE adicionado.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _CreateOptionTile(
+                icon: Icons.qr_code_scanner_rounded,
+                title: 'Ler QR Code do PULSE',
+                subtitle: 'Aponte a câmera para receber uma ficha ou programa.',
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  final imported = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute<bool>(
+                      builder: (_) => const PulseWorkoutQrScannerScreen(),
+                    ),
+                  );
+                  if ((imported ?? false) && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Conteúdo do QR Code adicionado.'),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
