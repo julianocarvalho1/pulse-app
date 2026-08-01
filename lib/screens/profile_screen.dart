@@ -216,8 +216,8 @@ class ProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     String currentPath,
   ) async {
-    final hasPhoto = currentPath.trim().isNotEmpty &&
-        File(currentPath).existsSync();
+    final hasPhoto =
+        currentPath.trim().isNotEmpty && File(currentPath).existsSync();
     final action = await showModalBottomSheet<_ProfilePhotoAction>(
       context: context,
       useSafeArea: true,
@@ -241,10 +241,7 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 6),
             Text(
               'A imagem fica salva somente neste aparelho.',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 14),
             ListTile(
@@ -252,10 +249,8 @@ class ProfileScreen extends ConsumerWidget {
               leading: const Icon(Icons.photo_library_outlined),
               title: Text(hasPhoto ? 'Trocar foto' : 'Escolher foto'),
               subtitle: const Text('Selecionar uma imagem do aparelho'),
-              onTap: () => Navigator.pop(
-                sheetContext,
-                _ProfilePhotoAction.choose,
-              ),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _ProfilePhotoAction.choose),
             ),
             if (hasPhoto)
               ListTile(
@@ -265,10 +260,8 @@ class ProfileScreen extends ConsumerWidget {
                   'Remover foto',
                   style: TextStyle(color: AppColors.danger),
                 ),
-                onTap: () => Navigator.pop(
-                  sheetContext,
-                  _ProfilePhotoAction.remove,
-                ),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _ProfilePhotoAction.remove),
               ),
           ],
         ),
@@ -486,10 +479,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: <Widget>[
-          _ProfileAvatar(
-            photoPath: photoPath,
-            onTap: onPhotoTap,
-          ),
+          _ProfileAvatar(photoPath: photoPath, onTap: onPhotoTap),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
