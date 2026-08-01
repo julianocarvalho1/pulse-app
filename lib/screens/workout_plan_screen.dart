@@ -11,7 +11,9 @@ import 'routine_detail_screen.dart';
 import 'routine_editor_screen.dart';
 
 class WorkoutPlanScreen extends ConsumerWidget {
-  const WorkoutPlanScreen({super.key});
+  const WorkoutPlanScreen({super.key, this.onBackToHome});
+
+  final VoidCallback? onBackToHome;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,15 +28,22 @@ class WorkoutPlanScreen extends ConsumerWidget {
         backgroundColor: AppColors.background,
         appBar: AppBar(
           primary: true,
-          toolbarHeight: 60,
+          toolbarHeight: 54,
           backgroundColor: AppColors.background,
           surfaceTintColor: Colors.transparent,
           scrolledUnderElevation: 0,
-          automaticallyImplyLeading: false,
-          titleSpacing: 20,
+          automaticallyImplyLeading: onBackToHome == null,
+          leading: onBackToHome == null
+              ? null
+              : IconButton(
+                  tooltip: 'Voltar para o início',
+                  onPressed: onBackToHome,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                ),
+          titleSpacing: onBackToHome == null ? 20 : 0,
           title: const Text(
             'Treinos',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
           ),
           bottom: TabBar(
             indicatorColor: Theme.of(context).colorScheme.primary,
@@ -65,15 +74,26 @@ class WorkoutPlanScreen extends ConsumerWidget {
             const ExercisesScreen(embedded: true),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: AppColors.onPrimary,
-          elevation: 0,
-          onPressed: () => _showCreateOptions(context),
-          icon: const Icon(Icons.add),
-          label: const Text(
-            'Criar treino',
-            style: TextStyle(fontWeight: FontWeight.w700),
+        floatingActionButton: SizedBox(
+          height: 40,
+          child: FilledButton.icon(
+            onPressed: () => _showCreateOptions(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: AppColors.onPrimary,
+              elevation: 0,
+              minimumSize: Size.zero,
+              padding: const EdgeInsets.symmetric(horizontal: 13),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 17),
+            label: const Text(
+              'Criar treino',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            ),
           ),
         ),
       ),
@@ -558,17 +578,17 @@ class WorkoutPlanScreen extends ConsumerWidget {
     List<WorkoutProgram> programs,
   ) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
               ).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: Theme.of(
                   context,
@@ -576,61 +596,67 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.menu_book,
+                  Icons.menu_book_rounded,
                   color: Theme.of(context).colorScheme.primary,
-                  size: 20,
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
-                    'Programas prontos para você importar e adaptar à sua rotina.',
+                    'Escolha um programa, confira todas as fichas e adapte exercícios, séries e descansos depois de adicionar.',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
+                      height: 1.3,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
+              padding: const EdgeInsets.only(bottom: 54),
               itemCount: programs.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 16),
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final prog = programs[index];
                 final isImported = provider.isProgramImported(prog);
 
                 return Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: 48,
-                            height: 48,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(12),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
-                              Icons.bolt,
+                              _programIcon(prog),
                               color: Theme.of(context).colorScheme.primary,
-                              size: 24,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 11),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,57 +665,78 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                   prog.name,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 16,
+                                    fontSize: 15,
+                                    height: 1.2,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 3),
                                 Text(
-                                  'Contém ${prog.routines.length} fichas de treino',
+                                  '${prog.routines.length} fichas • ${prog.frequencyPerWeek}x por semana',
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          if (isImported)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 22,
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 9),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _programBadge(
+                            context,
+                            icon: Icons.signal_cellular_alt_rounded,
+                            label: prog.level,
+                          ),
+                          _programBadge(
+                            context,
+                            icon: Icons.flag_rounded,
+                            label: prog.objective,
+                          ),
+                          _programBadge(
+                            context,
+                            icon: Icons.schedule_rounded,
+                            label: prog.estimatedDuration,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 9),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 9,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.background,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'MÉTODO E OBJETIVO:',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              prog.focus,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          prog.focus,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
+                            child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Theme.of(
                                   context,
@@ -698,22 +745,26 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 10,
                                 ),
                               ),
                               onPressed: () {
                                 _showProgramDetails(context, provider, prog);
                               },
-                              child: const Text(
-                                'Ver Fichas',
+                              icon: const Icon(
+                                Icons.visibility_outlined,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Ver estrutura',
                                 style: TextStyle(fontWeight: FontWeight.w800),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
@@ -725,45 +776,29 @@ class WorkoutPlanScreen extends ConsumerWidget {
                                 disabledForegroundColor:
                                     AppColors.textSecondary,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 10,
                                 ),
                               ),
                               onPressed: isImported
                                   ? null
                                   : () {
-                                      final imported = provider.importProgram(
-                                        prog,
-                                      );
-
-                                      ScaffoldMessenger.of(
+                                      _importCatalogProgram(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            imported
-                                                ? 'Programa ${prog.name} importado para Minhas Fichas!'
-                                                : 'Este programa já está em Minhas Fichas.',
-                                          ),
-                                          backgroundColor: imported
-                                              ? Theme.of(
-                                                  context,
-                                                ).colorScheme.primary
-                                              : AppColors.surfaceLight,
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
+                                        provider,
+                                        prog,
                                       );
                                     },
                               icon: Icon(
                                 isImported
                                     ? Icons.check_circle
-                                    : Icons.download_rounded,
+                                    : Icons.add_rounded,
                                 size: 18,
                               ),
                               label: Text(
-                                isImported ? 'Já Importado' : 'Importar Grupo',
+                                isImported ? 'Adicionado' : 'Adicionar',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -789,126 +824,390 @@ class WorkoutPlanScreen extends ConsumerWidget {
     WorkoutProgram prog,
   ) {
     final isImported = provider.isProgramImported(prog);
-    showModalBottomSheet(
+
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.88,
+        minChildSize: 0.6,
+        maxChildSize: 0.96,
+        builder: (sheetContext, scrollController) => Column(
           children: [
-            Text(
-              prog.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              prog.focus,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 14,
+            const SizedBox(height: 10),
+            Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(99),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'FICHAS INCLUSAS NO PROGRAMA:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...prog.routines.map(
-              (r) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.name,
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _programIcon(prog),
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              prog.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              '${prog.routines.length} fichas • ${prog.frequencyPerWeek}x por semana',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _programBadge(
+                        context,
+                        icon: Icons.signal_cellular_alt_rounded,
+                        label: prog.level,
+                      ),
+                      _programBadge(
+                        context,
+                        icon: Icons.flag_rounded,
+                        label: prog.objective,
+                      ),
+                      _programBadge(
+                        context,
+                        icon: Icons.schedule_rounded,
+                        label: prog.estimatedDuration,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      prog.focus,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${r.exercises.length} exercícios estruturados.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
                         fontSize: 13,
+                        height: 1.45,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    'FICHAS E EXERCÍCIOS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ...prog.routines.map(
+                    (routine) => _programRoutinePreview(context, routine),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.edit_note_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Depois de adicionar, todas as fichas ficam editáveis em Minhas Fichas.',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: AppColors.onPrimary,
-                  disabledBackgroundColor: AppColors.surfaceLight,
-                  disabledForegroundColor: AppColors.textSecondary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                MediaQuery.paddingOf(ctx).bottom + 12,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    disabledBackgroundColor: AppColors.surfaceLight,
+                    disabledForegroundColor: AppColors.textSecondary,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                onPressed: isImported
-                    ? null
-                    : () {
-                        final imported = provider.importProgram(prog);
-                        Navigator.pop(ctx);
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              imported
-                                  ? 'Programa importado! Vá para "Minhas Fichas" para iniciar o treino.'
-                                  : 'Este programa já está em Minhas Fichas.',
-                            ),
-                            backgroundColor: imported
-                                ? Theme.of(context).colorScheme.primary
-                                : AppColors.surfaceLight,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                icon: Icon(
-                  isImported ? Icons.check_circle : Icons.download_rounded,
-                ),
-                label: Text(
-                  isImported ? 'Programa já importado' : 'Importar Este Grupo',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                  onPressed: isImported
+                      ? null
+                      : () {
+                          Navigator.pop(ctx);
+                          _importCatalogProgram(context, provider, prog);
+                        },
+                  icon: Icon(
+                    isImported ? Icons.check_circle : Icons.add_rounded,
+                  ),
+                  label: Text(
+                    isImported
+                        ? 'Programa já adicionado'
+                        : 'Adicionar programa',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _programRoutinePreview(BuildContext context, WorkoutRoutine routine) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          title: Text(
+            routine.name,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              '${routine.activitySummary} • ${routine.focus}',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.3,
+              ),
+            ),
+          ),
+          children: [
+            ...routine.exercises.map(
+              (exercise) => Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.fitness_center_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            exercise.name,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${exercise.reps} • descanso ${exercise.rest}',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ...routine.cardio.map(
+              (cardio) => Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.directions_run_rounded,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cardio.modality.label,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${cardio.plannedDurationMinutes} min${cardio.notes.isEmpty ? '' : ' • ${cardio.notes}'}',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _programBadge(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _programIcon(WorkoutProgram program) {
+    final objective = program.objective.toLowerCase();
+    if (objective.contains('adapta')) {
+      return Icons.school_rounded;
+    }
+    if (objective.contains('condicion')) {
+      return Icons.directions_run_rounded;
+    }
+    return Icons.fitness_center_rounded;
+  }
+
+  void _importCatalogProgram(
+    BuildContext context,
+    WorkoutController provider,
+    WorkoutProgram program,
+  ) {
+    final imported = provider.importProgram(program);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          imported
+              ? '${program.name} foi adicionado a Minhas Fichas.'
+              : 'Este programa já está em Minhas Fichas.',
+        ),
+        backgroundColor: imported
+            ? Theme.of(context).colorScheme.primary
+            : AppColors.surfaceLight,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

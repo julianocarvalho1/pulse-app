@@ -17,7 +17,9 @@ import 'progress_calendar_screen.dart';
 import 'workout_history_detail_screen.dart';
 
 class ProgressScreen extends ConsumerStatefulWidget {
-  const ProgressScreen({super.key});
+  const ProgressScreen({super.key, this.onBackToHome});
+
+  final VoidCallback? onBackToHome;
 
   @override
   ConsumerState<ProgressScreen> createState() => _ProgressScreenState();
@@ -57,8 +59,15 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             backgroundColor: AppColors.background,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
-            automaticallyImplyLeading: false,
-            titleSpacing: 20,
+            automaticallyImplyLeading: widget.onBackToHome == null,
+            leading: widget.onBackToHome == null
+                ? null
+                : IconButton(
+                    tooltip: 'Voltar para o início',
+                    onPressed: widget.onBackToHome,
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+            titleSpacing: widget.onBackToHome == null ? 20 : 0,
             title: const Text(
               'Progresso',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),

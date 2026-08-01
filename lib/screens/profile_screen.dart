@@ -13,8 +13,14 @@ import 'settings_screen.dart';
 import 'workout_history_detail_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key, this.onOpenWorkouts, this.onOpenProgress});
+  const ProfileScreen({
+    super.key,
+    this.onBackToHome,
+    this.onOpenWorkouts,
+    this.onOpenProgress,
+  });
 
+  final VoidCallback? onBackToHome;
   final VoidCallback? onOpenWorkouts;
   final VoidCallback? onOpenProgress;
 
@@ -66,8 +72,15 @@ class ProfileScreen extends ConsumerWidget {
             backgroundColor: AppColors.background,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
-            titleSpacing: 20,
-            automaticallyImplyLeading: false,
+            automaticallyImplyLeading: onBackToHome == null,
+            leading: onBackToHome == null
+                ? null
+                : IconButton(
+                    tooltip: 'Voltar para o início',
+                    onPressed: onBackToHome,
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
+            titleSpacing: onBackToHome == null ? 20 : 0,
             title: const Text(
               'Perfil',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),

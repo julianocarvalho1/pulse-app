@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -129,9 +131,10 @@ class _MainNavigationState extends State<MainNavigation> {
         onOpenWorkouts: () => _selectTab(1),
         onOpenProgress: () => _selectTab(2),
       ),
-      const WorkoutPlanScreen(),
-      const ProgressScreen(),
+      WorkoutPlanScreen(onBackToHome: () => _selectTab(0)),
+      ProgressScreen(onBackToHome: () => _selectTab(0)),
       ProfileScreen(
+        onBackToHome: () => _selectTab(0),
         onOpenWorkouts: () => _selectTab(1),
         onOpenProgress: () => _selectTab(2),
       ),
@@ -146,55 +149,102 @@ class _MainNavigationState extends State<MainNavigation> {
     setState(() => _index = index);
   }
 
+  Future<void> _handleSystemBack() async {
+    if (_index != 0) {
+      _selectTab(0);
+      return;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Sair do app?',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'Deseja realmente fechar o PULSE?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Sair'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldExit == true) {
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final systemUiStyle = pulseSystemUiOverlayStyle(
       Theme.of(context).brightness,
     ).copyWith(statusBarColor: Colors.transparent);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: systemUiStyle,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: IndexedStack(index: _index, children: _screens),
-        bottomNavigationBar: ColoredBox(
-          color: AppColors.surface,
-          child: SafeArea(
-            top: false,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border(top: BorderSide(color: AppColors.border)),
-              ),
-              child: NavigationBar(
-                height: 68,
-                backgroundColor: AppColors.surface,
-                indicatorColor: AppColors.primarySoft,
-                selectedIndex: _index,
-                onDestinationSelected: _selectTab,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: const <NavigationDestination>[
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Hoje',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.fitness_center_outlined),
-                    selectedIcon: Icon(Icons.fitness_center),
-                    label: 'Treinos',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.insights_outlined),
-                    selectedIcon: Icon(Icons.insights_rounded),
-                    label: 'Progresso',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.person_outline),
-                    selectedIcon: Icon(Icons.person_rounded),
-                    label: 'Perfil',
-                  ),
-                ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          unawaited(_handleSystemBack());
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: systemUiStyle,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: IndexedStack(index: _index, children: _screens),
+          bottomNavigationBar: ColoredBox(
+            color: AppColors.surface,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: NavigationBar(
+                  height: 68,
+                  backgroundColor: AppColors.surface,
+                  indicatorColor: AppColors.primarySoft,
+                  selectedIndex: _index,
+                  onDestinationSelected: _selectTab,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: const <NavigationDestination>[
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Hoje',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.fitness_center_outlined),
+                      selectedIcon: Icon(Icons.fitness_center),
+                      label: 'Treinos',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.insights_outlined),
+                      selectedIcon: Icon(Icons.insights_rounded),
+                      label: 'Progresso',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person_rounded),
+                      label: 'Perfil',
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

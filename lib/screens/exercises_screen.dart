@@ -22,6 +22,7 @@ class ExercisesScreen extends ConsumerStatefulWidget {
 
 class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   String _searchQuery = '';
+  String _selectedMuscle = 'Todos';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -497,226 +498,305 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     );
   }
 
+  Widget _buildExerciseCard(
+    BuildContext context,
+    Exercise exercise,
+    WorkoutController provider,
+  ) {
+    final muscle = ExerciseCatalog.standardizedMuscle(exercise.muscle);
+    final primary = Theme.of(context).colorScheme.primary;
+
+    void openExercise() {
+      _searchFocusNode.unfocus();
+      FocusScope.of(context).unfocus();
+
+      if (widget.isSelecting) {
+        _showExerciseConfigDialog(context, exercise, provider);
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ExerciseDetailScreen(exercise: exercise),
+        ),
+      );
+    }
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: openExercise,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 9, 8, 9),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: AppColors.border),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  ExerciseCatalog.mediaPathFor(exercise),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Icon(
+                      Icons.fitness_center_rounded,
+                      color: primary,
+                      size: 23,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      exercise.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        muscle,
+                        style: TextStyle(
+                          color: primary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (widget.isSelecting)
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: AppColors.onPrimary,
+                    size: 22,
+                  ),
+                )
+              else
+                IconButton.filledTonal(
+                  tooltip: 'Adicionar à ficha',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    _searchFocusNode.unfocus();
+                    _showRoutineSelector(context, exercise, provider);
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilters(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final filters = <String>['Todos', ..._muscleOrder];
+
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Column(
+        children: <Widget>[
+          TextField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            autofocus: false,
+            textInputAction: TextInputAction.search,
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Buscar exercício ou músculo',
+              hintStyle: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: AppColors.textSecondary,
+                size: 21,
+              ),
+              suffixIcon: _searchQuery.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Limpar busca',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        _searchController.clear();
+                        _searchFocusNode.unfocus();
+                        setState(() => _searchQuery = '');
+                      },
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+              isDense: true,
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(13),
+                borderSide: BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(13),
+                borderSide: BorderSide(color: primary, width: 1.4),
+              ),
+            ),
+            onChanged: (value) => setState(() => _searchQuery = value),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: filters.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 7),
+              itemBuilder: (context, index) {
+                final filter = filters[index];
+                final selected = filter == _selectedMuscle;
+
+                return FilterChip(
+                  selected: selected,
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 3),
+                  side: BorderSide(
+                    color: selected ? primary : AppColors.border,
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  selectedColor: primary.withValues(alpha: 0.14),
+                  label: Text(
+                    filter,
+                    style: TextStyle(
+                      color: selected ? primary : AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                    ),
+                  ),
+                  onSelected: (_) {
+                    _searchFocusNode.unfocus();
+                    setState(() => _selectedMuscle = filter);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
 
-    final allExercises =
-        workoutState.allExercises
-            .where(
-              (exercise) => ExerciseCatalog.matches(exercise, _searchQuery),
-            )
-            .toList()
-          ..sort(_compareExercises);
+    final allExercises = workoutState.allExercises.where((exercise) {
+      if (!ExerciseCatalog.matches(exercise, _searchQuery)) {
+        return false;
+      }
+
+      if (_selectedMuscle == 'Todos') {
+        return true;
+      }
+
+      return ExerciseCatalog.standardizedMuscle(exercise.muscle) ==
+          _selectedMuscle;
+    }).toList()..sort(_compareExercises);
 
     final content = Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: TextField(
-            controller: _searchController,
-            focusNode: _searchFocusNode,
-            autofocus: false,
-            style: TextStyle(color: AppColors.textPrimary),
-            decoration: InputDecoration(
-              hintText: 'Buscar por nome, alias ou músculo...',
-              hintStyle: TextStyle(color: AppColors.textSecondary),
-              prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: AppColors.textSecondary),
-                      onPressed: () {
-                        _searchController.clear();
-                        _searchFocusNode.unfocus();
-                        setState(() {
-                          _searchQuery = '';
-                        });
-                      },
-                    )
-                  : null,
-
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-          ),
-        ),
+      children: <Widget>[
+        _buildSearchAndFilters(context),
+        Divider(height: 1, color: AppColors.border),
         Expanded(
           child: allExercises.isEmpty
               ? Center(
-                  child: Text(
-                    'Nenhum exercício encontrado.',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
-                  itemCount: allExercises.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final ex = allExercises[index];
-                    final muscle = ExerciseCatalog.standardizedMuscle(
-                      ex.muscle,
-                    );
-                    final previousMuscle = index == 0
-                        ? null
-                        : ExerciseCatalog.standardizedMuscle(
-                            allExercises[index - 1].muscle,
-                          );
-                    final showHeader = muscle != previousMuscle;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showHeader)
-                          Padding(
-                            padding: EdgeInsets.only(
-                              left: 4,
-                              top: index == 0 ? 0 : 10,
-                              bottom: 8,
-                            ),
-                            child: Text(
-                              muscle.toUpperCase(),
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.9,
-                              ),
-                            ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 40,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Nenhum exercício encontrado',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
-                            leading: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).scaffoldBackgroundColor,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(9),
-                                child: Image.asset(
-                                  ExerciseCatalog.mediaPathFor(ex),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Center(
-                                        child: Icon(
-                                          Icons.fitness_center,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          size: 24,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              ex.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                                fontSize: 14,
-                              ),
-                            ),
-                            subtitle: Text(
-                              ExerciseCatalog.standardizedMuscle(
-                                ex.muscle,
-                              ).toUpperCase(),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            trailing: widget.isSelecting
-                                ? Icon(
-                                    Icons.add_circle,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  )
-                                : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.add_circle_outline,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        onPressed: () {
-                                          _searchFocusNode.unfocus();
-                                          _showRoutineSelector(
-                                            context,
-                                            ex,
-                                            provider,
-                                          );
-                                        },
-                                      ),
-                                      Icon(
-                                        Icons.chevron_right,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ],
-                                  ),
-                            onTap: () {
-                              _searchFocusNode.unfocus();
-                              FocusScope.of(context).unfocus();
-
-                              if (widget.isSelecting) {
-                                _showExerciseConfigDialog(
-                                  context,
-                                  ex,
-                                  provider,
-                                );
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ExerciseDetailScreen(exercise: ex),
-                                  ),
-                                );
-                              }
-                            },
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tente outro nome ou escolha outro grupo muscular.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
                           ),
                         ),
                       ],
-                    );
-                  },
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 96),
+                  itemCount: allExercises.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) => _buildExerciseCard(
+                    context,
+                    allExercises[index],
+                    provider,
+                  ),
                 ),
         ),
       ],
@@ -730,15 +810,26 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         : Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
+              toolbarHeight: 54,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              automaticallyImplyLeading: !widget.isSelecting,
+              leading: widget.isSelecting
+                  ? IconButton(
+                      tooltip: 'Voltar',
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                    )
+                  : null,
+              titleSpacing: 0,
               title: Text(
                 widget.isSelecting
-                    ? 'Adicionar ao Treino'
-                    : 'Biblioteca de Exercícios',
+                    ? 'Escolher exercício'
+                    : 'Biblioteca de exercícios',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
+                  fontSize: 17,
                 ),
               ),
             ),

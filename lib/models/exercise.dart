@@ -217,6 +217,10 @@ class WorkoutProgram {
     required this.name,
     required this.focus,
     required List<WorkoutRoutine> routines,
+    this.level = '',
+    this.objective = '',
+    this.recommendedFrequency = 0,
+    this.estimatedDuration = '',
   }) : routines = UnmodifiableListView<WorkoutRoutine>(
          List<WorkoutRoutine>.from(routines),
        );
@@ -225,18 +229,33 @@ class WorkoutProgram {
   final String name;
   final String focus;
   final List<WorkoutRoutine> routines;
+  final String level;
+  final String objective;
+  final int recommendedFrequency;
+  final String estimatedDuration;
+
+  int get frequencyPerWeek =>
+      recommendedFrequency > 0 ? recommendedFrequency : routines.length;
 
   WorkoutProgram copyWith({
     String? id,
     String? name,
     String? focus,
     List<WorkoutRoutine>? routines,
+    String? level,
+    String? objective,
+    int? recommendedFrequency,
+    String? estimatedDuration,
   }) {
     return WorkoutProgram(
       id: id ?? this.id,
       name: name ?? this.name,
       focus: focus ?? this.focus,
       routines: routines ?? this.routines,
+      level: level ?? this.level,
+      objective: objective ?? this.objective,
+      recommendedFrequency: recommendedFrequency ?? this.recommendedFrequency,
+      estimatedDuration: estimatedDuration ?? this.estimatedDuration,
     );
   }
 
@@ -245,6 +264,10 @@ class WorkoutProgram {
       'id': id,
       'name': name,
       'focus': focus,
+      'level': level,
+      'objective': objective,
+      'recommendedFrequency': recommendedFrequency,
+      'estimatedDuration': estimatedDuration,
       'routines': routines.map((routine) => routine.toMap()).toList(),
     };
   }
@@ -256,6 +279,10 @@ class WorkoutProgram {
       id: map['id']?.toString() ?? '',
       name: map['name']?.toString() ?? '',
       focus: map['focus']?.toString() ?? '',
+      level: map['level']?.toString() ?? '',
+      objective: map['objective']?.toString() ?? '',
+      recommendedFrequency: _readIntValue(map['recommendedFrequency']) ?? 0,
+      estimatedDuration: map['estimatedDuration']?.toString() ?? '',
       routines: rawRoutines is List
           ? rawRoutines
                 .whereType<Map>()
@@ -267,6 +294,16 @@ class WorkoutProgram {
                 .toList()
           : const <WorkoutRoutine>[],
     );
+  }
+
+  static int? _readIntValue(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
   }
 }
 
