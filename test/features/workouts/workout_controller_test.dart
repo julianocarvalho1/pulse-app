@@ -582,6 +582,46 @@ void main() {
     );
   });
 
+  test('exclui todas as fichas de um programa de uma vez', () async {
+    final secondProgramRoutine = routine.copyWith(
+      id: 'routine-2',
+      name: 'Treino B',
+      groupName: 'Outro programa',
+    );
+    final secondRoutineSameProgram = routine.copyWith(
+      id: 'routine-3',
+      name: 'Treino C',
+    );
+    final repository = _FakeWorkoutRepository(
+      routines: <WorkoutRoutine>[
+        routine,
+        secondRoutineSameProgram,
+        secondProgramRoutine,
+      ],
+      activeProgramName: 'ABC',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    controller.deleteProgram('ABC');
+    await Future<void>.delayed(Duration.zero);
+
+    final state = container.read(workoutControllerProvider);
+    expect(state.myRoutines, hasLength(1));
+    expect(state.myRoutines.single.groupName, 'Outro programa');
+    expect(state.activeProgramName, 'Outro programa');
+    expect(repository.routines, hasLength(1));
+  });
+
   test('mantém a duração do treino em um Notifier separado', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);

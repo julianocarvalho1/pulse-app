@@ -95,6 +95,10 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool('app_lock_enabled', true);
     await preferences.setString('user_name', 'Atleta');
+    await preferences.setString(
+      'user_profile_photo_path',
+      '/data/user/0/pulse/profile/foto.jpg',
+    );
 
     final bytes = await service.exportBytes();
     final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
@@ -102,6 +106,7 @@ void main() {
 
     expect(exportedPreferences['user_name'], 'Atleta');
     expect(exportedPreferences.containsKey('app_lock_enabled'), isFalse);
+    expect(exportedPreferences.containsKey('user_profile_photo_path'), isFalse);
   });
 
   test('rejeita arquivo que não pertence ao PULSE', () {

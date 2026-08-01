@@ -11,12 +11,14 @@ class UserProfile {
     required this.weightKg,
     required this.heightCm,
     required this.age,
+    this.photoPath = '',
   });
 
   final String name;
   final double weightKg;
   final double heightCm;
   final int age;
+  final String photoPath;
 
   String get displayName {
     final normalizedName = name.trim();
@@ -28,12 +30,15 @@ class UserProfile {
     double? weightKg,
     double? heightCm,
     int? age,
+    String? photoPath,
+    bool clearPhotoPath = false,
   }) {
     return UserProfile(
       name: name ?? this.name,
       weightKg: weightKg ?? this.weightKg,
       heightCm: heightCm ?? this.heightCm,
       age: age ?? this.age,
+      photoPath: clearPhotoPath ? '' : photoPath ?? this.photoPath,
     );
   }
 }

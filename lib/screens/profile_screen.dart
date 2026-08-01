@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -100,6 +102,9 @@ class ProfileScreen extends ConsumerWidget {
                     profile.displayName,
                     currentFocus,
                     completedHistoryCount,
+                    photoPath: profile.photoPath,
+                    onPhotoTap: () =>
+                        _openPhotoOptions(context, ref, profile.photoPath),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -204,6 +209,105 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openPhotoOptions(
+    BuildContext context,
+    WidgetRef ref,
+    String currentPath,
+  ) async {
+    final hasPhoto = currentPath.trim().isNotEmpty &&
+        File(currentPath).existsSync();
+    final action = await showModalBottomSheet<_ProfilePhotoAction>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          4,
+          20,
+          MediaQuery.viewPaddingOf(sheetContext).bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Foto do perfil',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'A imagem fica salva somente neste aparelho.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 14),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(hasPhoto ? 'Trocar foto' : 'Escolher foto'),
+              subtitle: const Text('Selecionar uma imagem do aparelho'),
+              onTap: () => Navigator.pop(
+                sheetContext,
+                _ProfilePhotoAction.choose,
+              ),
+            ),
+            if (hasPhoto)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.delete_outline, color: AppColors.danger),
+                title: Text(
+                  'Remover foto',
+                  style: TextStyle(color: AppColors.danger),
+                ),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _ProfilePhotoAction.remove,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null || !context.mounted) {
+      return;
+    }
+
+    final service = ref.read(profilePhotoServiceProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    try {
+      switch (action) {
+        case _ProfilePhotoAction.choose:
+          final storedPath = await service.pickAndStore(
+            currentPath: currentPath,
+          );
+          if (storedPath == null) {
+            return;
+          }
+          await controller.setProfilePhotoPath(storedPath);
+          break;
+        case _ProfilePhotoAction.remove:
+          await controller.removeProfilePhoto();
+          await service.remove(currentPath);
+          break;
+      }
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível atualizar a foto do perfil.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _historyItem(
@@ -365,8 +469,10 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context,
     String userName,
     String currentFocus,
-    int completedWorkouts,
-  ) {
+    int completedWorkouts, {
+    required String photoPath,
+    required VoidCallback onPhotoTap,
+  }) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -380,19 +486,9 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: <Widget>[
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primaryBorder),
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 36,
-            ),
+          _ProfileAvatar(
+            photoPath: photoPath,
+            onTap: onPhotoTap,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -502,6 +598,86 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+enum _ProfilePhotoAction { choose, remove }
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.photoPath, required this.onTap});
+
+  final String photoPath;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = photoPath.trim().isEmpty ? null : File(photoPath);
+    final hasPhoto = file?.existsSync() ?? false;
+
+    return Semantics(
+      button: true,
+      label: hasPhoto ? 'Trocar foto do perfil' : 'Adicionar foto ao perfil',
+      child: InkResponse(
+        onTap: onTap,
+        radius: 42,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            SizedBox(
+              width: 68,
+              height: 68,
+              child: ClipOval(
+                clipBehavior: Clip.antiAlias,
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: hasPhoto
+                      ? Image.file(
+                          file!,
+                          width: 68,
+                          height: 68,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                          filterQuality: FilterQuality.high,
+                          gaplessPlayback: true,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.person_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 36,
+                          ),
+                        )
+                      : Icon(
+                          Icons.person_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 36,
+                        ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                width: 25,
+                height: 25,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surface,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 13,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

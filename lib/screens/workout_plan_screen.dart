@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/personal_workout_import/presentation/screens/personal_workout_import_screen.dart';
 import '../features/workout_generator/presentation/screens/workout_generator_screen.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
@@ -107,7 +108,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Gere um programa completo ou monte uma ficha manualmente.',
+                'Gere, importe do personal ou monte uma ficha manualmente.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 16),
@@ -121,6 +122,22 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const WorkoutGeneratorScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _CreateOptionTile(
+                icon: Icons.assignment_ind_outlined,
+                title: 'Importar ficha do personal',
+                subtitle:
+                    'Importe DOCX, TXT, CSV ou cole o texto para revisar.',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PersonalWorkoutImportScreen(),
                     ),
                   );
                 },
@@ -260,13 +277,51 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     size: 20,
                   ),
                 ),
-                title: Text(
-                  groupName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: AppColors.textPrimary,
-                  ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        groupName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Opções do programa',
+                      color: AppColors.surface,
+                      onSelected: (value) {
+                        if (value == 'delete_program') {
+                          _confirmDeleteProgram(
+                            context,
+                            provider,
+                            groupName,
+                            groupRoutines.length,
+                          );
+                        }
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem<String>(
+                          value: 'delete_program',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.redAccent,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Excluir programa inteiro',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 subtitle: Text(
                   '${groupRoutines.length} fichas neste programa',
@@ -440,6 +495,48 @@ class WorkoutPlanScreen extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteProgram(
+    BuildContext context,
+    WorkoutController provider,
+    String groupName,
+    int routineCount,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Excluir programa inteiro?'),
+        content: Text(
+          '“$groupName” possui $routineCount ficha${routineCount == 1 ? '' : 's'}. Todas serão removidas de uma vez. O histórico dos treinos já realizados será mantido.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir programa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    provider.deleteProgram(groupName);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Programa “$groupName” excluído.'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

@@ -22,6 +22,7 @@ class PulseBackupService {
     'app_lock_enabled',
     'user_password',
     'usarBiometria',
+    'user_profile_photo_path',
   };
 
   static const Set<String> _optionalBackupTables = <String>{

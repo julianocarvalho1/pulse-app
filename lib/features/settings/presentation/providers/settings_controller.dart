@@ -1,11 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../data/profile_photo_service.dart';
 import '../../data/settings_local_service.dart';
 import '../../domain/pulse_settings.dart';
 
 final settingsLocalServiceProvider = Provider<SettingsLocalService>(
   (ref) => SettingsLocalService(),
+);
+
+final profilePhotoServiceProvider = Provider<ProfilePhotoService>(
+  (ref) => const ProfilePhotoService(),
 );
 
 final settingsControllerProvider =
@@ -105,6 +110,28 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
     );
   }
 
+  Future<void> setProfilePhotoPath(String photoPath) async {
+    final current = _currentValue;
+    if (current == null || current.profile.photoPath == photoPath) {
+      return;
+    }
+
+    await _persist(
+      current.copyWith(profile: current.profile.copyWith(photoPath: photoPath)),
+    );
+  }
+
+  Future<void> removeProfilePhoto() async {
+    final current = _currentValue;
+    if (current == null || current.profile.photoPath.isEmpty) {
+      return;
+    }
+
+    await _persist(
+      current.copyWith(profile: current.profile.copyWith(clearPhotoPath: true)),
+    );
+  }
+
   Future<void> updateProfile(UserProfile profile) async {
     final current = _currentValue;
     if (current == null) {
@@ -127,7 +154,11 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
 
   Future<void> resetToDefaults({bool clearStorage = false}) async {
     if (clearStorage) {
+      final photoPath = _currentValue?.profile.photoPath ?? '';
       await _service.clearAll();
+      if (photoPath.isNotEmpty) {
+        await ref.read(profilePhotoServiceProvider).remove(photoPath);
+      }
     }
 
     final defaults = PulseSettings.defaults();

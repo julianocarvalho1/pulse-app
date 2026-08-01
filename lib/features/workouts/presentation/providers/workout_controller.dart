@@ -144,6 +144,12 @@ class WorkoutController extends Notifier<WorkoutState> {
     ref.read(workoutLibraryControllerProvider.notifier).deleteRoutine(id);
   }
 
+  void deleteProgram(String groupName) {
+    ref
+        .read(workoutLibraryControllerProvider.notifier)
+        .deleteProgram(groupName);
+  }
+
   bool isProgramImported(WorkoutProgram program) {
     return ref
         .read(workoutCatalogControllerProvider.notifier)

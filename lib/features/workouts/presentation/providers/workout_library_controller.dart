@@ -162,6 +162,57 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
     _persist(() => _repository.saveRoutines(updatedRoutines), 'salvar fichas');
   }
 
+  void deleteProgram(String groupName) {
+    final normalizedGroup = groupName.trim();
+    if (normalizedGroup.isEmpty) {
+      return;
+    }
+
+    final updatedRoutines = state.routines
+        .where((routine) => routine.groupName != normalizedGroup)
+        .toList(growable: false);
+    if (updatedRoutines.length == state.routines.length) {
+      return;
+    }
+
+    var activeProgramName = state.activeProgramName;
+    if (activeProgramName == normalizedGroup) {
+      activeProgramName = updatedRoutines
+          .map((routine) => routine.groupName.trim())
+          .firstWhere((name) => name.isNotEmpty, orElse: () => '');
+    }
+
+    final usedExerciseIds = updatedRoutines
+        .expand((routine) => routine.exercises)
+        .map((exercise) => exercise.id)
+        .toSet();
+    final updatedCustomExercises = state.customExercises
+        .where(
+          (exercise) =>
+              !exercise.id.startsWith('custom_import_') ||
+              usedExerciseIds.contains(exercise.id),
+        )
+        .toList(growable: false);
+
+    state = state.copyWith(
+      customExercises: updatedCustomExercises,
+      routines: updatedRoutines,
+      activeProgramName: activeProgramName,
+    );
+    _persist(
+      () => _repository.saveRoutines(updatedRoutines),
+      'excluir programa',
+    );
+    _persist(
+      () => _repository.saveCustomExercises(updatedCustomExercises),
+      'limpar exercícios importados sem uso',
+    );
+    _persist(
+      () => _repository.saveActiveProgramName(activeProgramName),
+      'atualizar programa ativo',
+    );
+  }
+
   void addCatalogRoutines({
     required List<WorkoutRoutine> routines,
     required String activeProgramName,
@@ -183,6 +234,45 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
     _persist(
       () => _repository.saveActiveProgramName(activeProgramName),
       'salvar programa ativo',
+    );
+  }
+
+  void addImportedProgram(WorkoutProgram program) {
+    if (program.routines.isEmpty) {
+      return;
+    }
+
+    final importedCustomExercises = program.routines
+        .expand((routine) => routine.exercises)
+        .where((exercise) => exercise.id.startsWith('custom_import_'))
+        .toList(growable: false);
+    final customById = <String, Exercise>{
+      for (final exercise in state.customExercises) exercise.id: exercise,
+      for (final exercise in importedCustomExercises) exercise.id: exercise,
+    };
+    final updatedCustomExercises = customById.values.toList(growable: false);
+    final updatedRoutines = <WorkoutRoutine>[
+      ...state.routines,
+      ...program.routines,
+    ];
+
+    state = state.copyWith(
+      customExercises: updatedCustomExercises,
+      routines: updatedRoutines,
+      activeProgramName: program.name,
+    );
+
+    _persist(
+      () => _repository.saveCustomExercises(updatedCustomExercises),
+      'salvar exercícios importados',
+    );
+    _persist(
+      () => _repository.saveRoutines(updatedRoutines),
+      'salvar programa do personal',
+    );
+    _persist(
+      () => _repository.saveActiveProgramName(program.name),
+      'ativar programa do personal',
     );
   }
 

@@ -14,6 +14,7 @@ class SettingsLocalService {
   static const String _userWeightKey = 'user_weight';
   static const String _userHeightKey = 'user_height_cm';
   static const String _userAgeKey = 'user_age';
+  static const String _userPhotoPathKey = 'user_profile_photo_path';
 
   Future<PulseSettings> load() async {
     final preferences = await SharedPreferences.getInstance();
@@ -49,6 +50,7 @@ class SettingsLocalService {
         weightKg: _readDouble(preferences, _userWeightKey),
         heightCm: _readDouble(preferences, _userHeightKey),
         age: preferences.getInt(_userAgeKey) ?? 0,
+        photoPath: preferences.getString(_userPhotoPathKey) ?? '',
       ),
     );
   }
@@ -69,6 +71,7 @@ class SettingsLocalService {
       preferences.setDouble(_userWeightKey, settings.profile.weightKg),
       preferences.setDouble(_userHeightKey, settings.profile.heightCm),
       preferences.setInt(_userAgeKey, settings.profile.age),
+      preferences.setString(_userPhotoPathKey, settings.profile.photoPath),
     ]);
 
     await preferences.remove(_legacyVibrateAfterRestKey);

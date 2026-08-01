@@ -42,4 +42,18 @@ void main() {
 
     expect(settings.themeMode, PulseThemeMode.dark);
   });
+
+  test('persiste o caminho local da foto do perfil', () async {
+    final service = SettingsLocalService();
+    final expected = PulseSettings.defaults().copyWith(
+      profile: PulseSettings.defaults().profile.copyWith(
+        photoPath: '/data/user/0/pulse/profile/foto.jpg',
+      ),
+    );
+
+    await service.save(expected);
+    final restored = await service.load();
+
+    expect(restored.profile.photoPath, '/data/user/0/pulse/profile/foto.jpg');
+  });
 }

@@ -1,5 +1,6 @@
-plugins {
+﻿plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -17,8 +18,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.fitapp"
-
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = 36
 
         versionCode = flutter.versionCode
@@ -38,6 +38,12 @@ kotlin {
     }
 }
 
+
+dependencies {
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+}
 flutter {
     source = "../.."
 }
+
+

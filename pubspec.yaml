@@ -19,7 +19,12 @@ dependencies:
   flutter_riverpod: ^3.4.2
   sqflite: ^2.4.3
   path: ^1.9.1
+  path_provider: ^2.1.5
   file_picker: 10.3.10
+  image_picker: ^1.2.3
+  image_cropper: ^12.2.1
+  archive: ^4.0.9
+  xml: ^7.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
