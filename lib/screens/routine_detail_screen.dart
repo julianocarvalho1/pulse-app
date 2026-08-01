@@ -4,6 +4,8 @@ import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
+import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
+import '../features/workout_sharing/presentation/widgets/pulse_workout_share_sheet.dart';
 import '../theme/app_theme.dart';
 import 'routine_editor_screen.dart';
 import 'workout_session_screen.dart';
@@ -401,6 +403,18 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Compartilhar ficha',
+            icon: Icon(
+              Icons.ios_share_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () => showPulseWorkoutShareSheet(
+              context,
+              const PulseWorkoutCodec().routineDocument(routine),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Editar ficha',
             icon: Icon(
               Icons.edit,
               color: Theme.of(context).colorScheme.primary,

@@ -166,6 +166,20 @@ class WorkoutController extends Notifier<WorkoutState> {
     ref.read(workoutCatalogControllerProvider.notifier).importRoutine(routine);
   }
 
+  void addSharedContent({
+    required List<WorkoutRoutine> routines,
+    required List<Exercise> customExercises,
+    required String activeProgramName,
+  }) {
+    ref
+        .read(workoutLibraryControllerProvider.notifier)
+        .addSharedContent(
+          routines: routines,
+          customExercises: customExercises,
+          activeProgramName: activeProgramName,
+        );
+  }
+
   Future<WorkoutHistoryItem> addCardioSession({
     required CardioLog cardio,
     String? sessionName,

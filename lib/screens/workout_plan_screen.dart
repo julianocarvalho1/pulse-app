@@ -4,6 +4,9 @@ import '../models/exercise.dart';
 import '../features/personal_workout_import/presentation/screens/personal_workout_import_screen.dart';
 import '../features/workout_generator/presentation/screens/workout_generator_screen.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
+import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
+import '../features/workout_sharing/presentation/screens/pulse_workout_import_screen.dart';
+import '../features/workout_sharing/presentation/widgets/pulse_workout_share_sheet.dart';
 import '../theme/app_theme.dart';
 import 'create_routine_screen.dart';
 import 'exercises_screen.dart';
@@ -164,6 +167,29 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _CreateOptionTile(
+                icon: Icons.swap_horiz_rounded,
+                title: 'Importar arquivo do PULSE',
+                subtitle: 'Receba uma ficha ou programa compartilhado.',
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  final imported = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute<bool>(
+                      builder: (_) => const PulseWorkoutImportScreen(),
+                    ),
+                  );
+                  if ((imported ?? false) && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Conteúdo do PULSE adicionado.'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              _CreateOptionTile(
                 icon: Icons.edit_note_rounded,
                 title: 'Criar ficha manualmente',
                 subtitle: 'Escolha cada exercício e etapa de cardio.',
@@ -313,7 +339,15 @@ class WorkoutPlanScreen extends ConsumerWidget {
                       tooltip: 'Opções do programa',
                       color: AppColors.surface,
                       onSelected: (value) {
-                        if (value == 'delete_program') {
+                        if (value == 'share_program') {
+                          showPulseWorkoutShareSheet(
+                            context,
+                            const PulseWorkoutCodec().programDocument(
+                              name: groupName,
+                              routines: groupRoutines,
+                            ),
+                          );
+                        } else if (value == 'delete_program') {
                           _confirmDeleteProgram(
                             context,
                             provider,
@@ -323,6 +357,16 @@ class WorkoutPlanScreen extends ConsumerWidget {
                         }
                       },
                       itemBuilder: (_) => const [
+                        PopupMenuItem<String>(
+                          value: 'share_program',
+                          child: Row(
+                            children: [
+                              Icon(Icons.ios_share_rounded),
+                              SizedBox(width: 10),
+                              Text('Compartilhar programa'),
+                            ],
+                          ),
+                        ),
                         PopupMenuItem<String>(
                           value: 'delete_program',
                           child: Row(

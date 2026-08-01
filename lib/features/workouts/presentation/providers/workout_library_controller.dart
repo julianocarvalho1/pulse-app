@@ -187,11 +187,12 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
         .map((exercise) => exercise.id)
         .toSet();
     final updatedCustomExercises = state.customExercises
-        .where(
-          (exercise) =>
-              !exercise.id.startsWith('custom_import_') ||
-              usedExerciseIds.contains(exercise.id),
-        )
+        .where((exercise) {
+          final isImported =
+              exercise.id.startsWith('custom_import_') ||
+              exercise.id.startsWith('custom_shared_');
+          return !isImported || usedExerciseIds.contains(exercise.id);
+        })
         .toList(growable: false);
 
     state = state.copyWith(
@@ -284,6 +285,47 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
       () => _repository.saveRoutines(updatedRoutines),
       'salvar ficha importada',
     );
+  }
+
+  void addSharedContent({
+    required List<WorkoutRoutine> routines,
+    required List<Exercise> customExercises,
+    required String activeProgramName,
+  }) {
+    if (routines.isEmpty) {
+      return;
+    }
+
+    final customById = <String, Exercise>{
+      for (final exercise in state.customExercises) exercise.id: exercise,
+      for (final exercise in customExercises) exercise.id: exercise,
+    };
+    final updatedCustomExercises = customById.values.toList(growable: false);
+    final updatedRoutines = <WorkoutRoutine>[...state.routines, ...routines];
+    final resolvedActiveProgram = activeProgramName.trim().isEmpty
+        ? state.activeProgramName
+        : activeProgramName.trim();
+
+    state = state.copyWith(
+      customExercises: updatedCustomExercises,
+      routines: updatedRoutines,
+      activeProgramName: resolvedActiveProgram,
+    );
+
+    _persist(
+      () => _repository.saveCustomExercises(updatedCustomExercises),
+      'salvar exercícios recebidos',
+    );
+    _persist(
+      () => _repository.saveRoutines(updatedRoutines),
+      'salvar conteúdo compartilhado',
+    );
+    if (activeProgramName.trim().isNotEmpty) {
+      _persist(
+        () => _repository.saveActiveProgramName(resolvedActiveProgram),
+        'ativar programa compartilhado',
+      );
+    }
   }
 
   void _persist(Future<void> Function() operation, String label) {
