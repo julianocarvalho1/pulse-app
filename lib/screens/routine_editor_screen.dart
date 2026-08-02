@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/workouts/domain/models/cardio_log.dart';
-import '../features/workouts/domain/services/routine_week_progression_service.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../models/exercise.dart';
 import '../theme/app_theme.dart';
@@ -25,7 +24,6 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
   late RoutineType _type;
   late List<Exercise> _exercises;
   late List<RoutineCardio> _cardio;
-  bool _isRoutineWeekFlowOpen = false;
 
   @override
   void initState() {
@@ -138,192 +136,6 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
     setState(() => _exercises.add(selected));
   }
 
-  static const _weekProgressionService = RoutineWeekProgressionService();
-
-  List<int> get _availableRoutineWeeks =>
-      _weekProgressionService.availableWeeks(_exercises);
-
-  int get _activeRoutineWeek => _weekProgressionService.activeWeek(_exercises);
-
-  Future<void> _waitForRoutineWeekOverlayToSettle() async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    await Future<void>.delayed(Duration.zero);
-    await WidgetsBinding.instance.endOfFrame;
-    if (mounted) {
-      await Future<void>.delayed(const Duration(milliseconds: 160));
-    }
-  }
-
-  Future<void> _chooseRoutineWeek() async {
-    final weeks = _availableRoutineWeeks;
-    if (weeks.isEmpty || _isRoutineWeekFlowOpen) {
-      return;
-    }
-
-    _isRoutineWeekFlowOpen = true;
-    try {
-      final selected = await showModalBottomSheet<int>(
-        context: context,
-        useSafeArea: true,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        builder: (sheetContext) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            18,
-            20,
-            MediaQuery.paddingOf(sheetContext).bottom + 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Semana ativa da ficha',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'A escolha será aplicada a todos os exercícios periodizados.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  for (final week in weeks)
-                    ChoiceChip(
-                      label: Text('Semana $week'),
-                      selected: week == _activeRoutineWeek,
-                      onSelected: (_) => Navigator.pop(sheetContext, week),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-
-      await _waitForRoutineWeekOverlayToSettle();
-      if (selected == null || !mounted || selected == _activeRoutineWeek) {
-        return;
-      }
-      await _confirmRoutineWeekChange(selected);
-    } finally {
-      _isRoutineWeekFlowOpen = false;
-    }
-  }
-
-  Future<void> _confirmRoutineWeekChange(int targetWeek) async {
-    final changes = _weekProgressionService.describeChanges(
-      _exercises,
-      targetWeek,
-    );
-    if (changes.isEmpty) {
-      return;
-    }
-
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: Text('Usar Semana $targetWeek?'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const Text(
-                      'Confira como a prescrição da ficha será alterada:',
-                    ),
-                    const SizedBox(height: 12),
-                    for (final change in changes.take(8)) ...<Widget>[
-                      Text(
-                        change.exerciseName,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Semana ${change.fromWeek}: ${change.fromSummary}',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        'Semana ${change.toWeek}: ${change.toSummary}${change.usesFallbackWeek ? ' (última disponível)' : ''}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    if (changes.length > 8)
-                      Text(
-                        'E mais ${changes.length - 8} exercício(s).',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('CANCELAR'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('ALTERAR SEMANA'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-
-    if (!confirmed || !mounted) {
-      return;
-    }
-    setState(() {
-      _exercises = _weekProgressionService.applyWeek(_exercises, targetWeek);
-    });
-  }
-
-  Future<void> _moveRoutineWeek(int direction) async {
-    final weeks = _availableRoutineWeeks;
-    if (weeks.isEmpty || _isRoutineWeekFlowOpen) {
-      return;
-    }
-    final current = _activeRoutineWeek;
-    final currentIndex = weeks.indexWhere((week) => week == current);
-    final safeIndex = currentIndex < 0 ? 0 : currentIndex;
-    final targetIndex = (safeIndex + direction)
-        .clamp(0, weeks.length - 1)
-        .toInt();
-    final target = weeks[targetIndex];
-    if (target == current) {
-      return;
-    }
-
-    _isRoutineWeekFlowOpen = true;
-    try {
-      await _confirmRoutineWeekChange(target);
-    } finally {
-      _isRoutineWeekFlowOpen = false;
-    }
-  }
-
   Future<void> _editExercisePrescription(int index) async {
     final allExercises = ref
         .read(workoutControllerProvider.notifier)
@@ -386,9 +198,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
       return;
     }
 
-    final exercisesToSave = _availableRoutineWeeks.isEmpty
-        ? _exercises
-        : _weekProgressionService.applyWeek(_exercises, _activeRoutineWeek);
+    final exercisesToSave = _exercises;
 
     ref
         .read(workoutControllerProvider.notifier)
@@ -467,83 +277,6 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                 subtitle:
                     '${_exercises.length} exercício${_exercises.length == 1 ? '' : 's'}',
               ),
-              if (_availableRoutineWeeks.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.32),
-                    ),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      IconButton(
-                        tooltip: 'Semana anterior',
-                        onPressed:
-                            _activeRoutineWeek > _availableRoutineWeeks.first
-                            ? () => _moveRoutineWeek(-1)
-                            : null,
-                        icon: const Icon(Icons.chevron_left_rounded),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: _chooseRoutineWeek,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Column(
-                              children: <Widget>[
-                                Text(
-                                  'SEMANA ATIVA DA FICHA',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Semana $_activeRoutineWeek de ${_availableRoutineWeeks.last}',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                Text(
-                                  'Toque para escolher',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Próxima semana',
-                        onPressed:
-                            _activeRoutineWeek < _availableRoutineWeeks.last
-                            ? () => _moveRoutineWeek(1)
-                            : null,
-                        icon: const Icon(Icons.chevron_right_rounded),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
               const SizedBox(height: 10),
               if (_exercises.isEmpty)
                 const _EmptyBlock(
@@ -591,16 +324,14 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                           subtitle: Text(
                             exercise.advancedPrescription.isEmpty
                                 ? '${exercise.reps} • ${exercise.rest}'
-                                : '${exercise.advancedPrescription.summary}\nToque para editar séries, semanas e técnicas',
+                                : '${exercise.advancedPrescription.summary}\nToque para editar séries, RIR, cadência e técnicas',
                           ),
                           isThreeLine: !exercise.advancedPrescription.isEmpty,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               Icon(
-                                exercise.advancedPrescription.isEmpty
-                                    ? Icons.tune_rounded
-                                    : Icons.event_repeat_rounded,
+                                Icons.tune_rounded,
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                               IconButton(

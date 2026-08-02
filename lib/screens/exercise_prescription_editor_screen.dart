@@ -24,8 +24,7 @@ class _ExercisePrescriptionEditorScreenState
     extends State<ExercisePrescriptionEditorScreen> {
   late List<WorkoutWeekPrescription> _weeks;
   late List<ExerciseAlternative> _alternatives;
-  late int _activeWeek;
-  late int _selectedWeek;
+  late int _storedActiveWeek;
 
   @override
   void initState() {
@@ -33,12 +32,11 @@ class _ExercisePrescriptionEditorScreenState
     final existing = widget.exercise.advancedPrescription;
     if (existing.weeks.isEmpty) {
       _weeks = <WorkoutWeekPrescription>[_legacyWeek(widget.exercise)];
-      _activeWeek = 1;
-      _selectedWeek = 1;
+      _storedActiveWeek = 1;
     } else {
-      _weeks = List<WorkoutWeekPrescription>.from(existing.weeks);
-      _activeWeek = existing.activeWeek.clamp(1, _weeks.length).toInt();
-      _selectedWeek = _activeWeek;
+      _weeks = List<WorkoutWeekPrescription>.from(existing.weeks)
+        ..sort((a, b) => a.weekNumber.compareTo(b.weekNumber));
+      _storedActiveWeek = existing.activeWeek;
     }
     _alternatives = List<ExerciseAlternative>.from(existing.alternatives);
   }
@@ -74,10 +72,7 @@ class _ExercisePrescriptionEditorScreenState
     return normalized;
   }
 
-  WorkoutWeekPrescription get _currentWeek => _weeks.firstWhere(
-    (week) => week.weekNumber == _selectedWeek,
-    orElse: () => _weeks.first,
-  );
+  WorkoutWeekPrescription get _currentWeek => _weeks.first;
 
   void _replaceCurrentWeek(WorkoutWeekPrescription updated) {
     setState(() {
@@ -88,91 +83,6 @@ class _ExercisePrescriptionEditorScreenState
         _weeks[index] = updated;
       }
     });
-  }
-
-  void _changeWeekCount(int nextCount) {
-    final safeCount = nextCount.clamp(1, 12).toInt();
-    setState(() {
-      if (safeCount > _weeks.length) {
-        final template = _weeks.last;
-        for (var number = _weeks.length + 1; number <= safeCount; number++) {
-          _weeks.add(
-            template.copyWith(
-              weekNumber: number,
-              label: '',
-              sets: <WorkoutSetPrescription>[
-                for (var index = 0; index < template.sets.length; index++)
-                  template.sets[index].copyWith(setNumber: index + 1),
-              ],
-            ),
-          );
-        }
-      } else if (safeCount < _weeks.length) {
-        _weeks = _weeks.take(safeCount).toList();
-        if (_selectedWeek > safeCount) {
-          _selectedWeek = safeCount;
-        }
-        if (_activeWeek > safeCount) {
-          _activeWeek = safeCount;
-        }
-      }
-    });
-  }
-
-  Future<void> _editWeekDetails() async {
-    final week = _currentWeek;
-    final labelController = TextEditingController(text: week.label);
-    final notesController = TextEditingController(text: week.notes);
-    final result = await showDialog<WorkoutWeekPrescription>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Semana ${week.weekNumber}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                controller: labelController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome opcional',
-                  hintText: 'Ex.: Acúmulo, Deload, Intensificação',
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: notesController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Orientações da semana',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CANCELAR'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(
-              dialogContext,
-              week.copyWith(
-                label: labelController.text.trim(),
-                notes: notesController.text.trim(),
-              ),
-            ),
-            child: const Text('SALVAR'),
-          ),
-        ],
-      ),
-    );
-    labelController.dispose();
-    notesController.dispose();
-    if (result != null && mounted) {
-      _replaceCurrentWeek(result);
-    }
   }
 
   Future<void> _editSet(int index) async {
@@ -452,7 +362,7 @@ class _ExercisePrescriptionEditorScreenState
 
   void _save() {
     final prescription = AdvancedExercisePrescription(
-      activeWeek: _activeWeek,
+      activeWeek: _storedActiveWeek,
       weeks: _weeks,
       alternatives: _alternatives,
     );
@@ -469,7 +379,7 @@ class _ExercisePrescriptionEditorScreenState
           builder: (dialogContext) => AlertDialog(
             title: const Text('Usar prescrição simples?'),
             content: const Text(
-              'A periodização, os detalhes por série e as alternativas serão removidos. Séries e repetições simples continuarão preservadas.',
+              'Os detalhes por série, RIR, cadência, técnicas e alternativas serão removidos. Séries e repetições simples continuarão preservadas.',
             ),
             actions: <Widget>[
               TextButton(
@@ -504,7 +414,7 @@ class _ExercisePrescriptionEditorScreenState
         backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
         title: const Text(
-          'Prescrição avançada',
+          'Detalhes da prescrição',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: <Widget>[
@@ -546,117 +456,17 @@ class _ExercisePrescriptionEditorScreenState
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        'Quantidade de semanas',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _weeks.length > 1
-                          ? () => _changeWeekCount(_weeks.length - 1)
-                          : null,
-                      icon: const Icon(Icons.remove_circle_outline_rounded),
-                    ),
-                    Text(
-                      '${_weeks.length}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _weeks.length < 12
-                          ? () => _changeWeekCount(_weeks.length + 1)
-                          : null,
-                      icon: const Icon(Icons.add_circle_outline_rounded),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'SEMANA EM EDIÇÃO',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: <Widget>[
-                for (final item in _weeks)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      selected: item.weekNumber == _selectedWeek,
-                      label: Text('${item.weekNumber}'),
-                      onSelected: (_) {
-                        setState(() => _selectedWeek = item.weekNumber);
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: primary.withValues(alpha: 0.28)),
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  week.weekNumber == _activeWeek
-                      ? Icons.calendar_month_rounded
-                      : Icons.edit_calendar_rounded,
-                  color: primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        week.displayName,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        week.weekNumber == _activeWeek
-                            ? 'Semana ativa atual. A troca é feita na tela da ficha.'
-                            : 'Edite a prescrição aqui e escolha a semana ativa na tela da ficha.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Configure cada série com alvo, descanso, RIR, cadência e técnica. Você também pode indicar exercícios alternativos.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.4,
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Editar nome e orientações',
-                  onPressed: _editWeekDetails,
-                  icon: const Icon(Icons.edit_note_rounded),
-                ),
               ],
             ),
           ),
-          if (week.notes.trim().isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(
-              week.notes,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-          ],
           const SizedBox(height: 20),
           Row(
             children: <Widget>[

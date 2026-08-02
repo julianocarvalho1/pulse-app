@@ -590,7 +590,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   }
 
   List<ActiveWorkoutSet> _prescribedSetsForExercise(Exercise exercise) {
-    final advancedWeek = exercise.advancedPrescription.activePrescription;
+    final advancedWeek = exercise.advancedPrescription.primaryPrescription;
     if (advancedWeek != null && advancedWeek.sets.isNotEmpty) {
       return <ActiveWorkoutSet>[
         for (var index = 0; index < advancedWeek.sets.length; index++)

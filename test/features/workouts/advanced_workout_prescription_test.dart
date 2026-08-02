@@ -100,4 +100,24 @@ void main() {
       contains('Halteres'),
     );
   });
+  test(
+    'prescrição principal usa a primeira configuração sem apagar as demais',
+    () {
+      final restored = AdvancedExercisePrescription.fromMap(
+        prescription.toMap(),
+      );
+
+      expect(restored.primaryPrescription?.weekNumber, 1);
+      expect(restored.primaryPrescription?.label, 'Acúmulo');
+      expect(restored.primaryPrescription?.sets.single.target, '10–12 reps');
+      expect(restored.weeks, hasLength(2));
+      expect(restored.activeWeek, 2);
+    },
+  );
+
+  test('resumo simplificado não expõe planejamento por semanas', () {
+    expect(prescription.summary, contains('1 série detalhada'));
+    expect(prescription.summary, contains('1 alternativa'));
+    expect(prescription.summary.toLowerCase(), isNot(contains('semana')));
+  });
 }

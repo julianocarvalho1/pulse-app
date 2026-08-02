@@ -245,14 +245,25 @@ class AdvancedExercisePrescription {
     );
   }
 
+  /// Prescrição principal usada enquanto o planejamento por semanas
+  /// permanece oculto no aplicativo. As demais semanas continuam preservadas
+  /// para compatibilidade com backups e arquivos antigos.
+  WorkoutWeekPrescription? get primaryPrescription {
+    if (weeks.isEmpty) {
+      return null;
+    }
+    final ordered = List<WorkoutWeekPrescription>.from(weeks)
+      ..sort((a, b) => a.weekNumber.compareTo(b.weekNumber));
+    return ordered.first;
+  }
+
   String get summary {
     final parts = <String>[];
-    if (weeks.isNotEmpty) {
-      parts.add('${weeks.length} semana${weeks.length == 1 ? '' : 's'}');
-      final setCount = activePrescription?.sets.length ?? 0;
-      if (setCount > 0) {
-        parts.add('$setCount série${setCount == 1 ? '' : 's'} na semana ativa');
-      }
+    final setCount = primaryPrescription?.sets.length ?? 0;
+    if (setCount > 0) {
+      parts.add(
+        '$setCount série${setCount == 1 ? '' : 's'} detalhada${setCount == 1 ? '' : 's'}',
+      );
     }
     if (alternatives.isNotEmpty) {
       parts.add(

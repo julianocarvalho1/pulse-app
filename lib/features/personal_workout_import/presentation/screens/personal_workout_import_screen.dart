@@ -178,7 +178,7 @@ class _PersonalWorkoutImportScreenState
                   icon: Icons.auto_awesome_motion_outlined,
                   title: 'Estruturas avançadas',
                   text:
-                      'São reconhecidos bi-sets com “+”, alternativas com “\\” ou “ / ”, prescrições como 2x12/2x10/1x8, máximo, passos, tempo, RIR, técnicas e planejamento por semanas. Itens ambíguos ficam marcados para revisão.',
+                      'São reconhecidos bi-sets com “+”, alternativas com “\\” ou “ / ”, prescrições como 2x12/2x10/1x8, máximo, passos, tempo, RIR e técnicas. Itens ambíguos ficam marcados para revisão.',
                 ),
                 SizedBox(height: 16),
                 _FormatGuideSection(

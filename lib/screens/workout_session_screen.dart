@@ -2246,17 +2246,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                     runSpacing: 6,
                                     children: <Widget>[
                                       if (ex
-                                          .advancedPrescription
-                                          .weeks
-                                          .isNotEmpty)
-                                        _advancedPrescriptionChip(
-                                          context,
-                                          Icons.calendar_month_rounded,
-                                          'Semana ${ex.advancedPrescription.activeWeek}',
-                                        ),
-                                      if (ex
                                               .advancedPrescription
-                                              .activePrescription
+                                              .primaryPrescription
                                               ?.sets
                                               .any(
                                                 (set) =>
@@ -2271,7 +2262,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ),
                                       if (ex
                                               .advancedPrescription
-                                              .activePrescription
+                                              .primaryPrescription
                                               ?.sets
                                               .any(
                                                 (set) => set.cadence
