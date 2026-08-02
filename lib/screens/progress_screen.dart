@@ -81,20 +81,30 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 6,
+                  vertical: 8,
                 ),
-                child: Row(
-                  children: List.generate(
-                    _tabs.length,
-                    (index) => Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          right: index == _tabs.length - 1 ? 0 : 10,
-                        ),
-                        child: _tabItem(_tabs[index], index),
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(child: _tabItem(_tabs[0], 0)),
+                          const SizedBox(width: 8),
+                          Expanded(child: _tabItem(_tabs[1], 1)),
+                        ],
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(child: _tabItem(_tabs[2], 2)),
+                          const SizedBox(width: 8),
+                          Expanded(child: _tabItem(_tabs[3], 3)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1440,9 +1450,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          height: 42,
+          height: 40,
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: active ? primary.withValues(alpha: 0.12) : AppColors.surface,
             borderRadius: BorderRadius.circular(999),
@@ -1456,9 +1466,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             label,
             textAlign: TextAlign.center,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: active ? FontWeight.w700 : FontWeight.w600,
               color: active ? primary : AppColors.textSecondary,
             ),
@@ -2142,10 +2151,10 @@ class _ProgressTabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
   @override
-  double get minExtent => 54;
+  double get minExtent => 104;
 
   @override
-  double get maxExtent => 54;
+  double get maxExtent => 104;
 
   @override
   Widget build(

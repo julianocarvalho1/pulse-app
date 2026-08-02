@@ -2305,26 +2305,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
                               Padding(
                                 padding: const EdgeInsets.only(
-                                  left: 16,
-                                  right: 16,
+                                  left: 12,
+                                  right: 8,
                                   top: 12,
-                                  bottom: 2,
+                                  bottom: 4,
                                 ),
                                 child: Row(
                                   children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'Série',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.bold,
+                                    SizedBox(
+                                      width: 38,
+                                      child: Center(
+                                        child: Text(
+                                          'Série',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 6),
                                     Expanded(
-                                      flex: 4,
                                       child: Center(
                                         child: Text(
                                           'Carga (kg)',
@@ -2336,8 +2338,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
                                     Expanded(
-                                      flex: 4,
                                       child: Center(
                                         child: Text(
                                           'Reps',
@@ -2349,10 +2351,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ),
                                       ),
                                     ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Align(
-                                        alignment: Alignment.centerRight,
+                                    const SizedBox(width: 6),
+                                    SizedBox(
+                                      width: 30,
+                                      child: Center(
                                         child: Icon(
                                           Icons.check,
                                           size: 14,
@@ -2366,7 +2368,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
                               Padding(
                                 padding: const EdgeInsets.only(
-                                  left: 16,
+                                  left: 12,
                                   right: 8,
                                   bottom: 8,
                                 ),
@@ -2407,91 +2409,82 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       }
 
                                       return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 2.0,
+                                        padding: EdgeInsets.only(
+                                          bottom: setIndex == sets.length - 1
+                                              ? 0
+                                              : 5,
                                         ),
                                         child: Row(
                                           children: [
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                '${setIndex + 1}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  color: isCompleted
-                                                      ? Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary
-                                                      : AppColors.textPrimary,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: 4,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 2,
-                                                    ),
-                                                child: _buildInputForm(
-                                                  context,
-                                                  _weightControllers[index]![setIndex],
-                                                  'kg',
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: 4,
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 2,
-                                                    ),
-                                                child: _buildInputForm(
-                                                  context,
-                                                  _repsControllers[index]![setIndex],
-                                                  smartTarget,
-                                                  isReps: true,
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: 1,
-                                              child: Align(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                child: Transform.scale(
-                                                  scale: 1.0,
-                                                  child: Checkbox(
-                                                    value: isCompleted,
-                                                    activeColor: Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
-                                                    checkColor:
-                                                        AppColors.onPrimary,
-                                                    side: BorderSide(
-                                                      color: AppColors.border,
-                                                      width: 1.5,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            4,
-                                                          ),
-                                                    ),
-                                                    onChanged: (val) {
-                                                      _handleSetChanged(
-                                                        provider: provider,
-                                                        exercises: exercises,
-                                                        exerciseIndex: index,
-                                                        setIndex: setIndex,
-                                                        isCompleted:
-                                                            val ?? false,
-                                                      );
-                                                    },
+                                            SizedBox(
+                                              width: 38,
+                                              child: Center(
+                                                child: Text(
+                                                  '${setIndex + 1}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                    color: isCompleted
+                                                        ? Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary
+                                                        : AppColors.textPrimary,
+                                                    fontSize: 14,
                                                   ),
                                                 ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: _buildInputForm(
+                                                context,
+                                                _weightControllers[index]![setIndex],
+                                                'kg',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: _buildInputForm(
+                                                context,
+                                                _repsControllers[index]![setIndex],
+                                                smartTarget,
+                                                isReps: true,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            SizedBox(
+                                              width: 30,
+                                              height: 30,
+                                              child: Checkbox(
+                                                value: isCompleted,
+                                                activeColor: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                checkColor: AppColors.onPrimary,
+                                                materialTapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                visualDensity:
+                                                    const VisualDensity(
+                                                      horizontal: -4,
+                                                      vertical: -4,
+                                                    ),
+                                                side: BorderSide(
+                                                  color: AppColors.border,
+                                                  width: 1.5,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                onChanged: (val) {
+                                                  _handleSetChanged(
+                                                    provider: provider,
+                                                    exercises: exercises,
+                                                    exerciseIndex: index,
+                                                    setIndex: setIndex,
+                                                    isCompleted: val ?? false,
+                                                  );
+                                                },
                                               ),
                                             ),
                                           ],

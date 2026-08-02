@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Variante escura da splash técnica. -->
-    <color name="splash_background">#0F0F12</color>
+    <color name="splash_background">#06130F</color>
 </resources>

@@ -315,14 +315,22 @@ class WorkoutPlanScreen extends ConsumerWidget {
     List<Widget> listItems = [];
 
     groupedRoutines.forEach((groupName, groupRoutines) {
+      final primary = Theme.of(context).colorScheme.primary;
+      final isActiveProgram = provider.activeProgramName == groupName;
+
       listItems.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 14),
           child: Material(
             color: AppColors.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: BorderSide(color: AppColors.border),
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(
+                color: isActiveProgram
+                    ? AppColors.primaryBorder
+                    : AppColors.border,
+                width: isActiveProgram ? 1.5 : 1,
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: Theme(
@@ -331,44 +339,70 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 tilePadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
+                  horizontal: 14,
+                  vertical: 8,
                 ),
                 childrenPadding: const EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  top: 2,
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
                 ),
                 collapsedIconColor: AppColors.textSecondary,
-                iconColor: Theme.of(context).colorScheme.primary,
+                iconColor: primary,
                 leading: Container(
-                  width: 42,
-                  height: 42,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        primary.withValues(alpha: 0.22),
+                        primary.withValues(alpha: 0.09),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(color: primary.withValues(alpha: 0.12)),
                   ),
-                  child: Icon(
-                    Icons.folder,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 20,
-                  ),
+                  child: Icon(Icons.folder_rounded, color: primary, size: 22),
                 ),
                 title: Row(
-                  children: [
+                  children: <Widget>[
                     Expanded(
                       child: Text(
                         groupName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
+                          height: 1.15,
                           color: AppColors.textPrimary,
                         ),
                       ),
                     ),
+                    if (isActiveProgram) ...<Widget>[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'ATIVO',
+                          style: TextStyle(
+                            color: primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.45,
+                          ),
+                        ),
+                      ),
+                    ],
                     PopupMenuButton<String>(
                       tooltip: 'Opções do programa',
                       color: AppColors.surface,
@@ -390,11 +424,11 @@ class WorkoutPlanScreen extends ConsumerWidget {
                           );
                         }
                       },
-                      itemBuilder: (_) => const [
+                      itemBuilder: (_) => const <PopupMenuEntry<String>>[
                         PopupMenuItem<String>(
                           value: 'share_program',
                           child: Row(
-                            children: [
+                            children: <Widget>[
                               Icon(Icons.ios_share_rounded),
                               SizedBox(width: 10),
                               Text('Compartilhar programa'),
@@ -404,7 +438,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                         PopupMenuItem<String>(
                           value: 'delete_program',
                           child: Row(
-                            children: [
+                            children: <Widget>[
                               Icon(
                                 Icons.delete_outline_rounded,
                                 color: Colors.redAccent,
@@ -421,11 +455,24 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                subtitle: Text(
-                  '${groupRoutines.length} fichas neste programa',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Row(
+                    children: <Widget>[
+                      Icon(
+                        Icons.view_agenda_outlined,
+                        size: 14,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${groupRoutines.length} fichas neste programa',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 children: groupRoutines
@@ -447,14 +494,8 @@ class WorkoutPlanScreen extends ConsumerWidget {
 
     for (var routine in looseRoutines) {
       listItems.add(
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
           child: _buildRoutineTile(
             context,
             provider,
@@ -477,8 +518,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
     WorkoutRoutine routine, {
     required bool isInsideGroup,
   }) {
-    final subtitleText =
-        '${routine.typeLabel} • ${routine.activitySummary} • ${routine.focus}';
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Dismissible(
       key: Key(routine.id),
@@ -488,9 +528,13 @@ class WorkoutPlanScreen extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
           color: Colors.redAccent,
-          borderRadius: BorderRadius.circular(isInsideGroup ? 14 : 0),
+          borderRadius: BorderRadius.circular(isInsideGroup ? 15 : 0),
         ),
-        child: Icon(Icons.delete_sweep, color: AppColors.textPrimary, size: 28),
+        child: const Icon(
+          Icons.delete_sweep_rounded,
+          color: Colors.white,
+          size: 28,
+        ),
       ),
       onDismissed: (direction) {
         provider.deleteRoutine(routine.id);
@@ -503,78 +547,102 @@ class WorkoutPlanScreen extends ConsumerWidget {
         );
       },
       child: Padding(
-        padding: EdgeInsets.only(top: isInsideGroup ? 10.0 : 0),
+        padding: EdgeInsets.only(top: isInsideGroup ? 8 : 0),
         child: Container(
           decoration: BoxDecoration(
-            color: isInsideGroup
-                ? Color.alphaBlend(
-                    AppColors.surfaceLight.withValues(alpha: 0.55),
-                    AppColors.surface,
+            gradient: isInsideGroup
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: <Color>[
+                      AppColors.surfaceLight,
+                      Color.alphaBlend(
+                        primary.withValues(alpha: 0.035),
+                        AppColors.surface,
+                      ),
+                    ],
                   )
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
+                : null,
+            color: isInsideGroup ? null : AppColors.surface,
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: isInsideGroup
-                  ? AppColors.border.withValues(alpha: 0.72)
+                  ? AppColors.primaryBorder.withValues(alpha: 0.72)
                   : AppColors.border,
             ),
           ),
           child: ListTile(
-            minVerticalPadding: 10,
-            contentPadding: isInsideGroup
-                ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
-                : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            minVerticalPadding: 8,
+            contentPadding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
             leading: Container(
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: isInsideGroup
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.12)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.15),
+                color: primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                _routineIcon(routine.type),
-                color: Theme.of(context).colorScheme.primary,
-                size: 21,
-              ),
+              child: Icon(_routineIcon(routine.type), color: primary, size: 21),
             ),
             title: Text(
               routine.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize: 15,
+                fontSize: 14.5,
+                height: 1.15,
                 color: AppColors.textPrimary,
               ),
             ),
             subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: isInsideGroup
-                  ? Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _buildRoutineMetaChip(context, routine.typeLabel),
-                        _buildRoutineMetaChip(context, routine.activitySummary),
-                        _buildRoutineMetaChip(context, routine.focus),
-                      ],
-                    )
-                  : Text(
-                      subtitleText,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
+              padding: const EdgeInsets.only(top: 7),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 5,
+                    children: <Widget>[
+                      _buildRoutineMetaChip(routine.typeLabel),
+                      _buildRoutineMetaChip(routine.activitySummary),
+                    ],
+                  ),
+                  if (routine.focus.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1),
+                            child: Icon(
+                              Icons.center_focus_strong_outlined,
+                              size: 13,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              routine.focus,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11.5,
+                                height: 1.18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                ],
+              ),
             ),
             trailing: PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
+              tooltip: 'Opções da ficha',
+              icon: Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
               color: AppColors.surface,
               onSelected: (value) {
                 if (value == 'view') {
@@ -595,22 +663,22 @@ class WorkoutPlanScreen extends ConsumerWidget {
                   provider.deleteRoutine(routine.id);
                 }
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(
+              itemBuilder: (context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
                   value: 'view',
                   child: Text(
                     'Ver detalhes',
                     style: TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
-                PopupMenuItem(
+                PopupMenuItem<String>(
                   value: 'edit',
                   child: Text(
                     'Editar',
                     style: TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
-                const PopupMenuItem(
+                const PopupMenuItem<String>(
                   value: 'delete',
                   child: Text(
                     'Excluir',
@@ -633,20 +701,20 @@ class WorkoutPlanScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRoutineMetaChip(BuildContext context, String label) {
+  Widget _buildRoutineMetaChip(String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.45),
+        color: AppColors.background.withValues(alpha: 0.38),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.75)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.70)),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: AppColors.textSecondary,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
           height: 1,
         ),
       ),

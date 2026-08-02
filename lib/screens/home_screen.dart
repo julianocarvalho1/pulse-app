@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import '../features/settings/presentation/providers/settings_controller.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../models/exercise.dart';
 import 'cardio_entry_screen.dart';
 import 'workout_session_screen.dart';
+import 'workout_history_detail_screen.dart';
 import 'workout_plan_screen.dart';
 import 'routine_detail_screen.dart';
 import 'settings_screen.dart';
@@ -559,6 +561,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final rotinaDoDia =
         provider.nextRoutineToTrain ??
         (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
+    final latestActivity = history.isEmpty ? null : history.first;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1153,6 +1156,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'ATIVIDADE RECENTE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _RecentActivityCard(
+                    workout: latestActivity,
+                    onTap: () {
+                      if (latestActivity != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (_) => WorkoutHistoryDetailScreen(
+                              workout: latestActivity,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final openWorkouts = widget.onOpenWorkouts;
+                      if (openWorkouts != null) {
+                        openWorkouts();
+                        return;
+                      }
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => const WorkoutPlanScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -1256,6 +1299,167 @@ class _HomeQuickActionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _RecentActivityCard extends StatelessWidget {
+  const _RecentActivityCard({required this.workout, required this.onTap});
+
+  final WorkoutHistoryItem? workout;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final item = workout;
+    final isEmpty = item == null;
+    late final IconData icon;
+    late final String title;
+    late final String subtitle;
+    late final String eyebrow;
+
+    if (item == null) {
+      icon = Icons.history_toggle_off_rounded;
+      title = 'Seu histórico começa aqui';
+      subtitle =
+          'Conclua um treino ou registre um cardio para acompanhar sua evolução.';
+      eyebrow = 'PRÓXIMO PASSO';
+    } else {
+      icon = item.isCardioOnly
+          ? Icons.directions_run_rounded
+          : item.isMixedSession
+          ? Icons.sports_gymnastics_rounded
+          : Icons.fitness_center_rounded;
+      title = item.routineName;
+      subtitle = _activitySummary(item);
+      eyebrow =
+          'ÚLTIMA ATIVIDADE • ${DateFormat('dd/MM • HH:mm').format(item.date)}';
+    }
+
+    final accent = item?.isIncomplete == true ? AppColors.warning : primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(17),
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 108),
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: <Color>[
+                Color.alphaBlend(
+                  accent.withValues(alpha: 0.10),
+                  AppColors.surface,
+                ),
+                AppColors.surface,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(
+              color: Color.alphaBlend(
+                accent.withValues(alpha: 0.25),
+                AppColors.border,
+              ),
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: accent, size: 23),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      eyebrow,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isEmpty
+                      ? Icons.arrow_forward_rounded
+                      : Icons.chevron_right_rounded,
+                  color: accent,
+                  size: 19,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _activitySummary(WorkoutHistoryItem item) {
+    final details = <String>[];
+
+    if (item.isCardioOnly) {
+      details.add('${item.totalCardioMinutes} min de cardio');
+    } else {
+      details.add('${item.totalExercises} exercícios');
+      details.add('${item.totalSets} séries');
+      if (item.isMixedSession && item.totalCardioMinutes > 0) {
+        details.add('${item.totalCardioMinutes} min cardio');
+      }
+    }
+
+    if (item.duration.trim().isNotEmpty) {
+      details.add(item.duration);
+    }
+
+    return details.join(' • ');
   }
 }
 

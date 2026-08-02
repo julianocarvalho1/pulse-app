@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Cor nativa exibida antes do primeiro frame do Flutter. -->
-    <color name="splash_background">#F2F5F7</color>
+    <color name="splash_background">#06130F</color>
 </resources>
