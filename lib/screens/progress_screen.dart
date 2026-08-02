@@ -55,7 +55,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             pinned: true,
             floating: true,
             snap: true,
-            toolbarHeight: 60,
+            toolbarHeight: 56,
             backgroundColor: AppColors.background,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
@@ -70,7 +70,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             titleSpacing: widget.onBackToHome == null ? 20 : 0,
             title: const Text(
               'Progresso',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
           ),
           SliverPersistentHeader(

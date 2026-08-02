@@ -168,6 +168,7 @@ class _PulseWorkoutImportScreenState
         ),
       ),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: EdgeInsets.fromLTRB(
           20,
           14,

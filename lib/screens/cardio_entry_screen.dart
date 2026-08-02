@@ -187,6 +187,7 @@ class _CardioEntryScreenState extends ConsumerState<CardioEntryScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(
               20,
               10,

@@ -596,6 +596,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _pageContainer({required List<Widget> children}) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 620),

@@ -109,6 +109,8 @@ class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
           children: [
             Expanded(
               child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   _IntroCard(),
@@ -551,6 +553,7 @@ class _ExerciseSearchDelegate extends SearchDelegate<Exercise?> {
   Widget _buildList(BuildContext context) {
     final items = _matches();
     return ListView.separated(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: items.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {

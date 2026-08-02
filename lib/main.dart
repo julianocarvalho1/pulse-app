@@ -85,6 +85,11 @@ class _PulseAppState extends ConsumerState<PulseApp>
         theme: buildPulseLightTheme(selectedPalette.lightPrimary),
         darkTheme: buildPulseDarkTheme(selectedPalette.darkPrimary),
         themeMode: materialThemeMode,
+        builder: (context, child) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child ?? const SizedBox.shrink(),
+        ),
         home: const PulseStartupSplash(
           child: AuthGate(child: OnboardingGate(child: MainNavigation())),
         ),
@@ -121,6 +126,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _index = 0;
+  bool _isExitDialogOpen = false;
   late final List<Widget> _screens;
 
   @override
@@ -154,37 +160,45 @@ class _MainNavigationState extends State<MainNavigation> {
       _selectTab(0);
       return;
     }
+    if (_isExitDialogOpen || !mounted) {
+      return;
+    }
 
-    final shouldExit = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(
-          'Sair do app?',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
+    _isExitDialogOpen = true;
+    try {
+      final shouldExit = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Sair do app?',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
           ),
+          content: Text(
+            'Deseja realmente fechar o PULSE?',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sair'),
+            ),
+          ],
         ),
-        content: Text(
-          'Deseja realmente fechar o PULSE?',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Sair'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (shouldExit == true) {
-      SystemNavigator.pop();
+      if (shouldExit == true) {
+        SystemNavigator.pop();
+      }
+    } finally {
+      _isExitDialogOpen = false;
     }
   }
 

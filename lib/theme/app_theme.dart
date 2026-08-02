@@ -32,13 +32,13 @@ class AppColors {
   /// Grafite escuro, sem usar preto quase absoluto. Mantém contraste e
   /// reduz a sensação de tela excessivamente fechada durante o treino.
   static const _PulseColorSet _dark = _PulseColorSet(
-    background: Color(0xFF17191D),
-    surface: Color(0xFF202329),
-    surfaceLight: Color(0xFF2A2E35),
-    border: Color(0xFF3A4049),
-    textPrimary: Color(0xFFF5F7FA),
-    textSecondary: Color(0xFFB8C0CB),
-    textMuted: Color(0xFF8C96A3),
+    background: Color(0xFF1E2228),
+    surface: Color(0xFF272C34),
+    surfaceLight: Color(0xFF323844),
+    border: Color(0xFF4A5360),
+    textPrimary: Color(0xFFF6F8FB),
+    textSecondary: Color(0xFFC8D0DA),
+    textMuted: Color(0xFF9CA7B4),
   );
 
   /// Neutros frios e menos contrastados para evitar o aspecto estourado no

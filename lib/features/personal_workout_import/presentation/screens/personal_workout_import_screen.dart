@@ -155,6 +155,7 @@ class _PersonalWorkoutImportScreenState
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
@@ -223,6 +224,7 @@ class _PersonalWorkoutImportScreenState
       body: SafeArea(
         top: false,
         child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             20,
             12,

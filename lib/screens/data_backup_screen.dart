@@ -38,6 +38,7 @@ class _DataBackupScreenState extends ConsumerState<DataBackupScreen> {
         ),
       ),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
         children: [
           _informationCard(context),

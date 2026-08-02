@@ -92,6 +92,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

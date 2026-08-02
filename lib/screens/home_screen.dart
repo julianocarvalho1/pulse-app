@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -561,461 +560,177 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         provider.nextRoutineToTrain ??
         (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) {
-          return;
-        }
-        final shouldExit = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: Text(
-              'Sair do App?',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            content: Text(
-              'Deseja realmente fechar o aplicativo?',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(
-                  'Cancelar',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                ),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(
-                  'Sair',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-        if (shouldExit ?? false) {
-          SystemNavigator.pop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-          slivers: [
-            SliverAppBar(
-              primary: true,
-              floating: true,
-              snap: true,
-              pinned: true,
-              toolbarHeight: 56,
-              surfaceTintColor: Colors.transparent,
-              scrolledUnderElevation: 0,
-              backgroundColor: AppColors.background,
-              elevation: 0,
-              titleSpacing: 20,
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/icon.png',
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          SliverAppBar(
+            primary: true,
+            floating: true,
+            snap: true,
+            pinned: true,
+            toolbarHeight: 56,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            backgroundColor: AppColors.background,
+            elevation: 0,
+            titleSpacing: 20,
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/icon.png',
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
                       width: 32,
                       height: 32,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.fitness_center,
-                          color: AppColors.onPrimary,
-                          size: 16,
-                        ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.fitness_center,
+                        color: AppColors.onPrimary,
+                        size: 16,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'PULSE',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2.0,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.settings, size: 26),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
-                  },
                 ),
-                GestureDetector(
-                  onTap: () => _mostrarNotificacoes(context, provider),
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 20.0, left: 8.0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.notifications_outlined, size: 26),
-                        if (_temNotificacoesNaoLidas)
-                          Positioned(
-                            right: 0,
-                            top: 14,
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.background,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                const SizedBox(width: 10),
+                Text(
+                  'PULSE',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 2.0,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                8,
-                20,
-                MediaQuery.viewPaddingOf(context).bottom + 20,
+            actions: [
+              IconButton(
+                tooltip: 'Abrir configurações',
+                icon: const Icon(Icons.settings_outlined, size: 25),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
               ),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _obterSaudacao(userName),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.35,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Vamos cuidar do treino de hoje?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          margin: const EdgeInsets.only(top: 2),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primarySoft,
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Text(
-                            _dataFormatada,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.primary,
-                              height: 1.15,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (provider.isWorkoutActive) ...[
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const WorkoutSessionScreen(),
-                            ),
-                          );
-                        },
+              IconButton(
+                tooltip: 'Abrir notificações',
+                onPressed: () => _mostrarNotificacoes(context, provider),
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: <Widget>[
+                    const Icon(Icons.notifications_outlined, size: 25),
+                    if (_temNotificacoesNaoLidas)
+                      Positioned(
+                        right: -2,
+                        top: -1,
                         child: Container(
-                          padding: const EdgeInsets.all(14),
+                          width: 9,
+                          height: 9,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.surfaceLight,
-                                AppColors.surface,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(18),
+                            color: AppColors.danger,
+                            shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppColors.warning,
+                              color: AppColors.background,
                               width: 1.5,
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.warning.withValues(
-                                          alpha: 0.14,
-                                        ),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'SESSÃO EM ANDAMENTO',
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.warning,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 7),
-                                    Text(
-                                      'Continuar ${provider.activeRoutineName}',
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Não deixe seu descanso passar!',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: AppColors.warning.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.play_arrow_rounded,
-                                  color: AppColors.warning,
-                                  size: 26,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
-                      // BOTÃO DUPLICADO FOI REMOVIDO DAQUI
-                    ] else if (rotinaDoDia != null) ...[
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  RoutineDetailScreen(routine: rotinaDoDia),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.surfaceLight,
-                                AppColors.surface,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: AppColors.border,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 3,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primarySoft,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        provider.activeProgramName.isNotEmpty
-                                            ? 'PROGRAMA: ${provider.activeProgramName.toUpperCase()}'
-                                            : 'PLANO ATUAL (TOQUE PARA VER)',
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 7),
-                                    Text(
-                                      rotinaDoDia.name,
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${rotinaDoDia.typeLabel} • ${rotinaDoDia.focus}',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              MediaQuery.viewPaddingOf(context).bottom + 20,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _obterSaudacao(userName),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.35,
                               ),
-                              Container(
-                                width: 52,
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySoft,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  _routineIcon(rotinaDoDia.type),
-                                  color: Theme.of(context).colorScheme.primary,
-                                  size: 26,
-                                ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Vamos cuidar do treino de hoje?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final started = provider.startRoutine(rotinaDoDia);
-
-                            if (!started &&
-                                provider.activeRoutineName !=
-                                    rotinaDoDia.name) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Você já está treinando ${provider.activeRoutineName}. Abra a ficha para confirmar a troca.',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const WorkoutSessionScreen(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            foregroundColor: AppColors.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _routineStartLabel(rotinaDoDia.type),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.play_arrow, size: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ] else ...[
+                      const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        margin: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Text(
+                          _dataFormatada,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.primary,
+                            height: 1.15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (provider.isWorkoutActive) ...[
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkoutSessionScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
@@ -1024,208 +739,425 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: AppColors.primaryBorder,
+                            color: AppColors.warning,
                             width: 1.5,
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.help_outline,
-                                  color: Theme.of(context).colorScheme.primary,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'PRECISA DE AJUDA?',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Não sabe por onde começar?',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Abra a área de Treinos para criar sua primeira ficha ou importar um programa pronto para o seu nível.',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
-                                  foregroundColor: AppColors.onPrimary,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                icon: const Icon(
-                                  Icons.fitness_center,
-                                  size: 20,
-                                ),
-                                label: const Text(
-                                  'ABRIR TREINOS',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  final openWorkouts = widget.onOpenWorkouts;
-                                  if (openWorkouts != null) {
-                                    openWorkouts();
-                                    return;
-                                  }
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const WorkoutPlanScreen(),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
                                     ),
-                                  );
-                                },
+                                    decoration: BoxDecoration(
+                                      color: AppColors.warning.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'SESSÃO EM ANDAMENTO',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.warning,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 7),
+                                  Text(
+                                    'Continuar ${provider.activeRoutineName}',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Não deixe seu descanso passar!',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: AppColors.warning.withValues(
+                                  alpha: 0.12,
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow_rounded,
+                                color: AppColors.warning,
+                                size: 26,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _HomeQuickActionCard(
-                            icon: Icons.directions_run_rounded,
-                            eyebrow: 'CARDIO',
-                            title: 'Registrar atividade',
-                            subtitle: 'Esteira, bike e mais',
-                            onTap: () async {
-                              final saved = await Navigator.push<bool>(
-                                context,
-                                MaterialPageRoute<bool>(
-                                  builder: (_) => const CardioEntryScreen(),
-                                ),
-                              );
-                              if (saved == true && context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Cardio salvo no histórico com sucesso.',
+                    ),
+                    // BOTÃO DUPLICADO FOI REMOVIDO DAQUI
+                  ] else if (rotinaDoDia != null) ...[
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                RoutineDetailScreen(routine: rotinaDoDia),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.surfaceLight, AppColors.surface],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: AppColors.border,
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primarySoft,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      provider.activeProgramName.isNotEmpty
+                                          ? 'PROGRAMA: ${provider.activeProgramName.toUpperCase()}'
+                                          : 'PLANO ATUAL (TOQUE PARA VER)',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
                                   ),
-                                );
-                              }
-                            },
-                          ),
+                                  const SizedBox(height: 7),
+                                  Text(
+                                    rotinaDoDia.name,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${rotinaDoDia.typeLabel} • ${rotinaDoDia.focus}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySoft,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _routineIcon(rotinaDoDia.type),
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 26,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _HomeQuickActionCard(
-                            icon: Icons.shuffle_rounded,
-                            eyebrow: 'TREINO DINÂMICO ⚡',
-                            title: 'Gerar agora',
-                            subtitle: 'Treino rápido e aleatório',
-                            emphasized: true,
-                            onTap: () =>
-                                _mostrarModalTreinoDinamico(context, provider),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final started = provider.startRoutine(rotinaDoDia);
 
-                    const SizedBox(height: 18),
+                          if (!started &&
+                              provider.activeRoutineName != rotinaDoDia.name) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Você já está treinando ${provider.activeRoutineName}. Abra a ficha para confirmar a troca.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'RESUMO SEMANAL',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 0.5,
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const WorkoutSessionScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
+                          elevation: 0,
                         ),
-                        GestureDetector(
-                          onTap: widget.onOpenProgress,
-                          child: Text(
-                            'VER PROGRESSO',
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _routineStartLabel(rotinaDoDia.type),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.play_arrow, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.surfaceLight, AppColors.surface],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: AppColors.primaryBorder,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.help_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'PRECISA DE AJUDA?',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Não sabe por onde começar?',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 22,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SummaryStat(
-                            icon: Icons.fitness_center,
-                            value: '$treinosNaSemana',
-                            label: 'Concluídos',
+                          const SizedBox(height: 8),
+                          Text(
+                            'Abra a área de Treinos para criar sua primeira ficha ou importar um programa pronto para o seu nível.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _SummaryStat(
-                            icon: Icons.local_fire_department,
-                            value: treinosNaSemana >= 3
-                                ? 'Excelente'
-                                : 'Em dia',
-                            label: 'Ritmo',
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: AppColors.onPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              icon: const Icon(Icons.fitness_center, size: 20),
+                              label: const Text(
+                                'ABRIR TREINOS',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              onPressed: () {
+                                final openWorkouts = widget.onOpenWorkouts;
+                                if (openWorkouts != null) {
+                                  openWorkouts();
+                                  return;
+                                }
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const WorkoutPlanScreen(),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _SummaryStat(
-                            icon: Icons.calendar_today,
-                            value: history.isNotEmpty
-                                ? '${DateTime.now().difference(history.first.date).inDays}d'
-                                : '-',
-                            label: 'Último treino',
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
-                ),
+
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _HomeQuickActionCard(
+                          icon: Icons.directions_run_rounded,
+                          eyebrow: 'CARDIO',
+                          title: 'Registrar atividade',
+                          subtitle: 'Esteira, bike e mais',
+                          onTap: () async {
+                            final saved = await Navigator.push<bool>(
+                              context,
+                              MaterialPageRoute<bool>(
+                                builder: (_) => const CardioEntryScreen(),
+                              ),
+                            );
+                            if (saved == true && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Cardio salvo no histórico com sucesso.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _HomeQuickActionCard(
+                          icon: Icons.shuffle_rounded,
+                          eyebrow: 'TREINO DINÂMICO ⚡',
+                          title: 'Gerar agora',
+                          subtitle: 'Treino rápido e aleatório',
+                          emphasized: true,
+                          onTap: () =>
+                              _mostrarModalTreinoDinamico(context, provider),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'RESUMO SEMANAL',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: widget.onOpenProgress,
+                        child: Text(
+                          'VER PROGRESSO',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SummaryStat(
+                          icon: Icons.fitness_center,
+                          value: '$treinosNaSemana',
+                          label: 'Concluídos',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _SummaryStat(
+                          icon: Icons.local_fire_department,
+                          value: treinosNaSemana >= 3 ? 'Excelente' : 'Em dia',
+                          label: 'Ritmo',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _SummaryStat(
+                          icon: Icons.calendar_today,
+                          value: history.isNotEmpty
+                              ? '${DateTime.now().difference(history.first.date).inDays}d'
+                              : '-',
+                          label: 'Último treino',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

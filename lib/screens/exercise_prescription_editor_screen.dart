@@ -117,13 +117,14 @@ class _ExercisePrescriptionEditorScreenState
         builder: (context, setDialogState) => AlertDialog(
           title: Text('Série ${existing.setNumber}'),
           content: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 TextField(
                   controller: targetController,
                   decoration: const InputDecoration(
-                    labelText: 'Alvo',
+                    labelText: 'Alvo da série',
                     hintText: 'Ex.: 8–12 reps, 30s, máximo',
                   ),
                 ),
@@ -145,25 +146,51 @@ class _ExercisePrescriptionEditorScreenState
                         controller: rirController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          labelText: 'RIR',
+                          labelText: 'Esforço (RIR)',
                           hintText: '0–5',
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'RIR é quantas repetições ainda sobrariam antes da falha. Ex.: RIR 2 = você conseguiria fazer mais 2.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: cadenceController,
                   decoration: const InputDecoration(
-                    labelText: 'Cadência',
+                    labelText: 'Cadência (opcional)',
                     hintText: 'Ex.: 3-1-1-0',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Cadência descreve o tempo de cada fase do movimento. Ex.: 3-1-1-0.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      height: 1.35,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<WorkoutTechnique>(
                   initialValue: technique,
-                  decoration: const InputDecoration(labelText: 'Técnica'),
+                  decoration: const InputDecoration(
+                    labelText: 'Técnica (opcional)',
+                  ),
                   items: WorkoutTechnique.values
                       .map(
                         (item) => DropdownMenuItem<WorkoutTechnique>(
@@ -193,7 +220,7 @@ class _ExercisePrescriptionEditorScreenState
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('CANCELAR'),
+              child: const Text('Cancelar'),
             ),
             FilledButton(
               onPressed: () {
@@ -212,7 +239,7 @@ class _ExercisePrescriptionEditorScreenState
                   ),
                 );
               },
-              child: const Text('SALVAR'),
+              child: const Text('Salvar'),
             ),
           ],
         ),
@@ -269,6 +296,9 @@ class _ExercisePrescriptionEditorScreenState
     final candidates = widget.availableExercises
         .where((exercise) => exercise.id != widget.exercise.id)
         .toList(growable: false);
+    final searchController = TextEditingController();
+    var query = '';
+
     final result = await showModalBottomSheet<List<ExerciseAlternative>>(
       context: context,
       isScrollControlled: true,
@@ -276,85 +306,191 @@ class _ExercisePrescriptionEditorScreenState
       builder: (sheetContext) {
         final selection = Set<String>.from(selectedIds);
         return StatefulBuilder(
-          builder: (context, setSheetState) => SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.82,
-            child: Column(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 12, 8),
-                  child: Row(
-                    children: <Widget>[
-                      const Expanded(
+          builder: (context, setSheetState) {
+            final normalizedQuery = query.trim().toLowerCase();
+            final filtered = candidates
+                .where((exercise) {
+                  if (normalizedQuery.isEmpty) {
+                    return true;
+                  }
+                  return exercise.name.toLowerCase().contains(
+                        normalizedQuery,
+                      ) ||
+                      exercise.muscle.toLowerCase().contains(normalizedQuery);
+                })
+                .toList(growable: false);
+
+            return SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.86,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 12, 8),
+                    child: Row(
+                      children: <Widget>[
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'Alternativas permitidas',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Escolha exercícios que podem substituir o atual.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Fechar',
+                          onPressed: () => Navigator.pop(sheetContext),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+                    child: TextField(
+                      controller: searchController,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por exercício ou músculo',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: query.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Limpar busca',
+                                onPressed: () {
+                                  searchController.clear();
+                                  setSheetState(() => query = '');
+                                },
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                      ),
+                      onChanged: (value) => setSheetState(() => query = value),
+                    ),
+                  ),
+                  if (selection.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
                         child: Text(
-                          'Alternativas permitidas',
+                          '${selection.length} selecionada${selection.length == 1 ? '' : 's'}',
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(sheetContext),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: candidates.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final exercise = candidates[index];
-                      final selected = selection.contains(exercise.id);
-                      return CheckboxListTile(
-                        value: selected,
-                        title: Text(
-                          exercise.name,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(exercise.muscle),
-                        onChanged: (value) {
-                          setSheetState(() {
-                            if (value == true) {
-                              selection.add(exercise.id);
-                            } else {
-                              selection.remove(exercise.id);
-                            }
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        Navigator.pop(sheetContext, <ExerciseAlternative>[
-                          for (final exercise in candidates)
-                            if (selection.contains(exercise.id))
-                              ExerciseAlternative(
-                                exerciseId: exercise.id,
-                                name: exercise.name,
-                                muscle: exercise.muscle,
+                    ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.search_off_rounded,
+                                    size: 42,
+                                    color: AppColors.textMuted,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'Nenhum exercício encontrado',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Tente outro nome ou grupo muscular.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                        ]);
-                      },
-                      icon: const Icon(Icons.check_rounded),
-                      label: const Text('CONFIRMAR ALTERNATIVAS'),
+                            ),
+                          )
+                        : ListView.separated(
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final exercise = filtered[index];
+                              final selected = selection.contains(exercise.id);
+                              return CheckboxListTile(
+                                value: selected,
+                                controlAffinity:
+                                    ListTileControlAffinity.trailing,
+                                title: Text(
+                                  exercise.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: Text(exercise.muscle),
+                                onChanged: (value) {
+                                  setSheetState(() {
+                                    if (value == true) {
+                                      selection.add(exercise.id);
+                                    } else {
+                                      selection.remove(exercise.id);
+                                    }
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            Navigator.pop(sheetContext, <ExerciseAlternative>[
+                              for (final exercise in candidates)
+                                if (selection.contains(exercise.id))
+                                  ExerciseAlternative(
+                                    exerciseId: exercise.id,
+                                    name: exercise.name,
+                                    muscle: exercise.muscle,
+                                  ),
+                            ]);
+                          },
+                          icon: const Icon(Icons.check_rounded),
+                          label: const Text('Confirmar alternativas'),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
+    searchController.dispose();
     if (result != null && mounted) {
       setState(() => _alternatives = result);
     }
@@ -384,11 +520,11 @@ class _ExercisePrescriptionEditorScreenState
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('CANCELAR'),
+                child: const Text('Cancelar'),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('REMOVER AVANÇADO'),
+                child: const Text('Remover detalhes'),
               ),
             ],
           ),
@@ -426,6 +562,7 @@ class _ExercisePrescriptionEditorScreenState
         ],
       ),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: EdgeInsets.fromLTRB(
           16,
           8,
@@ -479,7 +616,7 @@ class _ExercisePrescriptionEditorScreenState
               TextButton.icon(
                 onPressed: _addSet,
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('ADICIONAR'),
+                label: const Text('Adicionar'),
               ),
             ],
           ),
@@ -545,7 +682,7 @@ class _ExercisePrescriptionEditorScreenState
               TextButton.icon(
                 onPressed: _chooseAlternatives,
                 icon: const Icon(Icons.swap_horiz_rounded),
-                label: const Text('ESCOLHER'),
+                label: const Text('Escolher'),
               ),
             ],
           ),
@@ -558,7 +695,7 @@ class _ExercisePrescriptionEditorScreenState
                 border: Border.all(color: AppColors.border),
               ),
               child: Text(
-                'Nenhuma alternativa definida. Durante esta fase o exercício será mantido como prescrito.',
+                'Nenhuma alternativa definida. O exercício original será usado no treino.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             )
@@ -594,7 +731,7 @@ class _ExercisePrescriptionEditorScreenState
           child: FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.check_rounded),
-            label: const Text('SALVAR PRESCRIÇÃO'),
+            label: const Text('Salvar prescrição'),
           ),
         ),
       ),

@@ -235,6 +235,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
       body: SafeArea(
         top: false,
         child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             20,
             16,
@@ -524,6 +525,7 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
           const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.fromLTRB(
                 20,
                 4,
@@ -642,6 +644,7 @@ class _RoutineCardioEditorSheetState extends State<_RoutineCardioEditorSheet> {
             20,
       ),
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Form(
           key: _formKey,
           child: Column(

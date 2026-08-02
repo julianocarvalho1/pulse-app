@@ -311,6 +311,8 @@ class _PersonalWorkoutImportReviewScreenState
           children: [
             Expanded(
               child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   _ImportSummaryCard(draft: _draft),
@@ -846,6 +848,7 @@ class _ImportValidationMessageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1515,6 +1518,8 @@ class _ExerciseImportEditorSheetState
             ),
             Expanded(
               child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 children: [
                   if (widget.draft.hasAlternatives) ...[
@@ -1786,6 +1791,7 @@ class _GeneralCardioEditorSheetState extends State<_GeneralCardioEditorSheet> {
             18,
       ),
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

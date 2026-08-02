@@ -1263,6 +1263,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           ),
         ),
         content: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1545,6 +1546,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           ),
           actions: [
             IconButton(
+              tooltip: 'Abrir música',
               icon: Icon(
                 Icons.music_note,
                 color: Theme.of(context).colorScheme.primary,
@@ -1665,6 +1667,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                       ),
                     )
                   : ListView.builder(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       key: ValueKey<String>(
                         'workout-list-${workoutState.activeSession?.startedAt.millisecondsSinceEpoch ?? workoutState.activeRoutineName}',
                       ),
@@ -1789,6 +1793,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         borderRadius: BorderRadius.circular(24),
                                       ),
                                       child: SingleChildScrollView(
+                                        keyboardDismissBehavior:
+                                            ScrollViewKeyboardDismissBehavior
+                                                .onDrag,
                                         child: Padding(
                                           padding: const EdgeInsets.all(24),
                                           child: Column(

@@ -330,6 +330,16 @@ class WorkoutPlanScreen extends ConsumerWidget {
                 context,
               ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                childrenPadding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  top: 2,
+                ),
                 collapsedIconColor: AppColors.textSecondary,
                 iconColor: Theme.of(context).colorScheme.primary,
                 leading: Container(
@@ -418,11 +428,6 @@ class WorkoutPlanScreen extends ConsumerWidget {
                     fontSize: 12,
                   ),
                 ),
-                childrenPadding: const EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                ),
                 children: groupRoutines
                     .map(
                       (routine) => _buildRoutineTile(
@@ -472,13 +477,19 @@ class WorkoutPlanScreen extends ConsumerWidget {
     WorkoutRoutine routine, {
     required bool isInsideGroup,
   }) {
+    final subtitleText =
+        '${routine.typeLabel} • ${routine.activitySummary} • ${routine.focus}';
+
     return Dismissible(
       key: Key(routine.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: Colors.redAccent,
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(isInsideGroup ? 14 : 0),
+        ),
         child: Icon(Icons.delete_sweep, color: AppColors.textPrimary, size: 28),
       ),
       onDismissed: (direction) {
@@ -492,96 +503,151 @@ class WorkoutPlanScreen extends ConsumerWidget {
         );
       },
       child: Padding(
-        padding: EdgeInsets.only(top: isInsideGroup ? 8.0 : 0),
-        child: ListTile(
-          contentPadding: isInsideGroup
-              ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
+        padding: EdgeInsets.only(top: isInsideGroup ? 10.0 : 0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isInsideGroup
+                ? Color.alphaBlend(
+                    AppColors.surfaceLight.withValues(alpha: 0.55),
+                    AppColors.surface,
+                  )
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
               color: isInsideGroup
-                  ? AppColors.surfaceLight
-                  : Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              _routineIcon(routine.type),
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
+                  ? AppColors.border.withValues(alpha: 0.72)
+                  : AppColors.border,
             ),
           ),
-          title: Text(
-            routine.name,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: AppColors.textPrimary,
+          child: ListTile(
+            minVerticalPadding: 10,
+            contentPadding: isInsideGroup
+                ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+                : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: isInsideGroup
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.12)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _routineIcon(routine.type),
+                color: Theme.of(context).colorScheme.primary,
+                size: 21,
+              ),
             ),
-          ),
-          subtitle: Text(
-            '${routine.typeLabel} • ${routine.activitySummary} • ${routine.focus}',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
-            color: AppColors.surface,
-            onSelected: (value) {
-              if (value == 'view') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RoutineDetailScreen(routine: routine),
+            title: Text(
+              routine.name,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: isInsideGroup
+                  ? Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _buildRoutineMetaChip(context, routine.typeLabel),
+                        _buildRoutineMetaChip(context, routine.activitySummary),
+                        _buildRoutineMetaChip(context, routine.focus),
+                      ],
+                    )
+                  : Text(
+                      subtitleText,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+            ),
+            trailing: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
+              color: AppColors.surface,
+              onSelected: (value) {
+                if (value == 'view') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RoutineDetailScreen(routine: routine),
+                    ),
+                  );
+                } else if (value == 'edit') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<bool>(
+                      builder: (_) => RoutineEditorScreen(routine: routine),
+                    ),
+                  );
+                } else if (value == 'delete') {
+                  provider.deleteRoutine(routine.id);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'view',
+                  child: Text(
+                    'Ver detalhes',
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
-                );
-              } else if (value == 'edit') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<bool>(
-                    builder: (_) => RoutineEditorScreen(routine: routine),
+                ),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(
+                    'Editar',
+                    style: TextStyle(color: AppColors.textPrimary),
                   ),
-                );
-              } else if (value == 'delete') {
-                provider.deleteRoutine(routine.id);
-              }
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text(
+                    'Excluir',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RoutineDetailScreen(routine: routine),
+                ),
+              );
             },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'view',
-                child: Text(
-                  'Ver Detalhes',
-                  style: TextStyle(color: AppColors.textPrimary),
-                ),
-              ),
-              PopupMenuItem(
-                value: 'edit',
-                child: Text(
-                  'Editar',
-                  style: TextStyle(color: AppColors.textPrimary),
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text(
-                  'Excluir',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-              ),
-            ],
           ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => RoutineDetailScreen(routine: routine),
-              ),
-            );
-          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoutineMetaChip(BuildContext context, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.75)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          height: 1,
         ),
       ),
     );

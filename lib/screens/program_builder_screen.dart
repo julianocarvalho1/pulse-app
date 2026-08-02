@@ -236,6 +236,8 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                 ),
               ),
               content: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,6 +622,8 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                               ),
                             )
                           : ListView.separated(
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
                               controller: scrollController,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -784,6 +788,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                 20,
           ),
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Form(
               key: formKey,
               child: Column(
@@ -980,6 +985,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         ),
       ),
       body: ListView.separated(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: EdgeInsets.fromLTRB(
           20,
           20,
