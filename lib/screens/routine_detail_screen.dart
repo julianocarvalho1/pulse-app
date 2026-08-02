@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
+import '../features/workouts/domain/services/routine_week_progression_service.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
 import '../features/workout_sharing/presentation/widgets/pulse_workout_share_sheet.dart';
@@ -414,6 +415,9 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
       (item) => item.id == widget.routine.id,
       orElse: () => widget.routine,
     );
+    const weekService = RoutineWeekProgressionService();
+    final routineWeeks = weekService.availableWeeks(routine.exercises);
+    final activeRoutineWeek = weekService.activeWeek(routine.exercises);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -519,6 +523,45 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       ),
                     ],
                   ),
+                  if (routineWeeks.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.09),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 17,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: Text(
+                              'Semana ativa: $activeRoutineWeek de ${routineWeeks.last}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _openEditor(routine),
+                            child: const Text('ALTERAR'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

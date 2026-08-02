@@ -229,6 +229,12 @@ class WorkoutController extends Notifier<WorkoutState> {
         .addExerciseToWorkout(exercise);
   }
 
+  void replaceExerciseInActiveWorkout(int index, Exercise replacement) {
+    ref
+        .read(workoutSessionControllerProvider.notifier)
+        .replaceExerciseInActiveWorkout(index, replacement);
+  }
+
   void updateActiveCardio(ActiveCardioEntry entry) {
     ref
         .read(workoutSessionControllerProvider.notifier)

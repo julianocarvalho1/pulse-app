@@ -615,18 +615,13 @@ class _ExercisePrescriptionEditorScreenState
             ),
             child: Row(
               children: <Widget>[
-                IconButton(
-                  tooltip: 'Usar esta semana no próximo treino',
-                  onPressed: () {
-                    setState(() => _activeWeek = week.weekNumber);
-                  },
-                  icon: Icon(
-                    week.weekNumber == _activeWeek
-                        ? Icons.radio_button_checked_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: primary,
-                  ),
+                Icon(
+                  week.weekNumber == _activeWeek
+                      ? Icons.calendar_month_rounded
+                      : Icons.edit_calendar_rounded,
+                  color: primary,
                 ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,8 +632,8 @@ class _ExercisePrescriptionEditorScreenState
                       ),
                       Text(
                         week.weekNumber == _activeWeek
-                            ? 'Esta semana será usada no próximo treino.'
-                            : 'Marque para usar esta semana no próximo treino.',
+                            ? 'Semana ativa atual. A troca é feita na tela da ficha.'
+                            : 'Edite a prescrição aqui e escolha a semana ativa na tela da ficha.',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,

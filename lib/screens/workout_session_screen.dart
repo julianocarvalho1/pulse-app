@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../features/workouts/domain/models/active_workout_session.dart';
+import '../features/workouts/domain/models/advanced_workout_prescription.dart';
+import '../features/workouts/domain/services/exercise_alternative_service.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
+import '../features/workouts/presentation/state/workout_state.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../theme/app_theme.dart';
@@ -28,6 +31,8 @@ class SessionStateCache {
 }
 
 enum _WorkoutExitAction { minimize, discard }
+
+enum _AlternativeUse { sessionOnly, saveToRoutine }
 
 class _FinishDialogResult {
   const _FinishDialogResult(this.notes);
@@ -53,6 +58,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   bool _isSubmittingFinish = false;
   bool _isExitDialogOpen = false;
   bool _isFinishDialogOpen = false;
+  bool _isAlternativeFlowOpen = false;
   bool _isRouteClosing = false;
 
   @override
@@ -523,10 +529,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   Widget _advancedPrescriptionChip(
     BuildContext context,
     IconData icon,
-    String label,
-  ) {
+    String label, {
+    VoidCallback? onTap,
+  }) {
     final primary = Theme.of(context).colorScheme.primary;
-    return Container(
+    final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.09),
@@ -546,9 +553,192 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
+          if (onTap != null) ...<Widget>[
+            const SizedBox(width: 3),
+            Icon(Icons.chevron_right_rounded, size: 13, color: primary),
+          ],
         ],
       ),
     );
+    if (onTap == null) {
+      return content;
+    }
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: content,
+    );
+  }
+
+  Future<void> _chooseExerciseAlternative({
+    required WorkoutController provider,
+    required WorkoutState workoutState,
+    required int exerciseIndex,
+    required Exercise current,
+  }) async {
+    final alternatives = current.advancedPrescription.alternatives;
+    if (alternatives.isEmpty || _isAlternativeFlowOpen) {
+      return;
+    }
+
+    _isAlternativeFlowOpen = true;
+    try {
+      final selected = await showModalBottomSheet<ExerciseAlternative>(
+        context: context,
+        useSafeArea: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (sheetContext) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            18,
+            20,
+            MediaQuery.paddingOf(sheetContext).bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Trocar exercício',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'A prescrição, as cargas digitadas e as séries concluídas serão preservadas.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 14),
+              for (final alternative in alternatives)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: AppColors.border),
+                    ),
+                    leading: Icon(
+                      Icons.swap_horiz_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      alternative.name,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: alternative.muscle.trim().isEmpty
+                        ? null
+                        : Text(alternative.muscle),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.pop(sheetContext, alternative),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+
+      await _waitForTransientUiToSettle();
+      if (selected == null || !mounted || _isRouteClosing) {
+        return;
+      }
+
+      final matchingRoutines = workoutState.myRoutines
+          .where((routine) => routine.name == workoutState.activeRoutineName)
+          .toList(growable: false);
+      final routine = matchingRoutines.length == 1
+          ? matchingRoutines.single
+          : null;
+      final canSaveToRoutine =
+          routine != null &&
+          (exerciseIndex < routine.exercises.length ||
+              routine.exercises.any((exercise) => exercise.id == current.id));
+
+      final use = await showDialog<_AlternativeUse>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('Usar ${selected.name}?'),
+          content: Text(
+            canSaveToRoutine
+                ? 'Escolha se a troca vale somente para este treino ou também para a ficha.'
+                : 'Esta troca ficará somente neste treino. Não foi possível identificar uma única ficha para atualizar.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CANCELAR'),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, _AlternativeUse.sessionOnly),
+              child: const Text('SÓ NESTE TREINO'),
+            ),
+            if (canSaveToRoutine)
+              FilledButton(
+                onPressed: () =>
+                    Navigator.pop(dialogContext, _AlternativeUse.saveToRoutine),
+                child: const Text('SALVAR NA FICHA'),
+              ),
+          ],
+        ),
+      );
+
+      await _waitForTransientUiToSettle();
+      if (use == null || !mounted || _isRouteClosing) {
+        return;
+      }
+
+      _persistSessionNow();
+      final replacement = const ExerciseAlternativeService().buildReplacement(
+        current: current,
+        selected: selected,
+        catalog: provider.allExercises,
+      );
+      provider.replaceExerciseInActiveWorkout(exerciseIndex, replacement);
+
+      if (use == _AlternativeUse.saveToRoutine && routine != null) {
+        final routineExercises = List<Exercise>.from(routine.exercises);
+        var routineExerciseIndex = exerciseIndex;
+        if (routineExerciseIndex >= routineExercises.length ||
+            routineExercises[routineExerciseIndex].id != current.id) {
+          routineExerciseIndex = routineExercises.indexWhere(
+            (exercise) => exercise.id == current.id,
+          );
+        }
+        if (routineExerciseIndex >= 0) {
+          routineExercises[routineExerciseIndex] = replacement;
+          provider.updateRoutine(
+            routine.id,
+            routine.name,
+            routine.focus,
+            routine.groupName,
+            routineExercises,
+            newCardio: routine.cardio,
+          );
+        }
+      }
+
+      if (!mounted || _isRouteClosing) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            use == _AlternativeUse.saveToRoutine
+                ? '${replacement.name} foi salvo nesta ficha.'
+                : '${replacement.name} será usado somente neste treino.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      _isAlternativeFlowOpen = false;
+    }
   }
 
   void _showMusicSelector() {
@@ -2102,6 +2292,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                           context,
                                           Icons.swap_horiz_rounded,
                                           '${ex.advancedPrescription.alternatives.length} alternativa${ex.advancedPrescription.alternatives.length == 1 ? '' : 's'}',
+                                          onTap: () =>
+                                              _chooseExerciseAlternative(
+                                                provider: provider,
+                                                workoutState: workoutState,
+                                                exerciseIndex: index,
+                                                current: ex,
+                                              ),
                                         ),
                                     ],
                                   ),

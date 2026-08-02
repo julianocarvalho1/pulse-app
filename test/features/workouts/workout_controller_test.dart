@@ -123,6 +123,56 @@ void main() {
     expect(repository.clearActiveSessionCalls, greaterThanOrEqualTo(1));
   });
 
+  test('troca exercício na sessão preservando séries já preenchidas', () async {
+    final repository = _FakeWorkoutRepository(
+      routines: <WorkoutRoutine>[routine],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    controller.startRoutine(routine);
+    controller.saveActiveSessionProgress(
+      setsStatus: <int, List<bool>>{
+        0: <bool>[true, false, false],
+      },
+      weights: <int, List<String>>{
+        0: <String>['40', '', ''],
+      },
+      reps: <int, List<String>>{
+        0: <String>['10', '', ''],
+      },
+      notes: '',
+    );
+
+    const replacement = Exercise(
+      id: 'exercise-machine',
+      name: 'Supino Máquina',
+      muscle: 'Peito',
+      description: 'Alternativa',
+      reps: '3x 10',
+      rest: '60 seg',
+    );
+    controller.replaceExerciseInActiveWorkout(0, replacement);
+    await Future<void>.delayed(Duration.zero);
+
+    final state = container.read(workoutControllerProvider);
+    final activeExercise = controller.activeSession!.exercises.single;
+    expect(state.currentWorkoutExercises.single.id, replacement.id);
+    expect(activeExercise.exercise.id, replacement.id);
+    expect(activeExercise.sets.first.isCompleted, isTrue);
+    expect(activeExercise.sets.first.weightText, '40');
+    expect(activeExercise.sets.first.repsText, '10');
+  });
+
   test('publica um novo estado imutável ao criar exercício', () async {
     final repository = _FakeWorkoutRepository();
     final container = ProviderContainer(

@@ -360,6 +360,35 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     });
   }
 
+  void replaceExerciseInActiveWorkout(int index, Exercise replacement) {
+    final session = activeSession;
+    if (session == null ||
+        index < 0 ||
+        index >= state.exercises.length ||
+        index >= session.exercises.length) {
+      return;
+    }
+
+    final updatedExercises = List<Exercise>.from(state.exercises);
+    updatedExercises[index] = replacement;
+    final updatedSessionExercises = List<ActiveWorkoutExercise>.from(
+      session.exercises,
+    );
+    updatedSessionExercises[index] = updatedSessionExercises[index].copyWith(
+      exercise: replacement,
+    );
+
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      exercises: updatedSessionExercises,
+    );
+    state = state.copyWith(
+      exercises: updatedExercises,
+      activeSession: _activeSessionSnapshot,
+    );
+    unawaited(_persistActiveSession());
+  }
+
   void addExerciseToWorkout(Exercise exercise) {
     final updatedExercises = <Exercise>[...state.exercises, exercise];
     final session = activeSession;
