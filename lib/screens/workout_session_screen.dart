@@ -1387,7 +1387,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     bool isReps = false,
   }) {
     return SizedBox(
-      height: 32,
+      height: 30,
       child: TextField(
         controller: controller,
         keyboardType: isReps
@@ -2308,7 +2308,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                   left: 16,
                                   right: 16,
                                   top: 12,
-                                  bottom: 4,
+                                  bottom: 2,
                                 ),
                                 child: Row(
                                   children: [
@@ -2324,7 +2324,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       ),
                                     ),
                                     Expanded(
-                                      flex: 3,
+                                      flex: 4,
                                       child: Center(
                                         child: Text(
                                           'Carga (kg)',
@@ -2337,7 +2337,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       ),
                                     ),
                                     Expanded(
-                                      flex: 3,
+                                      flex: 4,
                                       child: Center(
                                         child: Text(
                                           'Reps',
@@ -2350,7 +2350,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       ),
                                     ),
                                     Expanded(
-                                      flex: 2,
+                                      flex: 1,
                                       child: Align(
                                         alignment: Alignment.centerRight,
                                         child: Icon(
@@ -2368,7 +2368,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                 padding: const EdgeInsets.only(
                                   left: 16,
                                   right: 8,
-                                  bottom: 12,
+                                  bottom: 8,
                                 ),
                                 child: Column(
                                   children: [
@@ -2408,7 +2408,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
                                       return Padding(
                                         padding: const EdgeInsets.only(
-                                          bottom: 4.0,
+                                          bottom: 2.0,
                                         ),
                                         child: Row(
                                           children: [
@@ -2428,11 +2428,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               ),
                                             ),
                                             Expanded(
-                                              flex: 3,
+                                              flex: 4,
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                      horizontal: 4,
+                                                      horizontal: 2,
                                                     ),
                                                 child: _buildInputForm(
                                                   context,
@@ -2442,11 +2442,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               ),
                                             ),
                                             Expanded(
-                                              flex: 3,
+                                              flex: 4,
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                      horizontal: 4,
+                                                      horizontal: 2,
                                                     ),
                                                 child: _buildInputForm(
                                                   context,
@@ -2457,7 +2457,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               ),
                                             ),
                                             Expanded(
-                                              flex: 2,
+                                              flex: 1,
                                               child: Align(
                                                 alignment:
                                                     Alignment.centerRight,

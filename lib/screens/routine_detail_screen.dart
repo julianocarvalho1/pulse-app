@@ -406,6 +406,62 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
     }
   }
 
+  IconData _routineTypeIcon(RoutineType type) {
+    return switch (type) {
+      RoutineType.strength => Icons.fitness_center_rounded,
+      RoutineType.cardio => Icons.directions_run_rounded,
+      RoutineType.mixed => Icons.sports_gymnastics_rounded,
+    };
+  }
+
+  Widget _buildRoutineInfoChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCountBadge(BuildContext context, int count, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$count $label',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
@@ -420,7 +476,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         title: const Text(
-          'Detalhes da Ficha',
+          'Detalhes da ficha',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         actions: [
@@ -438,7 +494,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
           IconButton(
             tooltip: 'Editar ficha',
             icon: Icon(
-              Icons.edit,
+              Icons.edit_rounded,
               color: Theme.of(context).colorScheme.primary,
             ),
             onPressed: () => _openEditor(routine),
@@ -457,12 +513,12 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Theme.of(
                   context,
                 ).colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: Theme.of(
                     context,
@@ -475,7 +531,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   Text(
                     routine.name,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
@@ -499,22 +555,20 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      Icon(
-                        Icons.format_list_numbered,
-                        size: 16,
-                        color: AppColors.textSecondary,
+                      _buildRoutineInfoChip(
+                        context,
+                        icon: _routineTypeIcon(routine.type),
+                        label: routine.typeLabel,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${routine.typeLabel} • ${routine.activitySummary}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      _buildRoutineInfoChip(
+                        context,
+                        icon: Icons.format_list_numbered_rounded,
+                        label: routine.activitySummary,
                       ),
                     ],
                   ),
@@ -523,14 +577,25 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
             ),
             const SizedBox(height: 24),
             if (routine.exercises.isNotEmpty) ...[
-              Text(
-                'LISTA DE EXERCÍCIOS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.0,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'EXERCÍCIOS',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  _buildCountBadge(
+                    context,
+                    routine.exercises.length,
+                    routine.exercises.length == 1 ? 'exercício' : 'exercícios',
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               ListView.builder(
@@ -580,13 +645,33 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Text(
-                  'Nenhum cardio planejado para esta ficha.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.directions_run_outlined,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Nenhum cardio planejado. Você pode adicionar um quando quiser.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               )
             else

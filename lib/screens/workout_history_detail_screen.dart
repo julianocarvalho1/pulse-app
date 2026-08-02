@@ -42,9 +42,9 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
         leading: IconButton(
           tooltip: 'Voltar',
           icon: Icon(
-            Icons.arrow_back_ios_new,
+            Icons.arrow_back_rounded,
             color: AppColors.textPrimary,
-            size: 20,
+            size: 22,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -56,14 +56,15 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 0,
       ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             20,
-            8,
+            4,
             20,
             MediaQuery.paddingOf(context).bottom + 32,
           ),
@@ -175,10 +176,10 @@ class _WorkoutSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: statusColor.withValues(alpha: 0.38)),
       ),
       child: Column(

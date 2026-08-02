@@ -78,12 +78,24 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             delegate: _ProgressTabsHeaderDelegate(
               backgroundColor: AppColors.background,
               borderColor: AppColors.border,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                scrollDirection: Axis.horizontal,
-                itemCount: _tabs.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 20),
-                itemBuilder: (context, index) => _tabItem(_tabs[index], index),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                child: Row(
+                  children: List.generate(
+                    _tabs.length,
+                    (index) => Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _tabs.length - 1 ? 0 : 10,
+                        ),
+                        child: _tabItem(_tabs[index], index),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -1419,27 +1431,37 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _tabItem(String label, int index) {
     final active = _tab == index;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _tab = index),
-      child: Container(
-        padding: const EdgeInsets.only(bottom: 10, left: 4, right: 4),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () => setState(() => _tab = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 42,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: active ? primary.withValues(alpha: 0.12) : AppColors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
               color: active
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.transparent,
-              width: 2,
+                  ? primary.withValues(alpha: 0.65)
+                  : AppColors.border,
             ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            color: active ? AppColors.textPrimary : AppColors.textSecondary,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+              color: active ? primary : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
@@ -2120,10 +2142,10 @@ class _ProgressTabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
 
   @override
-  double get minExtent => 48;
+  double get minExtent => 54;
 
   @override
-  double get maxExtent => 48;
+  double get maxExtent => 54;
 
   @override
   Widget build(

@@ -137,6 +137,21 @@ class WorkoutPlanScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _CreateOptionTile(
+                icon: Icons.edit_note_rounded,
+                title: 'Criar ficha manualmente',
+                subtitle: 'Escolha cada exercício e etapa de cardio.',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateRoutineScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _CreateOptionTile(
                 icon: Icons.auto_awesome_rounded,
                 title: 'Gerar programa inteligente',
                 subtitle: 'Objetivo, nível, dias, tempo e equipamentos.',
@@ -210,21 +225,6 @@ class WorkoutPlanScreen extends ConsumerWidget {
                       ),
                     );
                   }
-                },
-              ),
-              const SizedBox(height: 10),
-              _CreateOptionTile(
-                icon: Icons.edit_note_rounded,
-                title: 'Criar ficha manualmente',
-                subtitle: 'Escolha cada exercício e etapa de cardio.',
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateRoutineScreen(),
-                    ),
-                  );
                 },
               ),
             ],
