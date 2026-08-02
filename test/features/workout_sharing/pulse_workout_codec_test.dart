@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workout_sharing/domain/models/pulse_workout_file.dart';
 import 'package:pulse/features/workout_sharing/domain/services/pulse_workout_codec.dart';
+import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/models/exercise.dart';
 
@@ -85,6 +86,21 @@ void main() {
     expect(
       () => codec.decode(bytes),
       throwsA(isA<PulseWorkoutFileException>()),
+    );
+  });
+
+  test('continua lendo arquivo .pulse da versão 1', () {
+    final map = codec.routineDocument(routine()).toMap();
+    map['formatVersion'] = 1;
+    final bytes = Uint8List.fromList(utf8.encode(jsonEncode(map)));
+
+    final decoded = codec.decode(bytes);
+
+    expect(decoded.formatVersion, 1);
+    expect(decoded.routine?.name, 'Treino A');
+    expect(
+      decoded.routine?.exercises.single.advancedPrescription.isEmpty,
+      isTrue,
     );
   });
 
@@ -253,5 +269,62 @@ void main() {
       bundle.routines.single.cardio.single.id,
       startsWith('shared_cardio_'),
     );
+  });
+
+  test('arquivo .pulse preserva periodização e diferencia prescrições', () {
+    const advanced = AdvancedExercisePrescription(
+      activeWeek: 2,
+      weeks: <WorkoutWeekPrescription>[
+        WorkoutWeekPrescription(
+          weekNumber: 1,
+          sets: <WorkoutSetPrescription>[
+            WorkoutSetPrescription(setNumber: 1, target: '10–12 reps'),
+          ],
+        ),
+        WorkoutWeekPrescription(
+          weekNumber: 2,
+          sets: <WorkoutSetPrescription>[
+            WorkoutSetPrescription(
+              setNumber: 1,
+              target: '6–8 reps',
+              targetRir: 1,
+              technique: WorkoutTechnique.dropSet,
+            ),
+          ],
+        ),
+      ],
+    );
+    final advancedRoutine = routine(
+      exercises: <Exercise>[
+        exercise().copyWith(advancedPrescription: advanced),
+      ],
+    );
+    final decoded = codec.decode(
+      codec.encode(codec.routineDocument(advancedRoutine)),
+    );
+
+    expect(
+      decoded.routine?.exercises.single.advancedPrescription.activeWeek,
+      2,
+    );
+    expect(
+      decoded
+          .routine
+          ?.exercises
+          .single
+          .advancedPrescription
+          .activePrescription
+          ?.sets
+          .single
+          .technique,
+      WorkoutTechnique.dropSet,
+    );
+
+    final simplePreview = codec.prepareImport(
+      document: codec.routineDocument(routine()),
+      localExercises: <Exercise>[exercise()],
+      currentRoutines: <WorkoutRoutine>[advancedRoutine],
+    );
+    expect(simplePreview.isExactDuplicate, isFalse);
   });
 }

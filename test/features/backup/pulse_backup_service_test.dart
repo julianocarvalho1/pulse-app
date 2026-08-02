@@ -41,6 +41,29 @@ void main() {
       'group_name': 'Hipertrofia',
       'sort_order': 0,
     });
+    await db.insert('custom_exercises', <String, Object>{
+      'id': 'custom-advanced',
+      'name': 'Exercício avançado',
+      'muscle': 'Peito',
+      'description': '',
+      'reps': '3x 10',
+      'rest': '60 seg',
+      'is_superset': 0,
+      'custom_note': '',
+      'advanced_prescription_json': jsonEncode(<String, Object>{
+        'activeWeek': 1,
+        'weeks': <Object>[
+          <String, Object>{
+            'weekNumber': 1,
+            'sets': <Object>[
+              <String, Object>{'setNumber': 1, 'target': '8–10 reps'},
+            ],
+          },
+        ],
+        'alternatives': <Object>[],
+      }),
+      'created_at': 1,
+    });
     await db.insert('workout_history', <String, Object>{
       'id': 'history-a',
       'routine_name': 'Treino A',
@@ -77,12 +100,19 @@ void main() {
 
     await db.delete('workout_history');
     await db.delete('routines');
+    await db.delete('custom_exercises');
     await db.delete('body_measurements');
     await preferences.clear();
 
     await service.importBytes(bytes);
 
     expect(await db.query('routines'), hasLength(1));
+    final restoredCustom = await db.query('custom_exercises');
+    expect(restoredCustom, hasLength(1));
+    expect(
+      restoredCustom.single['advanced_prescription_json']?.toString(),
+      contains('8–10 reps'),
+    );
     expect(await db.query('workout_history'), hasLength(1));
     expect(await db.query('workout_history_cardio'), hasLength(1));
     expect(await db.query('body_measurements'), hasLength(1));

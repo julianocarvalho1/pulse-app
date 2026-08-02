@@ -164,6 +164,13 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
         exerciseIndex > 0 && state.exercises[exerciseIndex - 1].isSuperset;
 
     var restText = exercise.rest;
+    var prescribedRestSeconds =
+        session != null &&
+            setIndex != null &&
+            exerciseIndex < session.exercises.length &&
+            setIndex < session.exercises[exerciseIndex].sets.length
+        ? session.exercises[exerciseIndex].sets[setIndex].prescribedRestSeconds
+        : null;
 
     if (startsSuperset) {
       final nextExerciseIndex = exerciseIndex + 1;
@@ -177,6 +184,16 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       if (nextExerciseRest.trim().isNotEmpty) {
         restText = nextExerciseRest;
       }
+      prescribedRestSeconds =
+          session != null &&
+              setIndex != null &&
+              nextExerciseIndex < session.exercises.length &&
+              setIndex < session.exercises[nextExerciseIndex].sets.length
+          ? session
+                .exercises[nextExerciseIndex]
+                .sets[setIndex]
+                .prescribedRestSeconds
+          : prescribedRestSeconds;
     } else if (continuesSuperset) {
       final previousExerciseIndex = exerciseIndex - 1;
 
@@ -190,7 +207,9 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       }
     }
 
-    final seconds = LegacyWorkoutMapper.parseRestSeconds(restText);
+    final seconds = prescribedRestSeconds != null && prescribedRestSeconds > 0
+        ? prescribedRestSeconds
+        : LegacyWorkoutMapper.parseRestSeconds(restText);
     if (seconds <= 0) {
       return RestStartOutcome.unavailable;
     }
@@ -405,29 +424,39 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       final weightValues = weights[exerciseIndex] ?? const <String>[];
       final repsValues = reps[exerciseIndex] ?? const <String>[];
 
+      final prescribedSets = _prescribedSetsForExercise(exercise);
+      final restoredSets = session.exercises.length > exerciseIndex
+          ? session.exercises[exerciseIndex].sets
+          : const <ActiveWorkoutSet>[];
       final expectedCount = <int>[
         completedValues.length,
         weightValues.length,
         repsValues.length,
-        LegacyWorkoutMapper.parseExerciseConfig(
-          reps: exercise.reps,
-          rest: exercise.rest,
-        ).seriesCount,
+        restoredSets.length,
+        prescribedSets.length,
       ].reduce((a, b) => a > b ? a : b);
 
-      final activeSets = List<ActiveWorkoutSet>.generate(
-        expectedCount,
-        (setIndex) => ActiveWorkoutSet(
+      final activeSets = List<ActiveWorkoutSet>.generate(expectedCount, (
+        setIndex,
+      ) {
+        final prescription = setIndex < restoredSets.length
+            ? restoredSets[setIndex]
+            : setIndex < prescribedSets.length
+            ? prescribedSets[setIndex]
+            : ActiveWorkoutSet(setNumber: setIndex + 1);
+        return prescription.copyWith(
           setNumber: setIndex + 1,
           weightText: setIndex < weightValues.length
               ? weightValues[setIndex]
-              : '',
-          repsText: setIndex < repsValues.length ? repsValues[setIndex] : '',
+              : prescription.weightText,
+          repsText: setIndex < repsValues.length
+              ? repsValues[setIndex]
+              : prescription.repsText,
           isCompleted: setIndex < completedValues.length
               ? completedValues[setIndex]
-              : false,
-        ),
-      );
+              : prescription.isCompleted,
+        );
+      });
 
       updatedExercises.add(
         ActiveWorkoutExercise(exercise: exercise, sets: activeSets),
@@ -525,17 +554,36 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   }
 
   ActiveWorkoutExercise _buildActiveExercise(Exercise exercise) {
+    return ActiveWorkoutExercise(
+      exercise: exercise,
+      sets: _prescribedSetsForExercise(exercise),
+    );
+  }
+
+  List<ActiveWorkoutSet> _prescribedSetsForExercise(Exercise exercise) {
+    final advancedWeek = exercise.advancedPrescription.activePrescription;
+    if (advancedWeek != null && advancedWeek.sets.isNotEmpty) {
+      return <ActiveWorkoutSet>[
+        for (var index = 0; index < advancedWeek.sets.length; index++)
+          ActiveWorkoutSet(
+            setNumber: index + 1,
+            targetText: advancedWeek.sets[index].target,
+            targetRir: advancedWeek.sets[index].targetRir,
+            cadence: advancedWeek.sets[index].cadence,
+            technique: advancedWeek.sets[index].technique,
+            prescribedRestSeconds: advancedWeek.sets[index].restSeconds,
+            prescriptionNotes: advancedWeek.sets[index].notes,
+          ),
+      ];
+    }
+
     final config = LegacyWorkoutMapper.parseExerciseConfig(
       reps: exercise.reps,
       rest: exercise.rest,
     );
-
-    return ActiveWorkoutExercise(
-      exercise: exercise,
-      sets: List<ActiveWorkoutSet>.generate(
-        config.seriesCount,
-        (index) => ActiveWorkoutSet(setNumber: index + 1),
-      ),
+    return List<ActiveWorkoutSet>.generate(
+      config.seriesCount,
+      (index) => ActiveWorkoutSet(setNumber: index + 1),
     );
   }
 

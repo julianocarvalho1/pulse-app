@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 4;
+  static const int databaseVersion = 5;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -83,6 +83,7 @@ class PulseDatabase {
         rest TEXT NOT NULL,
         is_superset INTEGER NOT NULL DEFAULT 0,
         custom_note TEXT NOT NULL DEFAULT '',
+        advanced_prescription_json TEXT NOT NULL DEFAULT '',
         created_at INTEGER NOT NULL
       )
     ''');
@@ -110,6 +111,7 @@ class PulseDatabase {
         rest TEXT NOT NULL,
         is_superset INTEGER NOT NULL DEFAULT 0,
         custom_note TEXT NOT NULL DEFAULT '',
+        advanced_prescription_json TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (routine_id)
           REFERENCES routines (id)
           ON DELETE CASCADE
@@ -191,6 +193,7 @@ class PulseDatabase {
         rest TEXT NOT NULL,
         is_superset INTEGER NOT NULL DEFAULT 0,
         custom_note TEXT NOT NULL DEFAULT '',
+        advanced_prescription_json TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (session_id)
           REFERENCES active_session (id)
           ON DELETE CASCADE
@@ -210,6 +213,12 @@ class PulseDatabase {
         weight_text TEXT NOT NULL DEFAULT '',
         reps_text TEXT NOT NULL DEFAULT '',
         is_completed INTEGER NOT NULL DEFAULT 0,
+        target_text TEXT NOT NULL DEFAULT '',
+        target_rir INTEGER,
+        cadence TEXT NOT NULL DEFAULT '',
+        technique TEXT NOT NULL DEFAULT 'none',
+        prescribed_rest_seconds INTEGER,
+        prescription_notes TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (session_exercise_id)
           REFERENCES active_session_exercises (id)
           ON DELETE CASCADE
@@ -244,6 +253,96 @@ class PulseDatabase {
       await _createRoutineCardioTable(db);
       await _createActiveSessionCardioTable(db);
     }
+
+    if (oldVersion < 5) {
+      await _addAdvancedPrescriptionColumns(db);
+    }
+  }
+
+  Future<void> _addAdvancedPrescriptionColumns(DatabaseExecutor db) async {
+    await _addColumnIfMissing(
+      db,
+      table: 'custom_exercises',
+      column: 'advanced_prescription_json',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'routine_exercises',
+      column: 'advanced_prescription_json',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_exercises',
+      column: 'advanced_prescription_json',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'target_text',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'target_rir',
+      definition: 'INTEGER',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'cadence',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'technique',
+      definition: "TEXT NOT NULL DEFAULT 'none'",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'prescribed_rest_seconds',
+      definition: 'INTEGER',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'prescription_notes',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+  }
+
+  Future<void> _addColumnIfMissing(
+    DatabaseExecutor db, {
+    required String table,
+    required String column,
+    required String definition,
+  }) async {
+    if (!await _tableExists(db, table)) {
+      return;
+    }
+
+    final columns = await db.rawQuery('PRAGMA table_info($table)');
+    final alreadyExists = columns.any(
+      (row) => row['name']?.toString() == column,
+    );
+    if (alreadyExists) {
+      return;
+    }
+
+    await db.execute('ALTER TABLE $table ADD COLUMN $column $definition');
+  }
+
+  Future<bool> _tableExists(DatabaseExecutor db, String table) async {
+    final rows = await db.rawQuery(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1",
+      <Object?>[table],
+    );
+    return rows.isNotEmpty;
   }
 
   Future<void> _createRoutineCardioTable(DatabaseExecutor db) async {

@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
+import '../features/workouts/domain/models/advanced_workout_prescription.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 
 enum RoutineType {
@@ -40,6 +41,7 @@ class Exercise {
     required this.rest,
     this.isSuperset = false,
     this.customNote = '',
+    this.advancedPrescription = const AdvancedExercisePrescription(),
   });
 
   final String id;
@@ -50,6 +52,7 @@ class Exercise {
   final String rest;
   final bool isSuperset;
   final String customNote;
+  final AdvancedExercisePrescription advancedPrescription;
 
   Exercise copyWith({
     String? id,
@@ -60,6 +63,7 @@ class Exercise {
     String? rest,
     bool? isSuperset,
     String? customNote,
+    AdvancedExercisePrescription? advancedPrescription,
   }) {
     return Exercise(
       id: id ?? this.id,
@@ -70,6 +74,7 @@ class Exercise {
       rest: rest ?? this.rest,
       isSuperset: isSuperset ?? this.isSuperset,
       customNote: customNote ?? this.customNote,
+      advancedPrescription: advancedPrescription ?? this.advancedPrescription,
     );
   }
 
@@ -83,6 +88,8 @@ class Exercise {
       'rest': rest,
       'isSuperset': isSuperset,
       'customNote': customNote,
+      if (!advancedPrescription.isEmpty)
+        'advancedPrescription': advancedPrescription.toMap(),
     };
   }
 
@@ -96,6 +103,11 @@ class Exercise {
       rest: map['rest']?.toString() ?? '60 seg',
       isSuperset: map['isSuperset'] == true,
       customNote: map['customNote']?.toString() ?? '',
+      advancedPrescription: map['advancedPrescription'] is Map
+          ? AdvancedExercisePrescription.fromMap(
+              Map<String, dynamic>.from(map['advancedPrescription'] as Map),
+            )
+          : const AdvancedExercisePrescription(),
     );
   }
 }

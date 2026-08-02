@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../../models/exercise.dart';
+import '../../../workouts/domain/models/advanced_workout_prescription.dart';
 import '../models/pulse_workout_file.dart';
 
 class PulseWorkoutCodec {
@@ -157,12 +158,18 @@ class PulseWorkoutCodec {
               .map((incoming) {
                 final local =
                     byId[incoming.id] ?? byName[_normalize(incoming.name)];
+                final resolvedAdvanced = _resolveAdvancedPrescription(
+                  incoming.advancedPrescription,
+                  byId: byId,
+                  byName: byName,
+                );
                 if (local != null) {
                   return local.copyWith(
                     reps: incoming.reps,
                     rest: incoming.rest,
                     isSuperset: incoming.isSuperset,
                     customNote: incoming.customNote,
+                    advancedPrescription: resolvedAdvanced,
                   );
                 }
 
@@ -172,6 +179,7 @@ class PulseWorkoutCodec {
                   description: incoming.description.trim().isEmpty
                       ? 'Exercício recebido em um arquivo do PULSE.'
                       : incoming.description,
+                  advancedPrescription: resolvedAdvanced,
                 );
                 customExercises.add(custom);
                 return custom;
@@ -298,6 +306,7 @@ class PulseWorkoutCodec {
             _normalize(exercise.rest),
             exercise.isSuperset ? '1' : '0',
             _normalize(exercise.customNote),
+            _advancedPrescriptionSignature(exercise.advancedPrescription),
           ].join('|');
         })
         .join('||');
@@ -311,6 +320,70 @@ class PulseWorkoutCodec {
     // somente o conteúdo prescrito, para que uma ficha renomeada continue
     // sendo reconhecida ao tentar importar o mesmo arquivo novamente.
     return '$exercises###$cardio';
+  }
+
+  AdvancedExercisePrescription _resolveAdvancedPrescription(
+    AdvancedExercisePrescription incoming, {
+    required Map<String, Exercise> byId,
+    required Map<String, Exercise> byName,
+  }) {
+    if (incoming.isEmpty) {
+      return incoming;
+    }
+
+    return incoming.copyWith(
+      alternatives: <ExerciseAlternative>[
+        for (final alternative in incoming.alternatives)
+          () {
+            final local =
+                byId[alternative.exerciseId] ??
+                byName[_normalize(alternative.name)];
+            if (local == null) {
+              return alternative;
+            }
+            return ExerciseAlternative(
+              exerciseId: local.id,
+              name: local.name,
+              muscle: local.muscle,
+            );
+          }(),
+      ],
+    );
+  }
+
+  String _advancedPrescriptionSignature(
+    AdvancedExercisePrescription prescription,
+  ) {
+    if (prescription.isEmpty) {
+      return '';
+    }
+    final weeks = prescription.weeks
+        .map((week) {
+          final sets = week.sets
+              .map((set) {
+                return <String>[
+                  '${set.setNumber}',
+                  _normalize(set.target),
+                  '${set.restSeconds ?? ''}',
+                  '${set.targetRir ?? ''}',
+                  _normalize(set.cadence),
+                  set.technique.storageValue,
+                  _normalize(set.notes),
+                ].join('~');
+              })
+              .join('^');
+          return '${week.weekNumber}:${_normalize(week.label)}:$sets:${_normalize(week.notes)}';
+        })
+        .join('||');
+    final alternatives =
+        prescription.alternatives
+            .map(
+              (alternative) =>
+                  '${_normalize(alternative.name)}:${_normalize(alternative.muscle)}',
+            )
+            .toList()
+          ..sort();
+    return '${prescription.activeWeek}##$weeks##${alternatives.join('|')}';
   }
 
   bool _listEquals(List<String> a, List<String> b) {

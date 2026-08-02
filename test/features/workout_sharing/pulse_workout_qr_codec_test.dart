@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workout_sharing/domain/models/pulse_workout_file.dart';
 import 'package:pulse/features/workout_sharing/domain/services/pulse_workout_codec.dart';
 import 'package:pulse/features/workout_sharing/domain/services/pulse_workout_qr_codec.dart';
+import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/models/exercise.dart';
 
@@ -54,7 +58,7 @@ void main() {
     final encoded = qrCodec.encode(document);
     final decoded = qrCodec.decode(encoded);
 
-    expect(encoded, startsWith('PULSEQR1:'));
+    expect(encoded, startsWith('PULSEQR2:'));
     expect(
       encoded.length,
       lessThanOrEqualTo(PulseWorkoutQrCodec.maxQrCharacters),
@@ -102,6 +106,40 @@ void main() {
     expect(secondPreview.isExactDuplicate, isTrue);
   });
 
+  test('continua lendo QR Code da versão 1', () {
+    final compact = <String, Object>{
+      'v': 1,
+      't': 'r',
+      'n': 'Treino legado',
+      'c': 0,
+      'd': <String, Object>{
+        'n': 'Treino legado',
+        'e': <Object>[
+          <String, Object>{
+            'i': 'p1',
+            'n': 'Supino',
+            'm': 'Peito',
+            'r': '3x 10',
+            's': '60 seg',
+          },
+        ],
+      },
+    };
+    final compressed = ZLibEncoder(
+      level: 9,
+    ).convert(utf8.encode(jsonEncode(compact)));
+    final payload = base64UrlEncode(compressed).replaceAll('=', '');
+
+    final decoded = qrCodec.decode('PULSEQR1:$payload');
+
+    expect(decoded.formatVersion, 1);
+    expect(decoded.routine?.name, 'Treino legado');
+    expect(
+      decoded.routine?.exercises.single.advancedPrescription.isEmpty,
+      isTrue,
+    );
+  });
+
   test('recusa QR que não pertence ao PULSE', () {
     expect(
       () => qrCodec.decode('https://exemplo.com'),
@@ -117,7 +155,7 @@ void main() {
 
   test('recusa QR criado por versão futura', () {
     expect(
-      () => qrCodec.decode('PULSEQR2:abc'),
+      () => qrCodec.decode('PULSEQR3:abc'),
       throwsA(
         isA<PulseWorkoutFileException>().having(
           (error) => error.message,
@@ -153,5 +191,48 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('QR Code preserva detalhes avançados por série', () {
+    const advanced = AdvancedExercisePrescription(
+      activeWeek: 1,
+      weeks: <WorkoutWeekPrescription>[
+        WorkoutWeekPrescription(
+          weekNumber: 1,
+          sets: <WorkoutSetPrescription>[
+            WorkoutSetPrescription(
+              setNumber: 1,
+              target: '8–10 reps',
+              restSeconds: 90,
+              targetRir: 2,
+              cadence: '3-1-1-0',
+              technique: WorkoutTechnique.isometry,
+            ),
+          ],
+        ),
+      ],
+    );
+    final document = fileCodec.routineDocument(
+      routine(
+        exercises: <Exercise>[
+          exercise().copyWith(advancedPrescription: advanced),
+        ],
+      ),
+    );
+
+    final decoded = qrCodec.decode(qrCodec.encode(document));
+    final set = decoded
+        .routine!
+        .exercises
+        .single
+        .advancedPrescription
+        .activePrescription!
+        .sets
+        .single;
+
+    expect(set.target, '8–10 reps');
+    expect(set.targetRir, 2);
+    expect(set.cadence, '3-1-1-0');
+    expect(set.technique, WorkoutTechnique.isometry);
   });
 }

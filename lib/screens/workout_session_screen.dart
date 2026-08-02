@@ -520,6 +520,37 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     );
   }
 
+  Widget _advancedPrescriptionChip(
+    BuildContext context,
+    IconData icon,
+    String label,
+  ) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: primary.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 13, color: primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: primary,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showMusicSelector() {
     showModalBottomSheet(
       context: context,
@@ -1215,10 +1246,16 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
       final repsController = _repsControllers[exerciseIndex]![setIndex];
       if (repsController.text.trim().isEmpty) {
-        final smartTarget = _getSmartTarget(
-          exercises[exerciseIndex].reps,
-          setIndex,
-        );
+        final sessionSets = provider.activeSession?.exercises;
+        final prescribedTarget =
+            sessionSets != null &&
+                exerciseIndex < sessionSets.length &&
+                setIndex < sessionSets[exerciseIndex].sets.length
+            ? sessionSets[exerciseIndex].sets[setIndex].targetText
+            : '';
+        final smartTarget = prescribedTarget.trim().isNotEmpty
+            ? prescribedTarget
+            : _getSmartTarget(exercises[exerciseIndex].reps, setIndex);
         final match = RegExp(r'\d+').firstMatch(smartTarget);
         if (match != null) {
           repsController.text = match.group(0)!;
@@ -2006,6 +2043,69 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                   ),
                                 ),
                               ),
+                              if (!ex.advancedPrescription.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    10,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 7,
+                                    runSpacing: 6,
+                                    children: <Widget>[
+                                      if (ex
+                                          .advancedPrescription
+                                          .weeks
+                                          .isNotEmpty)
+                                        _advancedPrescriptionChip(
+                                          context,
+                                          Icons.calendar_month_rounded,
+                                          'Semana ${ex.advancedPrescription.activeWeek}',
+                                        ),
+                                      if (ex
+                                              .advancedPrescription
+                                              .activePrescription
+                                              ?.sets
+                                              .any(
+                                                (set) =>
+                                                    set.technique.label !=
+                                                    'Nenhuma',
+                                              ) ??
+                                          false)
+                                        _advancedPrescriptionChip(
+                                          context,
+                                          Icons.bolt_rounded,
+                                          'Técnica avançada',
+                                        ),
+                                      if (ex
+                                              .advancedPrescription
+                                              .activePrescription
+                                              ?.sets
+                                              .any(
+                                                (set) => set.cadence
+                                                    .trim()
+                                                    .isNotEmpty,
+                                              ) ??
+                                          false)
+                                        _advancedPrescriptionChip(
+                                          context,
+                                          Icons.speed_rounded,
+                                          'Cadência definida',
+                                        ),
+                                      if (ex
+                                          .advancedPrescription
+                                          .alternatives
+                                          .isNotEmpty)
+                                        _advancedPrescriptionChip(
+                                          context,
+                                          Icons.swap_horiz_rounded,
+                                          '${ex.advancedPrescription.alternatives.length} alternativa${ex.advancedPrescription.alternatives.length == 1 ? '' : 's'}',
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               Divider(color: AppColors.border, height: 1),
 
                               Padding(
@@ -2079,10 +2179,37 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                   children: [
                                     ...List.generate(sets.length, (setIndex) {
                                       bool isCompleted = sets[setIndex];
-                                      String smartTarget = _getSmartTarget(
-                                        ex.reps,
-                                        setIndex,
-                                      );
+                                      final prescribedSet =
+                                          workoutState.activeSession != null &&
+                                              index <
+                                                  workoutState
+                                                      .activeSession!
+                                                      .exercises
+                                                      .length &&
+                                              setIndex <
+                                                  workoutState
+                                                      .activeSession!
+                                                      .exercises[index]
+                                                      .sets
+                                                      .length
+                                          ? workoutState
+                                                .activeSession!
+                                                .exercises[index]
+                                                .sets[setIndex]
+                                          : null;
+                                      var smartTarget =
+                                          prescribedSet?.targetText.trim() ??
+                                          '';
+                                      if (smartTarget.isEmpty) {
+                                        smartTarget = _getSmartTarget(
+                                          ex.reps,
+                                          setIndex,
+                                        );
+                                      }
+                                      if (prescribedSet?.targetRir != null) {
+                                        smartTarget =
+                                            '$smartTarget • RIR ${prescribedSet!.targetRir}';
+                                      }
 
                                       return Padding(
                                         padding: const EdgeInsets.only(

@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../../../../models/exercise.dart';
+import 'advanced_workout_prescription.dart';
 import 'cardio_log.dart';
 
 @immutable
@@ -12,24 +13,52 @@ class ActiveWorkoutSet {
     this.weightText = '',
     this.repsText = '',
     this.isCompleted = false,
+    this.targetText = '',
+    this.targetRir,
+    this.cadence = '',
+    this.technique = WorkoutTechnique.none,
+    this.prescribedRestSeconds,
+    this.prescriptionNotes = '',
   });
 
   final int setNumber;
   final String weightText;
   final String repsText;
   final bool isCompleted;
+  final String targetText;
+  final int? targetRir;
+  final String cadence;
+  final WorkoutTechnique technique;
+  final int? prescribedRestSeconds;
+  final String prescriptionNotes;
 
   ActiveWorkoutSet copyWith({
     int? setNumber,
     String? weightText,
     String? repsText,
     bool? isCompleted,
+    String? targetText,
+    int? targetRir,
+    bool clearTargetRir = false,
+    String? cadence,
+    WorkoutTechnique? technique,
+    int? prescribedRestSeconds,
+    bool clearPrescribedRestSeconds = false,
+    String? prescriptionNotes,
   }) {
     return ActiveWorkoutSet(
       setNumber: setNumber ?? this.setNumber,
       weightText: weightText ?? this.weightText,
       repsText: repsText ?? this.repsText,
       isCompleted: isCompleted ?? this.isCompleted,
+      targetText: targetText ?? this.targetText,
+      targetRir: clearTargetRir ? null : (targetRir ?? this.targetRir),
+      cadence: cadence ?? this.cadence,
+      technique: technique ?? this.technique,
+      prescribedRestSeconds: clearPrescribedRestSeconds
+          ? null
+          : (prescribedRestSeconds ?? this.prescribedRestSeconds),
+      prescriptionNotes: prescriptionNotes ?? this.prescriptionNotes,
     );
   }
 
@@ -39,6 +68,13 @@ class ActiveWorkoutSet {
       'weightText': weightText,
       'repsText': repsText,
       'isCompleted': isCompleted,
+      'targetText': targetText,
+      if (targetRir != null) 'targetRir': targetRir,
+      'cadence': cadence,
+      'technique': technique.storageValue,
+      if (prescribedRestSeconds != null)
+        'prescribedRestSeconds': prescribedRestSeconds,
+      'prescriptionNotes': prescriptionNotes,
     };
   }
 
@@ -48,6 +84,12 @@ class ActiveWorkoutSet {
       weightText: map['weightText']?.toString() ?? '',
       repsText: map['repsText']?.toString() ?? '',
       isCompleted: map['isCompleted'] == true || map['isCompleted'] == 1,
+      targetText: map['targetText']?.toString() ?? '',
+      targetRir: _readNullableInt(map['targetRir']),
+      cadence: map['cadence']?.toString() ?? '',
+      technique: WorkoutTechnique.fromStorage(map['technique']),
+      prescribedRestSeconds: _readNullableInt(map['prescribedRestSeconds']),
+      prescriptionNotes: map['prescriptionNotes']?.toString() ?? '',
     );
   }
 }

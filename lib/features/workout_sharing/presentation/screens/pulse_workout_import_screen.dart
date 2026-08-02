@@ -520,7 +520,9 @@ class _PulseWorkoutImportScreenState
                   ),
                 ),
                 Text(
-                  '${exercise.reps} • ${exercise.rest}',
+                  exercise.advancedPrescription.isEmpty
+                      ? '${exercise.reps} • ${exercise.rest}'
+                      : '${exercise.reps} • ${exercise.rest}\n${exercise.advancedPrescription.summary}',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 10,

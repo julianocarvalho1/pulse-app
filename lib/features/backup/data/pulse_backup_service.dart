@@ -76,6 +76,7 @@ class PulseBackupService {
       'rest',
       'is_superset',
       'custom_note',
+      'advanced_prescription_json',
       'created_at',
     ],
     'routines': <String>['id', 'name', 'focus', 'group_name', 'sort_order'],
@@ -91,6 +92,7 @@ class PulseBackupService {
       'rest',
       'is_superset',
       'custom_note',
+      'advanced_prescription_json',
     ],
     'routine_cardio': <String>[
       'id',
@@ -157,6 +159,7 @@ class PulseBackupService {
       'rest',
       'is_superset',
       'custom_note',
+      'advanced_prescription_json',
     ],
     'active_session_sets': <String>[
       'id',
@@ -165,6 +168,12 @@ class PulseBackupService {
       'weight_text',
       'reps_text',
       'is_completed',
+      'target_text',
+      'target_rir',
+      'cadence',
+      'technique',
+      'prescribed_rest_seconds',
+      'prescription_notes',
     ],
     'active_session_cardio': <String>[
       'id',

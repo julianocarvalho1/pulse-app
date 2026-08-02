@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../../../../models/exercise.dart';
+import '../../../workouts/data/mappers/legacy_workout_mapper.dart';
+import '../../../workouts/domain/models/advanced_workout_prescription.dart';
 import '../../../workouts/domain/models/cardio_log.dart';
 
 enum PersonalImportIssueSeverity { info, warning, error }
@@ -204,6 +206,7 @@ class PersonalImportExerciseDraft {
         'Alternativas informadas: ${alternatives.join(' ou ')}',
     ];
     final importedNote = noteParts.join(' • ');
+    final advancedPrescription = _buildAdvancedPrescription(repsText);
 
     if (matched != null) {
       return matched.copyWith(
@@ -211,6 +214,7 @@ class PersonalImportExerciseDraft {
         rest: rest.trim().isEmpty ? 'Não informado' : rest.trim(),
         isSuperset: isSupersetLead,
         customNote: importedNote,
+        advancedPrescription: advancedPrescription,
       );
     }
 
@@ -225,7 +229,140 @@ class PersonalImportExerciseDraft {
       rest: rest.trim().isEmpty ? 'Não informado' : rest.trim(),
       isSuperset: isSupersetLead,
       customNote: importedNote,
+      advancedPrescription: advancedPrescription,
     );
+  }
+
+  AdvancedExercisePrescription _buildAdvancedPrescription(String repsText) {
+    final repValues = RegExp(r'\d+')
+        .allMatches(repetitions)
+        .map((match) => int.parse(match.group(0)!))
+        .toList(growable: false);
+    final normalizedRepetitions = repetitions.toLowerCase();
+    final isWrittenAsRange =
+        RegExp(
+          r'\d+\s*(?:a|até)\s*\d+',
+          caseSensitive: false,
+        ).hasMatch(normalizedRepetitions) ||
+        (seriesCount == 2 &&
+            normalizedRepetitions.contains('-') &&
+            !normalizedRepetitions.contains('/'));
+    final hasExplicitPerSetSeparator =
+        normalizedRepetitions.contains('/') ||
+        normalizedRepetitions.contains('+');
+    final hasPerSetTargets =
+        seriesCount > 1 &&
+        repValues.length == seriesCount &&
+        !isWrittenAsRange &&
+        (seriesCount >= 3 || hasExplicitPerSetSeparator);
+    final technique = _structuredTechnique();
+    final rir = RegExp(
+      r'RIR\s*[:=-]?\s*(\d+)',
+      caseSensitive: false,
+    ).firstMatch(intensity)?.group(1);
+    final targetRir = int.tryParse(rir ?? '');
+    final hasAdvancedData =
+        hasPerSetTargets ||
+        techniques.isNotEmpty ||
+        cadence.trim().isNotEmpty ||
+        targetRir != null ||
+        alternatives.length > 1;
+
+    if (!hasAdvancedData) {
+      return const AdvancedExercisePrescription();
+    }
+
+    final restSeconds = LegacyWorkoutMapper.parseExerciseConfig(
+      reps: repsText,
+      rest: rest,
+    ).recommendedRestSeconds;
+    final alternativesList = <ExerciseAlternative>[];
+    final seen = <String>{};
+    for (final alternativeName in alternatives) {
+      final normalized = _normalizeAlternative(alternativeName);
+      if (normalized.isEmpty ||
+          normalized == _normalizeAlternative(rawName) ||
+          !seen.add(normalized)) {
+        continue;
+      }
+      Exercise? catalogMatch;
+      for (final candidate in exerciseDatabase) {
+        if (_normalizeAlternative(candidate.name) == normalized) {
+          catalogMatch = candidate;
+          break;
+        }
+      }
+      alternativesList.add(
+        ExerciseAlternative(
+          exerciseId: catalogMatch?.id ?? '',
+          name: alternativeName.trim(),
+          muscle: catalogMatch?.muscle ?? '',
+        ),
+      );
+    }
+
+    return AdvancedExercisePrescription(
+      activeWeek: 1,
+      weeks: <WorkoutWeekPrescription>[
+        WorkoutWeekPrescription(
+          weekNumber: 1,
+          label: 'Ficha importada',
+          sets: <WorkoutSetPrescription>[
+            for (var index = 0; index < seriesCount; index++)
+              WorkoutSetPrescription(
+                setNumber: index + 1,
+                target: hasPerSetTargets
+                    ? '${repValues[index]} reps'
+                    : repetitions.trim(),
+                restSeconds: restSeconds > 0 ? restSeconds : null,
+                targetRir: targetRir,
+                cadence: cadence.trim(),
+                technique: technique,
+              ),
+          ],
+        ),
+      ],
+      alternatives: alternativesList,
+    );
+  }
+
+  WorkoutTechnique _structuredTechnique() {
+    final normalized = techniques.join(' ').toLowerCase();
+    if (normalized.contains('drop')) {
+      return WorkoutTechnique.dropSet;
+    }
+    if (normalized.contains('rest') && normalized.contains('pause')) {
+      return WorkoutTechnique.restPause;
+    }
+    if (normalized.contains('isometr')) {
+      return WorkoutTechnique.isometry;
+    }
+    if (normalized.contains('parcial')) {
+      return WorkoutTechnique.partialFailure;
+    }
+    if (normalized.contains('falha')) {
+      return WorkoutTechnique.failure;
+    }
+    if (normalized.contains('dead') && normalized.contains('stop')) {
+      return WorkoutTechnique.deadStop;
+    }
+    if (normalized.contains('cluster')) {
+      return WorkoutTechnique.cluster;
+    }
+    if (normalized.contains('myo')) {
+      return WorkoutTechnique.myoReps;
+    }
+    return WorkoutTechnique.none;
+  }
+
+  String _normalizeAlternative(String value) {
+    const source = 'áàâãäéèêëíìîïóòôõöúùûüç';
+    const target = 'aaaaaeeeeiiiiooooouuuuc';
+    var normalized = value.trim().toLowerCase();
+    for (var index = 0; index < source.length; index++) {
+      normalized = normalized.replaceAll(source[index], target[index]);
+    }
+    return normalized.replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
   }
 }
 

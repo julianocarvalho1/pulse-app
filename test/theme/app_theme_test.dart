@@ -17,6 +17,15 @@ void main() {
     }
   });
 
+  test('tema escuro usa grafite mais suave em vez de preto quase absoluto', () {
+    final palette = pulsePalettes[1];
+    final theme = buildPulseDarkTheme(palette.darkPrimary);
+
+    expect(theme.brightness, Brightness.dark);
+    expect(theme.scaffoldBackgroundColor, const Color(0xFF17191D));
+    expect(theme.cardTheme.color, const Color(0xFF202329));
+  });
+
   test('tema claro usa cor moderada e texto branco nas acoes principais', () {
     final palette = pulsePalettes.first;
     final theme = buildPulseLightTheme(palette.lightPrimary);

@@ -5,6 +5,7 @@ import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../models/exercise.dart';
 import '../theme/app_theme.dart';
+import 'exercise_prescription_editor_screen.dart';
 import '../widgets/routine_type_selector.dart';
 
 class RoutineEditorScreen extends ConsumerStatefulWidget {
@@ -135,6 +136,76 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
     setState(() => _exercises.add(selected));
   }
 
+  Future<void> _setActiveWeekForAll() async {
+    final periodized = _exercises
+        .where((exercise) => exercise.advancedPrescription.weeks.isNotEmpty)
+        .toList(growable: false);
+    if (periodized.isEmpty) {
+      return;
+    }
+    final maxWeek = periodized
+        .expand((exercise) => exercise.advancedPrescription.weeks)
+        .map((week) => week.weekNumber)
+        .reduce((a, b) => a > b ? a : b);
+    final selected = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Semana ativa da ficha'),
+        children: <Widget>[
+          for (var week = 1; week <= maxWeek; week++)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, week),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('Semana $week'),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _exercises = <Exercise>[
+        for (final exercise in _exercises)
+          if (exercise.advancedPrescription.weeks.isEmpty)
+            exercise
+          else
+            exercise.copyWith(
+              advancedPrescription: exercise.advancedPrescription.copyWith(
+                activeWeek:
+                    exercise.advancedPrescription.weeks.any(
+                      (week) => week.weekNumber == selected,
+                    )
+                    ? selected
+                    : exercise.advancedPrescription.weeks.last.weekNumber,
+              ),
+            ),
+      ];
+    });
+  }
+
+  Future<void> _editExercisePrescription(int index) async {
+    final allExercises = ref
+        .read(workoutControllerProvider.notifier)
+        .allExercises;
+    final updated = await Navigator.push<Exercise>(
+      context,
+      MaterialPageRoute<Exercise>(
+        builder: (_) => ExercisePrescriptionEditorScreen(
+          exercise: _exercises[index],
+          availableExercises: allExercises,
+        ),
+      ),
+    );
+
+    if (updated != null && mounted) {
+      setState(() => _exercises[index] = updated);
+    }
+  }
+
   Future<void> _editCardio({RoutineCardio? existing}) async {
     final result = await showModalBottomSheet<RoutineCardio>(
       context: context,
@@ -255,6 +326,19 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                 subtitle:
                     '${_exercises.length} exercício${_exercises.length == 1 ? '' : 's'}',
               ),
+              if (_exercises.any(
+                (exercise) => exercise.advancedPrescription.weeks.isNotEmpty,
+              )) ...<Widget>[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _setActiveWeekForAll,
+                    icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                    label: const Text('DEFINIR SEMANA ATIVA'),
+                  ),
+                ),
+              ],
               const SizedBox(height: 10),
               if (_exercises.isEmpty)
                 const _EmptyBlock(
@@ -287,6 +371,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                             borderRadius: BorderRadius.circular(14),
                             side: BorderSide(color: AppColors.border),
                           ),
+                          onTap: () => _editExercisePrescription(index),
                           leading: ReorderableDragStartListener(
                             index: index,
                             child: Icon(
@@ -298,16 +383,32 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                             exercise.name,
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
-                          subtitle: Text('${exercise.reps} • ${exercise.rest}'),
-                          trailing: IconButton(
-                            tooltip: 'Remover',
-                            onPressed: () {
-                              setState(() => _exercises.removeAt(index));
-                            },
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.redAccent,
-                            ),
+                          subtitle: Text(
+                            exercise.advancedPrescription.isEmpty
+                                ? '${exercise.reps} • ${exercise.rest}'
+                                : '${exercise.advancedPrescription.summary}\nToque para editar séries, semanas e técnicas',
+                          ),
+                          isThreeLine: !exercise.advancedPrescription.isEmpty,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(
+                                exercise.advancedPrescription.isEmpty
+                                    ? Icons.tune_rounded
+                                    : Icons.event_repeat_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              IconButton(
+                                tooltip: 'Remover',
+                                onPressed: () {
+                                  setState(() => _exercises.removeAt(index));
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

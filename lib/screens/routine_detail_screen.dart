@@ -200,6 +200,29 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                           letterSpacing: 0.5,
                         ),
                       ),
+                      if (!exercise.advancedPrescription.isEmpty) ...<Widget>[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: <Widget>[
+                            Icon(
+                              Icons.event_repeat_rounded,
+                              size: 14,
+                              color: primaryColor,
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                exercise.advancedPrescription.summary,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 12,

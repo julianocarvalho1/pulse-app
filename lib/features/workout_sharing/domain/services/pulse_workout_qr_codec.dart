@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../../../models/exercise.dart';
+import '../../../workouts/domain/models/advanced_workout_prescription.dart';
 import '../../../workouts/domain/models/cardio_log.dart';
 import '../models/pulse_workout_file.dart';
 
 class PulseWorkoutQrCodec {
   const PulseWorkoutQrCodec();
 
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
   static const int maxQrCharacters = 2200;
   static const int maxDecodedBytes = 512 * 1024;
   static const String _prefixRoot = 'PULSEQR';
@@ -123,6 +124,8 @@ class PulseWorkoutQrCodec {
       's': exercise.rest,
       if (exercise.isSuperset) 'u': 1,
       if (exercise.customNote.trim().isNotEmpty) 'o': exercise.customNote,
+      if (!exercise.advancedPrescription.isEmpty)
+        'a': exercise.advancedPrescription.toMap(),
     };
   }
 
@@ -173,6 +176,7 @@ class PulseWorkoutQrCodec {
       final routine = _routineFromCompactMap(data, 0);
       _validateRoutines(<WorkoutRoutine>[routine]);
       return PulseWorkoutDocument(
+        formatVersion: mapVersion,
         contentType: contentType,
         createdAt: createdAt,
         title: title.isEmpty ? routine.name : title,
@@ -183,6 +187,7 @@ class PulseWorkoutQrCodec {
     final program = _programFromCompactMap(data);
     _validateRoutines(program.routines);
     return PulseWorkoutDocument(
+      formatVersion: mapVersion,
       contentType: contentType,
       createdAt: createdAt,
       title: title.isEmpty ? program.name : title,
@@ -261,6 +266,11 @@ class PulseWorkoutQrCodec {
       rest: map['s']?.toString() ?? '60 seg',
       isSuperset: _readInt(map['u']) == 1,
       customNote: map['o']?.toString() ?? '',
+      advancedPrescription: map['a'] is Map
+          ? AdvancedExercisePrescription.fromMap(
+              Map<String, dynamic>.from(map['a'] as Map),
+            )
+          : const AdvancedExercisePrescription(),
     );
   }
 

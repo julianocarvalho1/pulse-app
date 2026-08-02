@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/pulse_database.dart';
 import '../../../../models/exercise.dart';
+import '../../domain/models/advanced_workout_prescription.dart';
 import '../../domain/models/active_workout_session.dart';
 import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
@@ -359,6 +362,15 @@ class WorkoutLocalService {
                   weightText: setRow['weight_text']?.toString() ?? '',
                   repsText: setRow['reps_text']?.toString() ?? '',
                   isCompleted: _readInt(setRow['is_completed']) == 1,
+                  targetText: setRow['target_text']?.toString() ?? '',
+                  targetRir: _readNullableInt(setRow['target_rir']),
+                  cadence: setRow['cadence']?.toString() ?? '',
+                  technique: WorkoutTechnique.fromStorage(setRow['technique']),
+                  prescribedRestSeconds: _readNullableInt(
+                    setRow['prescribed_rest_seconds'],
+                  ),
+                  prescriptionNotes:
+                      setRow['prescription_notes']?.toString() ?? '',
                 ),
               )
               .toList(),
@@ -449,6 +461,12 @@ class WorkoutLocalService {
             'weight_text': set.weightText,
             'reps_text': set.repsText,
             'is_completed': set.isCompleted ? 1 : 0,
+            'target_text': set.targetText,
+            'target_rir': set.targetRir,
+            'cadence': set.cadence,
+            'technique': set.technique.storageValue,
+            'prescribed_rest_seconds': set.prescribedRestSeconds,
+            'prescription_notes': set.prescriptionNotes,
           });
         }
 
@@ -591,6 +609,9 @@ class WorkoutLocalService {
       'rest': exercise.rest,
       'is_superset': exercise.isSuperset ? 1 : 0,
       'custom_note': exercise.customNote,
+      'advanced_prescription_json': exercise.advancedPrescription.isEmpty
+          ? ''
+          : jsonEncode(exercise.advancedPrescription.toMap()),
       'created_at': ?createdAt,
     };
   }
@@ -605,7 +626,31 @@ class WorkoutLocalService {
       rest: row['rest']?.toString() ?? '60 seg',
       isSuperset: _readInt(row['is_superset']) == 1,
       customNote: row['custom_note']?.toString() ?? '',
+      advancedPrescription: _readAdvancedPrescription(
+        row['advanced_prescription_json'],
+      ),
     );
+  }
+
+  AdvancedExercisePrescription _readAdvancedPrescription(Object? raw) {
+    final text = raw?.toString().trim() ?? '';
+    if (text.isEmpty) {
+      return const AdvancedExercisePrescription();
+    }
+
+    try {
+      final decoded = jsonDecode(text);
+      if (decoded is Map) {
+        return AdvancedExercisePrescription.fromMap(
+          Map<String, dynamic>.from(decoded),
+        );
+      }
+    } on FormatException {
+      // Dados antigos ou parcialmente gravados continuam usando a prescrição
+      // simples de séries e repetições.
+    }
+
+    return const AdvancedExercisePrescription();
   }
 
   Future<int> _countRows(Database db, String table) async {

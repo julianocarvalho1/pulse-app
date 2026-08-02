@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/core/database/pulse_database.dart';
 import 'package:pulse/features/workouts/data/services/workout_local_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
@@ -217,5 +218,94 @@ void main() {
     expect(loaded.cardio.single.modality, CardioModality.treadmill);
     expect(loaded.cardio.single.averageHeartRateBpm, 145);
     expect(loaded.cardio.single.notes, 'Ritmo moderado.');
+  });
+
+  test('persiste periodização e detalhes por série', () async {
+    const prescription = AdvancedExercisePrescription(
+      activeWeek: 2,
+      weeks: <WorkoutWeekPrescription>[
+        WorkoutWeekPrescription(
+          weekNumber: 1,
+          sets: <WorkoutSetPrescription>[
+            WorkoutSetPrescription(setNumber: 1, target: '10–12 reps'),
+          ],
+        ),
+        WorkoutWeekPrescription(
+          weekNumber: 2,
+          sets: <WorkoutSetPrescription>[
+            WorkoutSetPrescription(
+              setNumber: 1,
+              target: '6–8 reps',
+              restSeconds: 120,
+              targetRir: 1,
+              cadence: '3-1-1-0',
+              technique: WorkoutTechnique.restPause,
+            ),
+          ],
+        ),
+      ],
+    );
+    const exercise = Exercise(
+      id: 'p1',
+      name: 'Supino reto',
+      muscle: 'Peito',
+      description: '',
+      reps: '3x 10',
+      rest: '60 seg',
+      advancedPrescription: prescription,
+    );
+    final routine = WorkoutRoutine(
+      id: 'advanced-routine',
+      name: 'Treino avançado',
+      focus: 'Peito',
+      exercises: const <Exercise>[exercise],
+    );
+
+    await service.saveRoutines(<WorkoutRoutine>[routine]);
+    final restoredRoutine = (await service.loadRoutines()).single;
+
+    expect(restoredRoutine.exercises.single.advancedPrescription.activeWeek, 2);
+    expect(
+      restoredRoutine
+          .exercises
+          .single
+          .advancedPrescription
+          .activePrescription
+          ?.sets
+          .single
+          .technique,
+      WorkoutTechnique.restPause,
+    );
+
+    final activeSession = ActiveWorkoutSession(
+      id: 'advanced-active',
+      routineName: routine.name,
+      startedAt: DateTime(2026, 8, 1, 16),
+      elapsedSeconds: 0,
+      exercises: <ActiveWorkoutExercise>[
+        ActiveWorkoutExercise(
+          exercise: exercise,
+          sets: const <ActiveWorkoutSet>[
+            ActiveWorkoutSet(
+              setNumber: 1,
+              targetText: '6–8 reps',
+              targetRir: 1,
+              cadence: '3-1-1-0',
+              technique: WorkoutTechnique.restPause,
+              prescribedRestSeconds: 120,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await service.saveActiveSession(activeSession);
+    final restoredSession = await service.loadActiveSession();
+    final restoredSet = restoredSession!.exercises.single.sets.single;
+
+    expect(restoredSet.targetText, '6–8 reps');
+    expect(restoredSet.targetRir, 1);
+    expect(restoredSet.technique, WorkoutTechnique.restPause);
+    expect(restoredSet.prescribedRestSeconds, 120);
   });
 }

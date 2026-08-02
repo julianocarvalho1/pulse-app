@@ -34,7 +34,7 @@ class PulseWorkoutDocument {
     required this.title,
     WorkoutRoutine? routine,
     WorkoutProgram? program,
-    this.formatVersion = 1,
+    this.formatVersion = 2,
   }) : routine = routine,
        program = program {
     if (contentType == PulseWorkoutContentType.routine && routine == null) {
@@ -50,7 +50,7 @@ class PulseWorkoutDocument {
   }
 
   static const String format = 'pulse-workout';
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
 
   final int formatVersion;
   final PulseWorkoutContentType contentType;

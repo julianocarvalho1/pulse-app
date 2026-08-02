@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/models/exercise.dart';
 
@@ -27,6 +28,11 @@ void main() {
               weightText: '20',
               repsText: '10',
               isCompleted: true,
+              targetText: '8–10 reps',
+              targetRir: 2,
+              cadence: '3-1-1-0',
+              technique: WorkoutTechnique.isometry,
+              prescribedRestSeconds: 90,
             ),
             ActiveWorkoutSet(setNumber: 2, weightText: '20', repsText: '9'),
           ],
@@ -51,6 +57,12 @@ void main() {
     expect(restored.notes, 'Boa execução');
     expect(restored.exercises.single.exercise.id, 'supino');
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
+    expect(restored.exercises.single.sets.first.targetText, '8–10 reps');
+    expect(restored.exercises.single.sets.first.targetRir, 2);
+    expect(
+      restored.exercises.single.sets.first.technique,
+      WorkoutTechnique.isometry,
+    );
     expect(restored.exercises.single.sets.last.repsText, '9');
     expect(restored.cardio.single.modality, CardioModality.elliptical);
     expect(restored.cardio.single.actualDurationMinutes, 18);
