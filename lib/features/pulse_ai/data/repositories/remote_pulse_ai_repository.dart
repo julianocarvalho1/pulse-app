@@ -29,6 +29,11 @@ class RemotePulseAiRepository implements PulseAiRepository {
     );
     final cleanedAnswer = _cleanAnswer(remoteAnswer.answer);
 
+    final supportingInsights =
+        request.mode == PulseAiAssistantMode.analyzeProgress
+        ? const <PulseAiInsight>[]
+        : structuredResponse.insights;
+
     return structuredResponse.copyWith(
       insights: <PulseAiInsight>[
         PulseAiInsight(
@@ -36,7 +41,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
           body: cleanedAnswer,
           tone: PulseAiInsightTone.neutral,
         ),
-        ...structuredResponse.insights,
+        ...supportingInsights,
       ],
       generatedLocally: false,
       providerModel: remoteAnswer.model,
@@ -53,7 +58,19 @@ class RemotePulseAiRepository implements PulseAiRepository {
       ..writeln()
       ..writeln('Regras específicas desta solicitação:')
       ..writeln('- Responda sem Markdown e sem títulos com símbolos.')
-      ..writeln('- Use no máximo 5 parágrafos curtos.')
+      ..writeln('- Use no máximo 4 parágrafos curtos.')
+      ..writeln(
+        '- Escreva como uma conversa natural, não como um relatório padronizado.',
+      )
+      ..writeln(
+        '- Escolha apenas os 2 ou 3 aspectos mais relevantes do contexto.',
+      )
+      ..writeln(
+        '- Interprete os dados em conjunto e evite repetir todos os números recebidos.',
+      )
+      ..writeln(
+        '- Varie a construção das frases e evite respostas com o mesmo roteiro.',
+      )
       ..writeln('- Não invente exercícios, cargas ou informações ausentes.')
       ..writeln('- Não faça diagnóstico nem prescrição médica.')
       ..writeln('- Não mencione o nome do modelo ou do provedor de IA.')
@@ -138,8 +155,8 @@ class RemotePulseAiRepository implements PulseAiRepository {
     buffer
       ..writeln('Resumo numérico do progresso:')
       ..writeln('Período: ${progress.periodLabel}')
-      ..writeln('Treinos registrados: ${progress.workouts}')
-      ..writeln('Treinos concluídos: ${progress.completedWorkouts}')
+      ..writeln('Atividades registradas: ${progress.workouts}')
+      ..writeln('Registros concluídos: ${progress.completedWorkouts}')
       ..writeln('Treinos incompletos: ${progress.incompleteWorkouts}')
       ..writeln('Dias ativos: ${progress.activeDays}')
       ..writeln(
@@ -150,7 +167,19 @@ class RemotePulseAiRepository implements PulseAiRepository {
       ..writeln('Repetições registradas: ${progress.totalReps}')
       ..writeln('Volume total: ${progress.totalVolume.toStringAsFixed(1)}')
       ..writeln('Sequência atual: ${progress.currentStreak}')
-      ..writeln('Melhor sequência: ${progress.longestStreak}');
+      ..writeln('Melhor sequência: ${progress.longestStreak}')
+      ..writeln(
+        'Sessões de musculação ou treino misto: ${progress.strengthSessions}',
+      )
+      ..writeln('Sessões somente de cardio: ${progress.cardioSessions}')
+      ..writeln('Atividades livres: ${progress.freeActivitySessions}')
+      ..writeln('Minutos de atividades livres: ${progress.freeActivityMinutes}')
+      ..writeln(
+        'Atividades que substituíram treino planejado: ${progress.substituteActivities}',
+      )
+      ..writeln(
+        'Tipos de atividades livres: ${progress.freeActivityLabels.isEmpty ? 'não informados' : progress.freeActivityLabels.join(', ')}',
+      );
 
     if (progress.workoutsChange != null ||
         progress.activeDaysChange != null ||
@@ -158,7 +187,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
         progress.volumeChange != null) {
       buffer
         ..writeln('Comparação percentual com o período anterior:')
-        ..writeln('Treinos: ${progress.workoutsChange?.toStringAsFixed(1)}')
+        ..writeln('Atividades: ${progress.workoutsChange?.toStringAsFixed(1)}')
         ..writeln(
           'Dias ativos: ${progress.activeDaysChange?.toStringAsFixed(1)}',
         )
@@ -167,7 +196,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
     }
 
     buffer.writeln(
-      'Analise tendências de consistência e registro. Não prescreva uma frequência ideal e não conclua que houve ganho de saúde, força ou massa muscular apenas com estes números.',
+      'Diferencie aderência à ficha de consistência geral: atividades livres contam como dia ativo, mas não como ficha concluída. Analise tendências de consistência e registro. Não prescreva uma frequência ideal e não conclua que houve ganho de saúde, força ou massa muscular apenas com estes números.',
     );
   }
 
@@ -201,7 +230,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
     PulseAiAssistantMode.reviewRoutine =>
       'Faça uma revisão organizacional da ficha, apontando pontos positivos e pontos de atenção sem alterar o treino.',
     PulseAiAssistantMode.analyzeProgress =>
-      'Faça uma leitura clara de frequência, consistência, volume registrado e comparação do período, sem diagnóstico e sem prescrição automática.',
+      'Converse com o usuário sobre o momento mais relevante do período. Relacione frequência, consistência, tipos de atividade e evolução registrada sem transformar a resposta em uma lista de métricas. Reconheça o que foi positivo, aponte uma observação útil e termine com uma orientação geral e realista, sem diagnóstico nem prescrição automática.',
     PulseAiAssistantMode.explainExercise =>
       'Explique o exercício selecionado, a prescrição cadastrada e os termos avançados em linguagem simples.',
   };
@@ -210,7 +239,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
     PulseAiAssistantMode.explainWorkout => 'Leitura personalizada',
     PulseAiAssistantMode.suggestReplacement => 'Leitura das alternativas',
     PulseAiAssistantMode.reviewRoutine => 'Análise da ficha',
-    PulseAiAssistantMode.analyzeProgress => 'Análise do período',
+    PulseAiAssistantMode.analyzeProgress => 'Leitura do seu momento',
     PulseAiAssistantMode.explainExercise => 'Explicação personalizada',
   };
 

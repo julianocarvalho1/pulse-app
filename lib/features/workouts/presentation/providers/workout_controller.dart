@@ -4,6 +4,7 @@ import '../../../../models/exercise.dart';
 import '../../domain/models/active_workout_session.dart';
 import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
+import '../../domain/models/free_activity_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../state/workout_state.dart';
 import 'workout_bootstrap_controller.dart';
@@ -187,6 +188,15 @@ class WorkoutController extends Notifier<WorkoutState> {
     return ref
         .read(workoutHistoryControllerProvider.notifier)
         .addCardioSession(cardio: cardio, sessionName: sessionName);
+  }
+
+  Future<WorkoutHistoryItem> addFreeActivity({
+    required FreeActivityLog activity,
+    required DateTime date,
+  }) {
+    return ref
+        .read(workoutHistoryControllerProvider.notifier)
+        .addFreeActivity(activity: activity, date: date);
   }
 
   Future<void> deleteHistoryItem(String id) {

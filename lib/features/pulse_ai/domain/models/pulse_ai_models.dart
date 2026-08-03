@@ -80,6 +80,12 @@ class PulseAiProgressSnapshot {
     this.activeDaysChange,
     this.durationChange,
     this.volumeChange,
+    this.strengthSessions = 0,
+    this.cardioSessions = 0,
+    this.freeActivitySessions = 0,
+    this.substituteActivities = 0,
+    this.freeActivityMinutes = 0,
+    this.freeActivityLabels = const <String>[],
   });
 
   final String periodLabel;
@@ -98,6 +104,12 @@ class PulseAiProgressSnapshot {
   final double? activeDaysChange;
   final double? durationChange;
   final double? volumeChange;
+  final int strengthSessions;
+  final int cardioSessions;
+  final int freeActivitySessions;
+  final int substituteActivities;
+  final int freeActivityMinutes;
+  final List<String> freeActivityLabels;
 
   bool get isEmpty => workouts == 0;
 }

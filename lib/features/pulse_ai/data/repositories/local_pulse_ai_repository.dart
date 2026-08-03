@@ -240,7 +240,7 @@ class LocalPulseAiRepository implements PulseAiRepository {
           PulseAiInsight(
             title: 'Primeiro passo',
             body:
-                'Conclua ou salve um treino para começar a acompanhar frequência, volume e consistência.',
+                'Conclua um treino ou registre uma atividade para começar a acompanhar frequência, volume e consistência.',
             tone: PulseAiInsightTone.attention,
           ),
         ],
@@ -254,7 +254,7 @@ class LocalPulseAiRepository implements PulseAiRepository {
       PulseAiInsight(
         title: 'Consistência no período',
         body:
-            '${progress.completedWorkouts} de ${progress.workouts} treinos foram concluídos, em ${progress.activeDays} dias ativos. A frequência média foi de ${progress.weeklyFrequency.toStringAsFixed(1)} dia${progress.weeklyFrequency == 1 ? '' : 's'} por semana.',
+            '${progress.workouts} atividades foram registradas em ${progress.activeDays} dias ativos. A frequência média foi de ${progress.weeklyFrequency.toStringAsFixed(1)} dia${progress.weeklyFrequency == 1 ? '' : 's'} por semana.',
         tone: completionRate >= 75
             ? PulseAiInsightTone.positive
             : PulseAiInsightTone.neutral,
@@ -264,6 +264,13 @@ class LocalPulseAiRepository implements PulseAiRepository {
         body:
             'Foram registradas ${progress.totalSets} séries, ${progress.totalReps} repetições e ${_formatVolume(progress.totalVolume)} de volume total.',
       ),
+      if (progress.freeActivitySessions > 0)
+        PulseAiInsight(
+          title: 'Atividades fora da ficha',
+          body:
+              '${progress.freeActivitySessions} atividade${progress.freeActivitySessions == 1 ? '' : 's'} livre${progress.freeActivitySessions == 1 ? '' : 's'} somaram ${progress.freeActivityMinutes} minutos${progress.freeActivityLabels.isEmpty ? '' : ' (${progress.freeActivityLabels.join(', ')})'}. ${progress.substituteActivities} substituiu${progress.substituteActivities == 1 ? '' : 'ram'} treino${progress.substituteActivities == 1 ? '' : 's'} planejado${progress.substituteActivities == 1 ? '' : 's'}, sem marcar nenhuma ficha como concluída.',
+          tone: PulseAiInsightTone.positive,
+        ),
     ];
 
     final trend = _progressTrend(progress);
@@ -274,7 +281,7 @@ class LocalPulseAiRepository implements PulseAiRepository {
     if (progress.currentStreak > 0 || progress.longestStreak > 0) {
       insights.add(
         PulseAiInsight(
-          title: 'Sequência de treinos',
+          title: 'Sequência de dias ativos',
           body:
               'Sequência atual: ${progress.currentStreak} dia${progress.currentStreak == 1 ? '' : 's'}. Melhor sequência registrada: ${progress.longestStreak}.',
           tone: progress.currentStreak > 0

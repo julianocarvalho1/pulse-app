@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'cardio_log.dart';
 import 'exercise_log.dart';
+import 'free_activity_log.dart';
 import 'workout_session_status.dart';
 
 @immutable
@@ -15,12 +16,16 @@ class WorkoutHistoryItem {
     required this.duration,
     required List<ExerciseLog> exercises,
     List<CardioLog> cardio = const <CardioLog>[],
+    List<FreeActivityLog> freeActivities = const <FreeActivityLog>[],
     this.notes = '',
     this.status = WorkoutSessionStatus.completed,
   }) : exercises = UnmodifiableListView<ExerciseLog>(
          List<ExerciseLog>.from(exercises),
        ),
-       cardio = UnmodifiableListView<CardioLog>(List<CardioLog>.from(cardio));
+       cardio = UnmodifiableListView<CardioLog>(List<CardioLog>.from(cardio)),
+       freeActivities = UnmodifiableListView<FreeActivityLog>(
+         List<FreeActivityLog>.from(freeActivities),
+       );
 
   final String id;
   final String routineName;
@@ -28,6 +33,7 @@ class WorkoutHistoryItem {
   final String duration;
   final List<ExerciseLog> exercises;
   final List<CardioLog> cardio;
+  final List<FreeActivityLog> freeActivities;
   final String notes;
   final WorkoutSessionStatus status;
 
@@ -35,7 +41,10 @@ class WorkoutHistoryItem {
 
   int get totalCardioActivities => cardio.length;
 
-  int get totalActivities => totalExercises + totalCardioActivities;
+  int get totalFreeActivities => freeActivities.length;
+
+  int get totalActivities =>
+      totalExercises + totalCardioActivities + totalFreeActivities;
 
   int get totalCardioMinutes {
     return cardio.fold<int>(
@@ -51,9 +60,24 @@ class WorkoutHistoryItem {
     );
   }
 
-  bool get isCardioOnly => cardio.isNotEmpty && exercises.isEmpty;
+  int get totalFreeActivityMinutes {
+    return freeActivities.fold<int>(
+      0,
+      (total, entry) => total + entry.durationMinutes,
+    );
+  }
 
-  bool get isMixedSession => cardio.isNotEmpty && exercises.isNotEmpty;
+  bool get isFreeActivityOnly =>
+      freeActivities.isNotEmpty && exercises.isEmpty && cardio.isEmpty;
+
+  bool get isCardioOnly =>
+      cardio.isNotEmpty && exercises.isEmpty && freeActivities.isEmpty;
+
+  bool get isMixedSession =>
+      (cardio.isNotEmpty || freeActivities.isNotEmpty) && exercises.isNotEmpty;
+
+  bool get replacedPlannedWorkout =>
+      freeActivities.any((entry) => entry.replacedPlannedWorkout);
 
   int get totalSets {
     return exercises.fold<int>(
@@ -80,6 +104,7 @@ class WorkoutHistoryItem {
     String? duration,
     List<ExerciseLog>? exercises,
     List<CardioLog>? cardio,
+    List<FreeActivityLog>? freeActivities,
     String? notes,
     WorkoutSessionStatus? status,
   }) {
@@ -90,6 +115,7 @@ class WorkoutHistoryItem {
       duration: duration ?? this.duration,
       exercises: exercises ?? this.exercises,
       cardio: cardio ?? this.cardio,
+      freeActivities: freeActivities ?? this.freeActivities,
       notes: notes ?? this.notes,
       status: status ?? this.status,
     );
@@ -103,6 +129,7 @@ class WorkoutHistoryItem {
       'duration': duration,
       'exercises': exercises.map((exercise) => exercise.toMap()).toList(),
       'cardio': cardio.map((entry) => entry.toMap()).toList(),
+      'freeActivities': freeActivities.map((entry) => entry.toMap()).toList(),
       'notes': notes,
       'status': status.storageValue,
     };
@@ -111,6 +138,7 @@ class WorkoutHistoryItem {
   factory WorkoutHistoryItem.fromMap(Map<String, dynamic> map) {
     final rawExercises = map['exercises'];
     final rawCardio = map['cardio'];
+    final rawFreeActivities = map['freeActivities'];
 
     return WorkoutHistoryItem(
       id: map['id']?.toString() ?? '',
@@ -137,6 +165,15 @@ class WorkoutHistoryItem {
                 )
                 .toList()
           : const <CardioLog>[],
+      freeActivities: rawFreeActivities is List
+          ? rawFreeActivities
+                .whereType<Map>()
+                .map(
+                  (entry) =>
+                      FreeActivityLog.fromMap(Map<String, dynamic>.from(entry)),
+                )
+                .toList()
+          : const <FreeActivityLog>[],
       notes: map['notes']?.toString() ?? '',
       status: WorkoutSessionStatus.fromStorage(map['status']),
     );

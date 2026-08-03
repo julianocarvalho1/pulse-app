@@ -128,10 +128,17 @@ class WorkoutAnalyticsService {
       final sortedItems = List<WorkoutHistoryItem>.from(items)
         ..sort((a, b) => b.date.compareTo(a.date));
       final completed = sortedItems
-          .where((item) => item.status == WorkoutSessionStatus.completed)
+          .where(
+            (item) =>
+                item.status == WorkoutSessionStatus.completed &&
+                !item.isFreeActivityOnly,
+          )
           .length;
       final incomplete = sortedItems
           .where((item) => item.status == WorkoutSessionStatus.incomplete)
+          .length;
+      final freeActivities = sortedItems
+          .where((item) => item.isFreeActivityOnly)
           .length;
 
       return MapEntry(
@@ -141,6 +148,7 @@ class WorkoutAnalyticsService {
           items: sortedItems,
           completedCount: completed,
           incompleteCount: incomplete,
+          freeActivityCount: freeActivities,
         ),
       );
     });
@@ -157,6 +165,11 @@ class WorkoutAnalyticsService {
     var totalVolume = 0.0;
     var completed = 0;
     var incomplete = 0;
+    var strengthSessions = 0;
+    var cardioSessions = 0;
+    var freeActivitySessions = 0;
+    var substituteActivities = 0;
+    var freeActivityMinutes = 0;
     final activeDays = <DateTime>{};
 
     for (final item in items) {
@@ -164,6 +177,18 @@ class WorkoutAnalyticsService {
       totalSets += item.totalSets;
       totalVolume += item.totalVolume;
       activeDays.add(_dateOnly(item.date));
+
+      if (item.isFreeActivityOnly) {
+        freeActivitySessions++;
+        freeActivityMinutes += item.totalFreeActivityMinutes;
+        if (item.replacedPlannedWorkout) {
+          substituteActivities++;
+        }
+      } else if (item.isCardioOnly) {
+        cardioSessions++;
+      } else {
+        strengthSessions++;
+      }
 
       if (item.status == WorkoutSessionStatus.completed) {
         completed++;
@@ -200,6 +225,11 @@ class WorkoutAnalyticsService {
       totalReps: totalReps,
       totalVolume: totalVolume,
       weeklyFrequency: activeDays.isEmpty ? 0 : activeDays.length / weeks,
+      strengthSessions: strengthSessions,
+      cardioSessions: cardioSessions,
+      freeActivitySessions: freeActivitySessions,
+      substituteActivities: substituteActivities,
+      freeActivityMinutes: freeActivityMinutes,
     );
   }
 

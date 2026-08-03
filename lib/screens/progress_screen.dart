@@ -152,7 +152,18 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _progressSectionHeader(
-          title: 'CALENDÁRIO DE TREINOS',
+          title: 'VISÃO GERAL DO PERÍODO',
+          subtitle: 'Escolha o intervalo e receba uma leitura da sua evolução.',
+          trailing: _periodDropdown(),
+        ),
+        if (!stats.isEmpty) ...<Widget>[
+          const SizedBox(height: 10),
+          _progressAiCard(context, summary),
+          const SizedBox(height: 20),
+        ] else
+          const SizedBox(height: 16),
+        _progressSectionHeader(
+          title: 'CALENDÁRIO DE ATIVIDADES',
           subtitle: 'Toque em um dia para consultar as atividades registradas.',
         ),
         const SizedBox(height: 10),
@@ -160,8 +171,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
         const SizedBox(height: 20),
         _progressSectionHeader(
           title: 'RESUMO DO PERÍODO',
-          subtitle: 'Frequência, tempo e evolução dos seus treinos.',
-          trailing: _periodDropdown(),
+          subtitle: 'Frequência, tempo e evolução das atividades registradas.',
         ),
         const SizedBox(height: 10),
         if (stats.isEmpty)
@@ -169,11 +179,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
             icon: Icons.insights_outlined,
             title: 'Ainda não há dados neste período',
             message:
-                'Conclua ou salve um treino incompleto para começar a acompanhar sua evolução real.',
+                'Conclua um treino ou registre uma atividade para começar a acompanhar sua evolução real.',
           )
         else ...<Widget>[
-          _progressAiCard(context, summary),
-          const SizedBox(height: 16),
           Row(
             children: <Widget>[
               Expanded(
@@ -181,9 +189,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                   context,
                   icon: Icons.fitness_center,
                   value: '${stats.workouts}',
-                  label: 'Treinos',
+                  label: 'Atividades',
                   detail:
-                      '${stats.completedWorkouts} completos • ${stats.incompleteWorkouts} incompletos',
+                      '${stats.strengthSessions} treinos • ${stats.cardioSessions} cardios • ${stats.freeActivitySessions} livres',
                 ),
               ),
               const SizedBox(width: 12),
@@ -742,6 +750,17 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
       activeDaysChange: comparison?.activeDaysChange,
       durationChange: comparison?.durationChange,
       volumeChange: comparison?.volumeChange,
+      strengthSessions: stats.strengthSessions,
+      cardioSessions: stats.cardioSessions,
+      freeActivitySessions: stats.freeActivitySessions,
+      substituteActivities: stats.substituteActivities,
+      freeActivityMinutes: stats.freeActivityMinutes,
+      freeActivityLabels: summary.workouts
+          .expand((item) => item.freeActivities)
+          .map((entry) => entry.displayName)
+          .toSet()
+          .take(5)
+          .toList(growable: false),
     );
 
     Navigator.of(context).push(
@@ -955,7 +974,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
               Expanded(
                 child: _comparisonItem(
                   context,
-                  'Treinos',
+                  'Atividades',
                   comparison.workoutsChange,
                 ),
               ),
@@ -1067,8 +1086,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
 
   Widget _workoutCard(BuildContext context, WorkoutHistoryItem item) {
     final incomplete = item.isIncomplete;
+    final isFreeActivity = item.isFreeActivityOnly;
     final isCardio = item.isCardioOnly;
-    final color = incomplete
+    final color = isFreeActivity
+        ? AppColors.info
+        : incomplete
         ? Colors.orangeAccent
         : Theme.of(context).colorScheme.primary;
 
@@ -1102,7 +1124,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    isCardio
+                    isFreeActivity
+                        ? Icons.sports_gymnastics_rounded
+                        : isCardio
                         ? Icons.directions_run_rounded
                         : incomplete
                         ? Icons.pending_actions_rounded
@@ -1134,7 +1158,18 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 5,
-                        children: isCardio
+                        children: isFreeActivity
+                            ? <Widget>[
+                                _miniTag(
+                                  '${item.totalFreeActivityMinutes} min',
+                                ),
+                                _miniTag(
+                                  item.freeActivities.first.intensity.label,
+                                ),
+                                if (item.replacedPlannedWorkout)
+                                  _miniTag('Substituiu treino'),
+                              ]
+                            : isCardio
                             ? <Widget>[
                                 _miniTag('${item.totalCardioMinutes} min'),
                                 if (item.totalCardioDistanceKm > 0)
@@ -1169,7 +1204,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isCardio
+                      isFreeActivity
+                          ? 'ATIVIDADE'
+                          : isCardio
                           ? 'CARDIO'
                           : incomplete
                           ? 'INCOMPLETO'

@@ -11,6 +11,11 @@ class WorkoutPeriodStats {
     required this.totalReps,
     required this.totalVolume,
     required this.weeklyFrequency,
+    this.strengthSessions = 0,
+    this.cardioSessions = 0,
+    this.freeActivitySessions = 0,
+    this.substituteActivities = 0,
+    this.freeActivityMinutes = 0,
   });
 
   final int workouts;
@@ -22,6 +27,11 @@ class WorkoutPeriodStats {
   final int totalReps;
   final double totalVolume;
   final double weeklyFrequency;
+  final int strengthSessions;
+  final int cardioSessions;
+  final int freeActivitySessions;
+  final int substituteActivities;
+  final int freeActivityMinutes;
 
   bool get isEmpty => workouts == 0;
 }
@@ -121,16 +131,19 @@ class WorkoutDaySummary {
     required this.items,
     required this.completedCount,
     required this.incompleteCount,
+    this.freeActivityCount = 0,
   });
 
   final DateTime date;
   final List<WorkoutHistoryItem> items;
   final int completedCount;
   final int incompleteCount;
+  final int freeActivityCount;
 
-  int get total => completedCount + incompleteCount;
+  int get total => completedCount + incompleteCount + freeActivityCount;
   bool get hasCompleted => completedCount > 0;
   bool get hasIncomplete => incompleteCount > 0;
+  bool get hasFreeActivity => freeActivityCount > 0;
 }
 
 class WorkoutProgressSummary {

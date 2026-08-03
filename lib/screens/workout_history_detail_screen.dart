@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
+import '../features/workouts/domain/models/free_activity_log.dart';
 import '../features/workouts/domain/models/workout_history_item.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../theme/app_theme.dart';
@@ -19,15 +20,21 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
       "dd/MM/yyyy 'às' HH:mm",
     ).format(workout.date);
     final isIncomplete = workout.isIncomplete;
-    final statusColor = isIncomplete
+    final statusColor = workout.isFreeActivityOnly
+        ? AppColors.info
+        : isIncomplete
         ? AppColors.warning
         : Theme.of(context).colorScheme.primary;
-    final statusLabel = workout.isCardioOnly
+    final statusLabel = workout.isFreeActivityOnly
+        ? 'ATIVIDADE'
+        : workout.isCardioOnly
         ? 'CARDIO'
         : isIncomplete
         ? 'INCOMPLETO'
         : 'CONCLUÍDO';
-    final statusIcon = workout.isCardioOnly
+    final statusIcon = workout.isFreeActivityOnly
+        ? Icons.sports_gymnastics_rounded
+        : workout.isCardioOnly
         ? Icons.directions_run_rounded
         : isIncomplete
         ? Icons.pending_actions_rounded
@@ -49,7 +56,11 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          workout.isCardioOnly ? 'Detalhes do cardio' : 'Detalhes do treino',
+          workout.isFreeActivityOnly
+              ? 'Detalhes da atividade'
+              : workout.isCardioOnly
+              ? 'Detalhes do cardio'
+              : 'Detalhes do treino',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -84,6 +95,32 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                 const _SectionTitle('ANOTAÇÕES'),
                 const SizedBox(height: 10),
                 _NotesCard(notes: workout.notes),
+              ],
+              if (workout.freeActivities.isNotEmpty) ...[
+                const SizedBox(height: 26),
+                Row(
+                  children: <Widget>[
+                    const Expanded(child: _SectionTitle('ATIVIDADE REALIZADA')),
+                    Text(
+                      '${workout.totalFreeActivities}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: workout.freeActivities.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) => _FreeActivityHistoryCard(
+                    entry: workout.freeActivities[index],
+                  ),
+                ),
               ],
               if (workout.cardio.isNotEmpty) ...[
                 const SizedBox(height: 26),
@@ -143,7 +180,9 @@ class WorkoutHistoryDetailScreen extends StatelessWidget {
                   },
                 ),
               ],
-              if (workout.exercises.isEmpty && workout.cardio.isEmpty) ...[
+              if (workout.exercises.isEmpty &&
+                  workout.cardio.isEmpty &&
+                  workout.freeActivities.isEmpty) ...[
                 const SizedBox(height: 26),
                 const _EmptyExerciseDetails(),
               ],
@@ -270,7 +309,35 @@ class _WorkoutSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
-              children: workout.isCardioOnly
+              children: workout.isFreeActivityOnly
+                  ? <Widget>[
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.timer_outlined,
+                          value: '${workout.totalFreeActivityMinutes} min',
+                          label: 'Duração',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: Icons.speed_rounded,
+                          value: workout.freeActivities.first.intensity.label,
+                          label: 'Intensidade',
+                        ),
+                      ),
+                      const _MetricDivider(),
+                      Expanded(
+                        child: _SummaryMetric(
+                          icon: workout.replacedPlannedWorkout
+                              ? Icons.swap_horiz_rounded
+                              : Icons.add_circle_outline_rounded,
+                          value: workout.replacedPlannedWorkout ? 'Sim' : 'Não',
+                          label: 'Substituiu ficha',
+                        ),
+                      ),
+                    ]
+                  : workout.isCardioOnly
                   ? <Widget>[
                       Expanded(
                         child: _SummaryMetric(
@@ -483,6 +550,117 @@ class _NotesCard extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FreeActivityHistoryCard extends StatelessWidget {
+  const _FreeActivityHistoryCard({required this.entry});
+
+  final FreeActivityLog entry;
+
+  IconData get _icon => switch (entry.type) {
+    FreeActivityType.crossfit => Icons.sports_gymnastics_rounded,
+    FreeActivityType.functional => Icons.fitness_center_rounded,
+    FreeActivityType.pilates => Icons.self_improvement_rounded,
+    FreeActivityType.dance => Icons.music_note_rounded,
+    FreeActivityType.mobility => Icons.accessibility_new_rounded,
+    FreeActivityType.sport => Icons.sports_soccer_rounded,
+    FreeActivityType.yoga => Icons.spa_rounded,
+    FreeActivityType.other => Icons.more_horiz_rounded,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppColors.info;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: accent.withValues(alpha: 0.32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(_icon, color: accent, size: 21),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      entry.displayName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${entry.durationMinutes} min • intensidade ${entry.intensity.label.toLowerCase()}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (entry.replacedPlannedWorkout) ...<Widget>[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.swap_horiz_rounded, color: accent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Esta atividade substituiu o treino planejado do dia. A ficha não foi marcada como concluída.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (entry.notes.trim().isNotEmpty) ...<Widget>[
+            const SizedBox(height: 10),
+            Text(
+              entry.notes,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.35,
+              ),
+            ),
+          ],
         ],
       ),
     );

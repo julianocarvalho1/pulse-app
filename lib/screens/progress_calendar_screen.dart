@@ -38,6 +38,10 @@ class _ConsistencyCalendarSectionState
       0,
       (total, day) => total + day.incompleteCount,
     );
+    final freeActivities = days.values.fold<int>(
+      0,
+      (total, day) => total + day.freeActivityCount,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,6 +96,11 @@ class _ConsistencyCalendarSectionState
                       Colors.orangeAccent,
                       '$incomplete incompleto${incomplete == 1 ? '' : 's'}',
                     ),
+                    if (freeActivities > 0)
+                      _legend(
+                        AppColors.info,
+                        '$freeActivities atividade${freeActivities == 1 ? '' : 's'} livre${freeActivities == 1 ? '' : 's'}',
+                      ),
                     Text(
                       '${days.length} dia${days.length == 1 ? '' : 's'} ativo${days.length == 1 ? '' : 's'}',
                       style: TextStyle(
@@ -190,16 +199,21 @@ class _ConsistencyCalendarSectionState
   }) {
     final hasCompleted = summary?.hasCompleted ?? false;
     final hasIncomplete = summary?.hasIncomplete ?? false;
+    final hasFreeActivity = summary?.hasFreeActivity ?? false;
+    final onlyFreeActivity =
+        summary != null && summary.total == summary.freeActivityCount;
     final isToday = DateUtils.isSameDay(date, DateTime.now());
     final primary = Theme.of(context).colorScheme.primary;
-    final background = hasCompleted
+    final background = onlyFreeActivity
+        ? AppColors.info
+        : hasCompleted
         ? primary
         : hasIncomplete
         ? Colors.orangeAccent
         : Colors.transparent;
     final contentColor = summary == null
         ? AppColors.textPrimary
-        : hasCompleted
+        : hasCompleted || onlyFreeActivity
         ? AppColors.onPrimary
         : Colors.black87;
 
@@ -259,6 +273,20 @@ class _ConsistencyCalendarSectionState
                     decoration: const BoxDecoration(
                       color: Colors.orangeAccent,
                       shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              if (hasFreeActivity && !onlyFreeActivity)
+                Positioned(
+                  left: 1,
+                  bottom: 1,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.info,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.surface, width: 1),
                     ),
                   ),
                 ),
@@ -352,8 +380,11 @@ class _ConsistencyCalendarSectionState
 
   Widget _workoutItem(BuildContext context, WorkoutHistoryItem item) {
     final incomplete = item.isIncomplete;
+    final isFreeActivity = item.isFreeActivityOnly;
     final isCardio = item.isCardioOnly;
-    final color = incomplete
+    final color = isFreeActivity
+        ? AppColors.info
+        : incomplete
         ? Colors.orangeAccent
         : Theme.of(context).colorScheme.primary;
 
@@ -382,7 +413,9 @@ class _ConsistencyCalendarSectionState
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  isCardio
+                  isFreeActivity
+                      ? Icons.sports_gymnastics_rounded
+                      : isCardio
                       ? Icons.directions_run_rounded
                       : incomplete
                       ? Icons.pending_actions_rounded
@@ -426,7 +459,11 @@ class _ConsistencyCalendarSectionState
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  incomplete ? 'INCOMPLETO' : 'CONCLUÍDO',
+                  isFreeActivity
+                      ? 'ATIVIDADE'
+                      : incomplete
+                      ? 'INCOMPLETO'
+                      : 'CONCLUÍDO',
                   style: TextStyle(
                     color: color,
                     fontSize: 8,
@@ -531,6 +568,14 @@ class _ConsistencyCalendarSectionState
 
   String _workoutSubtitle(WorkoutHistoryItem item) {
     final time = DateFormat('HH:mm').format(item.date);
+    if (item.isFreeActivityOnly && item.freeActivities.isNotEmpty) {
+      final activity = item.freeActivities.first;
+      final replacement = activity.replacedPlannedWorkout
+          ? ' • substituiu o treino'
+          : '';
+      return '$time • ${activity.durationMinutes} min • ${activity.intensity.label}$replacement';
+    }
+
     if (item.isCardioOnly && item.cardio.isNotEmpty) {
       return '$time • ${item.totalCardioMinutes} min • ${item.cardio.first.modality.label}';
     }

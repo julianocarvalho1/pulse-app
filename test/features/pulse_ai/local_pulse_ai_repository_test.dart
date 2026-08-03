@@ -150,7 +150,8 @@ void main() {
     );
 
     expect(response.title, 'Leitura do seu progresso');
-    expect(response.insights.first.body, contains('10 de 12 treinos'));
+    expect(response.insights.first.body, contains('12 atividades'));
+    expect(response.insights.first.body, contains('9 dias ativos'));
     expect(response.generatedLocally, isTrue);
   });
 
@@ -165,5 +166,40 @@ void main() {
     expect(response.title, chestPress.name);
     expect(response.insights.first.body, contains('peito'));
     expect(response.insights[1].body, contains('3x 10'));
+  });
+
+  test('inclui atividades livres na leitura do progresso', () async {
+    final response = await repository.analyze(
+      const PulseAiRequest(
+        mode: PulseAiAssistantMode.analyzeProgress,
+        progress: PulseAiProgressSnapshot(
+          periodLabel: 'Últimas 4 semanas',
+          workouts: 5,
+          completedWorkouts: 5,
+          incompleteWorkouts: 0,
+          activeDays: 5,
+          durationSeconds: 12000,
+          totalSets: 40,
+          totalReps: 320,
+          totalVolume: 6400,
+          weeklyFrequency: 1.25,
+          currentStreak: 1,
+          longestStreak: 3,
+          strengthSessions: 4,
+          freeActivitySessions: 1,
+          substituteActivities: 1,
+          freeActivityMinutes: 60,
+          freeActivityLabels: <String>['CrossFit'],
+        ),
+      ),
+    );
+
+    final activityInsight = response.insights.firstWhere(
+      (insight) => insight.title == 'Atividades fora da ficha',
+    );
+
+    expect(activityInsight.body, contains('60 minutos'));
+    expect(activityInsight.body, contains('CrossFit'));
+    expect(activityInsight.body, contains('sem marcar nenhuma ficha'));
   });
 }

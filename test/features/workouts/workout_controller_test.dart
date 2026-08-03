@@ -4,6 +4,7 @@ import 'package:pulse/features/workouts/data/catalogs/pre_made_workout_catalog.d
 import 'package:pulse/features/workouts/data/services/workout_feedback_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
+import 'package:pulse/features/workouts/domain/models/free_activity_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/features/workouts/domain/repositories/workout_repository.dart';
@@ -670,6 +671,44 @@ void main() {
     expect(state.myRoutines.single.groupName, 'Outro programa');
     expect(state.activeProgramName, 'Outro programa');
     expect(repository.routines, hasLength(1));
+  });
+
+  test('registra atividade livre sem concluir a próxima ficha', () async {
+    final repository = _FakeWorkoutRepository(
+      routines: <WorkoutRoutine>[routine],
+      activeProgramName: 'ABC',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        workoutRepositoryProvider.overrideWithValue(repository),
+        workoutFeedbackServiceProvider.overrideWithValue(
+          _FakeWorkoutFeedbackService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    await controller.addFreeActivity(
+      activity: const FreeActivityLog(
+        type: FreeActivityType.pilates,
+        durationMinutes: 50,
+        intensity: FreeActivityIntensity.light,
+        replacedPlannedWorkout: true,
+      ),
+      date: DateTime(2026, 8, 2),
+    );
+
+    final state = container.read(workoutControllerProvider);
+    final item = state.history.single;
+
+    expect(item.isFreeActivityOnly, isTrue);
+    expect(item.freeActivities.single.displayName, 'Pilates');
+    expect(item.replacedPlannedWorkout, isTrue);
+    expect(state.nextRoutineToTrain?.id, routine.id);
+    expect(repository.history.single.id, item.id);
   });
 
   test('mantém a duração do treino em um Notifier separado', () {

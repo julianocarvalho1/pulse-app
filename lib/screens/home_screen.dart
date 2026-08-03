@@ -9,6 +9,7 @@ import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import '../models/exercise.dart';
 import 'cardio_entry_screen.dart';
+import 'free_activity_entry_screen.dart';
 import 'workout_session_screen.dart';
 import 'workout_history_detail_screen.dart';
 import 'workout_plan_screen.dart';
@@ -78,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     final history = provider.history;
-    final totalTreinos = history.length;
+    final totalRegistros = history.length;
 
     String statusTreinoMsg =
         'Você ainda não concluiu nenhum treino. Que tal começar hoje?';
@@ -90,7 +91,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final diferencaDias = DateTime.now().difference(ultimoTreino.date).inDays;
 
       if (diferencaDias == 0) {
-        statusTreinoMsg = ultimoTreino.isCardioOnly
+        statusTreinoMsg = ultimoTreino.isFreeActivityOnly
+            ? 'Atividade registrada hoje. Seu dia ativo foi reconhecido pelo PULSE.'
+            : ultimoTreino.isCardioOnly
             ? 'Cardio registrado hoje. Consistência também conta fora da musculação.'
             : 'Parabéns! Você treinou hoje e garantiu sua evolução.';
       } else if (diferencaDias == 1) {
@@ -101,7 +104,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             'Já se passaram $diferencaDias dias desde o seu último registro.';
       }
 
-      if (ultimoTreino.isCardioOnly) {
+      if (ultimoTreino.isFreeActivityOnly) {
+        final activity = ultimoTreino.freeActivities.first;
+        final replacementLabel = activity.replacedPlannedWorkout
+            ? ' • substituiu o treino planejado'
+            : '';
+        analiseRitmoMsg =
+            '${activity.displayName}: ${activity.durationMinutes} minutos • intensidade ${activity.intensity.label.toLowerCase()}$replacementLabel.';
+      } else if (ultimoTreino.isCardioOnly) {
         final cardio = ultimoTreino.cardio.first;
         final distanceLabel = cardio.distanceKm == null
             ? ''
@@ -179,7 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _buildNotificationItem(
               Icons.military_tech,
               'Marcos Alcançados',
-              'Total de $totalTreinos atividade(s) registrada(s).',
+              'Total de $totalRegistros atividade(s) registrada(s).',
             ),
           ],
         ),
@@ -336,7 +346,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       'Sem tempo para planejar? Escolha o foco e o tempo disponível. Nós montamos um treino aleatório para você na hora.',
                       style: TextStyle(
@@ -555,8 +565,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final agora = DateTime.now();
     final umaSemanaAtras = agora.subtract(const Duration(days: 7));
-    final treinosNaSemana = history
+    final atividadesDaSemana = history
         .where((item) => item.date.isAfter(umaSemanaAtras))
+        .toList(growable: false);
+    final diasAtivosNaSemana = atividadesDaSemana
+        .map((item) => DateTime(item.date.year, item.date.month, item.date.day))
+        .toSet()
         .length;
     final rotinaDoDia =
         provider.nextRoutineToTrain ??
@@ -662,7 +676,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               20,
-              8,
+              6,
               20,
               MediaQuery.viewPaddingOf(context).bottom + 20,
             ),
@@ -680,7 +694,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Text(
                               _obterSaudacao(userName),
                               style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 23,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.35,
                               ),
@@ -696,7 +710,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Container(
                         margin: const EdgeInsets.only(top: 2),
                         padding: const EdgeInsets.symmetric(
@@ -720,7 +734,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   if (provider.isWorkoutActive) ...[
                     GestureDetector(
@@ -733,7 +747,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
@@ -793,8 +807,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             Container(
-                              width: 52,
-                              height: 52,
+                              width: 46,
+                              height: 46,
                               decoration: BoxDecoration(
                                 color: AppColors.warning.withValues(
                                   alpha: 0.12,
@@ -804,7 +818,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Icon(
                                 Icons.play_arrow_rounded,
                                 color: AppColors.warning,
-                                size: 26,
+                                size: 24,
                               ),
                             ),
                           ],
@@ -824,7 +838,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
@@ -886,8 +900,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             Container(
-                              width: 52,
-                              height: 52,
+                              width: 46,
+                              height: 46,
                               decoration: BoxDecoration(
                                 color: AppColors.primarySoft,
                                 shape: BoxShape.circle,
@@ -895,14 +909,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Icon(
                                 _routineIcon(rotinaDoDia.type),
                                 color: Theme.of(context).colorScheme.primary,
-                                size: 26,
+                                size: 24,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -933,7 +947,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             context,
                           ).colorScheme.primary,
                           foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -1055,14 +1069,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: _HomeQuickActionCard(
                           icon: Icons.directions_run_rounded,
                           eyebrow: 'CARDIO',
-                          title: 'Registrar atividade',
+                          title: 'Registrar cardio',
                           subtitle: 'Esteira, bike e mais',
                           onTap: () async {
                             final saved = await Navigator.push<bool>(
@@ -1083,7 +1097,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _HomeQuickActionCard(
                           icon: Icons.shuffle_rounded,
@@ -1097,8 +1111,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  _HomeWideActionCard(
+                    icon: Icons.sports_gymnastics_rounded,
+                    eyebrow: 'ATIVIDADE LIVRE',
+                    title: 'CrossFit, pilates e mais',
+                    subtitle:
+                        'Registre uma atividade fora da ficha e mantenha seus dias ativos corretos.',
+                    onTap: () async {
+                      final saved = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute<bool>(
+                          builder: (_) => const FreeActivityEntryScreen(),
+                        ),
+                      );
+                      if (saved == true && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Atividade salva no histórico com sucesso.',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1126,21 +1165,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       Expanded(
                         child: _SummaryStat(
                           icon: Icons.fitness_center,
-                          value: '$treinosNaSemana',
-                          label: 'Concluídos',
+                          value: '$diasAtivosNaSemana',
+                          label: 'Dias ativos',
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: _SummaryStat(
                           icon: Icons.local_fire_department,
-                          value: treinosNaSemana >= 3 ? 'Excelente' : 'Em dia',
+                          value: diasAtivosNaSemana >= 3
+                              ? 'Excelente'
+                              : 'Em dia',
                           label: 'Ritmo',
                         ),
                       ),
@@ -1151,12 +1192,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           value: history.isNotEmpty
                               ? '${DateTime.now().difference(history.first.date).inDays}d'
                               : '-',
-                          label: 'Último treino',
+                          label: 'Última atividade',
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                   Text(
                     'ATIVIDADE RECENTE',
                     style: TextStyle(
@@ -1166,7 +1207,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _RecentActivityCard(
                     workout: latestActivity,
                     onTap: () {
@@ -1233,8 +1274,8 @@ class _HomeQuickActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          height: 124,
-          padding: const EdgeInsets.all(13),
+          height: 108,
+          padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             gradient: emphasized
                 ? LinearGradient(
@@ -1253,16 +1294,16 @@ class _HomeQuickActionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: emphasized ? primary : AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   icon,
                   color: emphasized ? AppColors.onPrimary : primary,
-                  size: 20,
+                  size: 18,
                 ),
               ),
               const Spacer(),
@@ -1302,6 +1343,95 @@ class _HomeQuickActionCard extends StatelessWidget {
   }
 }
 
+class _HomeWideActionCard extends StatelessWidget {
+  const _HomeWideActionCard({
+    required this.icon,
+    required this.eyebrow,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String eyebrow;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      eyebrow,
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _RecentActivityCard extends StatelessWidget {
   const _RecentActivityCard({required this.workout, required this.onTap});
 
@@ -1322,10 +1452,12 @@ class _RecentActivityCard extends StatelessWidget {
       icon = Icons.history_toggle_off_rounded;
       title = 'Seu histórico começa aqui';
       subtitle =
-          'Conclua um treino ou registre um cardio para acompanhar sua evolução.';
+          'Conclua um treino ou registre uma atividade para acompanhar sua evolução.';
       eyebrow = 'PRÓXIMO PASSO';
     } else {
-      icon = item.isCardioOnly
+      icon = item.isFreeActivityOnly
+          ? Icons.sports_gymnastics_rounded
+          : item.isCardioOnly
           ? Icons.directions_run_rounded
           : item.isMixedSession
           ? Icons.sports_gymnastics_rounded
@@ -1344,8 +1476,8 @@ class _RecentActivityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(17),
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 108),
-          padding: const EdgeInsets.all(15),
+          constraints: const BoxConstraints(minHeight: 94),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -1369,15 +1501,15 @@ class _RecentActivityCard extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Container(
-                width: 48,
-                height: 48,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: accent, size: 23),
+                child: Icon(icon, color: accent, size: 21),
               ),
-              const SizedBox(width: 13),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1445,7 +1577,14 @@ class _RecentActivityCard extends StatelessWidget {
   String _activitySummary(WorkoutHistoryItem item) {
     final details = <String>[];
 
-    if (item.isCardioOnly) {
+    if (item.isFreeActivityOnly) {
+      final activity = item.freeActivities.first;
+      details.add('${activity.durationMinutes} min');
+      details.add('Intensidade ${activity.intensity.label.toLowerCase()}');
+      if (activity.replacedPlannedWorkout) {
+        details.add('Substituiu o treino planejado');
+      }
+    } else if (item.isCardioOnly) {
       details.add('${item.totalCardioMinutes} min de cardio');
     } else {
       details.add('${item.totalExercises} exercícios');
@@ -1455,7 +1594,9 @@ class _RecentActivityCard extends StatelessWidget {
       }
     }
 
-    if (item.duration.trim().isNotEmpty) {
+    if (!item.isFreeActivityOnly &&
+        !item.isCardioOnly &&
+        item.duration.trim().isNotEmpty) {
       details.add(item.duration);
     }
 
@@ -1476,7 +1617,7 @@ class _SummaryStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -1484,7 +1625,7 @@ class _SummaryStat extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 5),
           Text(
             value,

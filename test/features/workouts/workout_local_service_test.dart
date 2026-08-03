@@ -5,6 +5,7 @@ import 'package:pulse/features/workouts/domain/models/active_workout_session.dar
 import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
+import 'package:pulse/features/workouts/domain/models/free_activity_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/models/exercise.dart';
@@ -307,5 +308,39 @@ void main() {
     expect(restoredSet.targetRir, 1);
     expect(restoredSet.technique, WorkoutTechnique.restPause);
     expect(restoredSet.prescribedRestSeconds, 120);
+  });
+
+  test('persiste atividade livre e indicação de substituição', () async {
+    final historyItem = WorkoutHistoryItem(
+      id: 'free-activity-1',
+      routineName: 'Atividade • CrossFit',
+      date: DateTime(2026, 8, 2, 18, 30),
+      duration: '55:00',
+      exercises: const <ExerciseLog>[],
+      freeActivities: const <FreeActivityLog>[
+        FreeActivityLog(
+          type: FreeActivityType.crossfit,
+          durationMinutes: 55,
+          intensity: FreeActivityIntensity.intense,
+          replacedPlannedWorkout: true,
+          notes: 'Aula com as amigas.',
+        ),
+      ],
+    );
+
+    await service.saveHistory(<WorkoutHistoryItem>[historyItem]);
+
+    final loaded = (await service.loadHistory()).single;
+
+    expect(loaded.isFreeActivityOnly, isTrue);
+    expect(loaded.totalFreeActivities, 1);
+    expect(loaded.totalFreeActivityMinutes, 55);
+    expect(loaded.replacedPlannedWorkout, isTrue);
+    expect(loaded.freeActivities.single.displayName, 'CrossFit');
+    expect(
+      loaded.freeActivities.single.intensity,
+      FreeActivityIntensity.intense,
+    );
+    expect(loaded.freeActivities.single.notes, 'Aula com as amigas.');
   });
 }

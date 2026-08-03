@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
+import 'package:pulse/features/workouts/domain/models/free_activity_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_session_status.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
@@ -115,6 +116,43 @@ void main() {
     expect(find.text('16,4 km'), findsWidgets);
     expect(find.text('Esforço 8/10'), findsOneWidget);
     expect(find.textContaining('calorias'), findsNothing);
+    expect(find.text('EXERCÍCIOS REALIZADOS'), findsNothing);
+  });
+
+  testWidgets('detalhes de atividade livre mostram substituição e observação', (
+    tester,
+  ) async {
+    final activity = WorkoutHistoryItem(
+      id: 'activity-1',
+      routineName: 'Atividade • CrossFit',
+      date: DateTime(2026, 8, 2, 18),
+      duration: '55:00',
+      exercises: const <ExerciseLog>[],
+      freeActivities: const <FreeActivityLog>[
+        FreeActivityLog(
+          type: FreeActivityType.crossfit,
+          durationMinutes: 55,
+          intensity: FreeActivityIntensity.intense,
+          replacedPlannedWorkout: true,
+          notes: 'Aula com as amigas.',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildPulseLightTheme(pulsePalettes[1].lightPrimary),
+        home: WorkoutHistoryDetailScreen(workout: activity),
+      ),
+    );
+
+    expect(find.text('Detalhes da atividade'), findsOneWidget);
+    expect(find.text('ATIVIDADE'), findsOneWidget);
+    expect(find.text('ATIVIDADE REALIZADA'), findsOneWidget);
+    expect(find.text('CrossFit'), findsOneWidget);
+    expect(find.text('55 min'), findsWidgets);
+    expect(find.text('Intensa'), findsWidgets);
+    expect(find.text('Aula com as amigas.'), findsOneWidget);
     expect(find.text('EXERCÍCIOS REALIZADOS'), findsNothing);
   });
 }

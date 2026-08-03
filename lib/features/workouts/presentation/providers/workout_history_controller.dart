@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
+import '../../domain/models/free_activity_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../../domain/models/workout_session_status.dart';
 import '../../domain/repositories/workout_repository.dart';
@@ -34,16 +35,19 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
     required String duration,
     required List<ExerciseLog> exercises,
     List<CardioLog> cardio = const <CardioLog>[],
+    List<FreeActivityLog> freeActivities = const <FreeActivityLog>[],
     required String notes,
     required WorkoutSessionStatus status,
+    DateTime? date,
   }) async {
     final item = WorkoutHistoryItem(
       id: id,
       routineName: routineName.isEmpty ? 'Treino Avulso' : routineName,
-      date: DateTime.now(),
+      date: date ?? DateTime.now(),
       duration: duration,
       exercises: exercises,
       cardio: cardio,
+      freeActivities: freeActivities,
       notes: notes,
       status: status,
     );
@@ -52,7 +56,7 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
     final updated = <WorkoutHistoryItem>[
       item,
       ...previous.where((existing) => existing.id != id),
-    ];
+    ]..sort((a, b) => b.date.compareTo(a.date));
     state = state.copyWith(items: updated);
 
     try {
@@ -84,6 +88,33 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
       cardio: <CardioLog>[cardio],
       notes: '',
       status: WorkoutSessionStatus.completed,
+    );
+  }
+
+  Future<WorkoutHistoryItem> addFreeActivity({
+    required FreeActivityLog activity,
+    required DateTime date,
+  }) {
+    final now = DateTime.now();
+    final normalizedDate = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      now.hour,
+      now.minute,
+    );
+    final duration =
+        '${activity.durationMinutes.toString().padLeft(2, '0')}:00';
+
+    return addWorkout(
+      id: 'activity_${now.microsecondsSinceEpoch}',
+      routineName: 'Atividade • ${activity.displayName}',
+      duration: duration,
+      exercises: const <ExerciseLog>[],
+      freeActivities: <FreeActivityLog>[activity],
+      notes: '',
+      status: WorkoutSessionStatus.completed,
+      date: normalizedDate,
     );
   }
 

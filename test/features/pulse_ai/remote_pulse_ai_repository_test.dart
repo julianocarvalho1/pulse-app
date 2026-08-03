@@ -100,6 +100,45 @@ void main() {
     expect(client.lastMessage, contains('Não cite nenhuma alternativa fora'));
   });
 
+  test('envia atividades livres separadas da aderência à ficha', () async {
+    final client = _RecordingClient(
+      const PulseAiRemoteAnswer(answer: 'Leitura do período.'),
+    );
+    final repository = RemotePulseAiRepository(client: client);
+
+    final response = await repository.analyze(
+      const PulseAiRequest(
+        mode: PulseAiAssistantMode.analyzeProgress,
+        progress: PulseAiProgressSnapshot(
+          periodLabel: 'Últimas 4 semanas',
+          workouts: 5,
+          completedWorkouts: 5,
+          incompleteWorkouts: 0,
+          activeDays: 5,
+          durationSeconds: 12000,
+          totalSets: 40,
+          totalReps: 320,
+          totalVolume: 6400,
+          weeklyFrequency: 1.25,
+          currentStreak: 1,
+          longestStreak: 3,
+          strengthSessions: 4,
+          freeActivitySessions: 1,
+          substituteActivities: 1,
+          freeActivityMinutes: 60,
+          freeActivityLabels: <String>['CrossFit'],
+        ),
+      ),
+    );
+
+    expect(client.lastMessage, contains('Atividades livres: 1'));
+    expect(client.lastMessage, contains('CrossFit'));
+    expect(client.lastMessage, contains('não como ficha concluída'));
+    expect(client.lastMessage, contains('conversa natural'));
+    expect(response.insights, hasLength(1));
+    expect(response.insights.single.title, 'Leitura do seu momento');
+  });
+
   test('volta ao modo local quando a IA conectada falha', () async {
     final repository = FallbackPulseAiRepository(
       primary: const _ThrowingRepository(PulseAiOfflineException()),

@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 5;
+  static const int databaseVersion = 6;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -232,6 +232,7 @@ class PulseDatabase {
 
     await _createBodyMeasurementsTable(db);
     await _createWorkoutHistoryCardioTable(db);
+    await _createWorkoutHistoryFreeActivitiesTable(db);
     await _createRoutineCardioTable(db);
     await _createActiveSessionCardioTable(db);
   }
@@ -256,6 +257,10 @@ class PulseDatabase {
 
     if (oldVersion < 5) {
       await _addAdvancedPrescriptionColumns(db);
+    }
+
+    if (oldVersion < 6) {
+      await _createWorkoutHistoryFreeActivitiesTable(db);
     }
   }
 
@@ -422,6 +427,32 @@ class PulseDatabase {
     await db.execute('''
       CREATE UNIQUE INDEX IF NOT EXISTS workout_history_cardio_order_index
       ON workout_history_cardio (history_id, sort_order)
+    ''');
+  }
+
+  Future<void> _createWorkoutHistoryFreeActivitiesTable(
+    DatabaseExecutor db,
+  ) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_history_free_activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        history_id TEXT NOT NULL,
+        sort_order INTEGER NOT NULL,
+        activity_type TEXT NOT NULL,
+        duration_minutes INTEGER NOT NULL,
+        intensity TEXT NOT NULL,
+        replaced_planned_workout INTEGER NOT NULL DEFAULT 0,
+        custom_name TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        FOREIGN KEY (history_id)
+          REFERENCES workout_history (id)
+          ON DELETE CASCADE
+      )
+    ''');
+
+    await db.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS workout_history_free_activities_order_index
+      ON workout_history_free_activities (history_id, sort_order)
     ''');
   }
 

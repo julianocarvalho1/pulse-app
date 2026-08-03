@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/progress/domain/models/progress_period.dart';
 import 'package:pulse/features/progress/domain/services/workout_analytics_service.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
+import 'package:pulse/features/workouts/domain/models/free_activity_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
 import 'package:pulse/features/workouts/domain/models/workout_session_status.dart';
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
@@ -151,6 +152,54 @@ void main() {
     expect(service.parseDurationSeconds('01:02:03'), 3723);
     expect(service.parseDurationSeconds('42:15'), 2535);
     expect(service.parseDurationSeconds('90'), 90);
+  });
+
+  test('atividade livre conta como dia ativo sem concluir uma ficha', () {
+    final freeActivity = WorkoutHistoryItem(
+      id: 'crossfit',
+      routineName: 'Atividade • CrossFit',
+      date: DateTime(2026, 7, 30, 19),
+      duration: '60:00',
+      exercises: const <ExerciseLog>[],
+      freeActivities: const <FreeActivityLog>[
+        FreeActivityLog(
+          type: FreeActivityType.crossfit,
+          durationMinutes: 60,
+          intensity: FreeActivityIntensity.intense,
+          replacedPlannedWorkout: true,
+        ),
+      ],
+    );
+    final strength = _workout(
+      id: 'strength',
+      date: DateTime(2026, 7, 29, 10),
+      sets: const <ExerciseSet>[ExerciseSet(reps: 10, weight: 20)],
+    );
+
+    final summary = service.buildSummary(
+      history: <WorkoutHistoryItem>[freeActivity, strength],
+      period: ProgressPeriod.fourWeeks,
+      now: DateTime(2026, 7, 30, 22),
+    );
+    final calendar = service.buildCalendar(
+      <WorkoutHistoryItem>[freeActivity, strength],
+      year: 2026,
+      month: 7,
+    );
+    final freeDay = calendar[DateTime(2026, 7, 30)]!;
+
+    expect(summary.current.workouts, 2);
+    expect(summary.current.activeDays, 2);
+    expect(summary.current.strengthSessions, 1);
+    expect(summary.current.freeActivitySessions, 1);
+    expect(summary.current.substituteActivities, 1);
+    expect(summary.current.freeActivityMinutes, 60);
+    expect(summary.current.totalSets, 1);
+    expect(summary.current.totalVolume, 200);
+    expect(freeDay.total, 1);
+    expect(freeDay.hasFreeActivity, isTrue);
+    expect(freeDay.hasCompleted, isFalse);
+    expect(freeDay.hasIncomplete, isFalse);
   });
 }
 

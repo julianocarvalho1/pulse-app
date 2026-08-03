@@ -86,6 +86,16 @@ void main() {
       'distance_km': 4.2,
       'notes': '',
     });
+    await db.insert('workout_history_free_activities', <String, Object?>{
+      'history_id': 'history-a',
+      'sort_order': 0,
+      'activity_type': 'crossfit',
+      'duration_minutes': 50,
+      'intensity': 'intense',
+      'replaced_planned_workout': 1,
+      'custom_name': '',
+      'notes': 'Aula externa.',
+    });
 
     await preferences.setString('user_name', 'Juliano');
     await preferences.setString('settings_theme_mode', 'light');
@@ -115,6 +125,12 @@ void main() {
     );
     expect(await db.query('workout_history'), hasLength(1));
     expect(await db.query('workout_history_cardio'), hasLength(1));
+    final restoredActivities = await db.query(
+      'workout_history_free_activities',
+    );
+    expect(restoredActivities, hasLength(1));
+    expect(restoredActivities.single['activity_type'], 'crossfit');
+    expect(restoredActivities.single['replaced_planned_workout'], 1);
     expect(await db.query('body_measurements'), hasLength(1));
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
@@ -165,5 +181,20 @@ void main() {
 
     final db = await database.database;
     expect(await db.query('workout_history_cardio'), isEmpty);
+  });
+
+  test('aceita backup anterior sem a tabela de atividades livres', () async {
+    final bytes = await service.exportBytes();
+    final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+    final tables = decoded['tables'] as Map<String, dynamic>;
+    tables.remove('workout_history_free_activities');
+
+    final legacyBytes = Uint8List.fromList(utf8.encode(jsonEncode(decoded)));
+
+    expect(() => service.inspectBytes(legacyBytes), returnsNormally);
+    await service.importBytes(legacyBytes);
+
+    final db = await database.database;
+    expect(await db.query('workout_history_free_activities'), isEmpty);
   });
 }

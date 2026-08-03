@@ -27,6 +27,7 @@ class PulseBackupService {
 
   static const Set<String> _optionalBackupTables = <String>{
     'workout_history_cardio',
+    'workout_history_free_activities',
     'routine_cardio',
     'active_session_cardio',
   };
@@ -41,6 +42,7 @@ class PulseBackupService {
     'workout_history_exercises',
     'workout_history_sets',
     'workout_history_cardio',
+    'workout_history_free_activities',
     'active_session',
     'active_session_exercises',
     'active_session_sets',
@@ -55,6 +57,7 @@ class PulseBackupService {
     'active_session',
     'workout_history_sets',
     'workout_history_cardio',
+    'workout_history_free_activities',
     'workout_history_exercises',
     'workout_history',
     'routine_cardio',
@@ -138,6 +141,17 @@ class PulseBackupService {
       'resistance_level',
       'perceived_effort',
       'average_heart_rate_bpm',
+      'notes',
+    ],
+    'workout_history_free_activities': <String>[
+      'id',
+      'history_id',
+      'sort_order',
+      'activity_type',
+      'duration_minutes',
+      'intensity',
+      'replaced_planned_workout',
+      'custom_name',
       'notes',
     ],
     'active_session': <String>[
@@ -232,6 +246,14 @@ class PulseBackupService {
           'sort_order',
           'modality',
           'actual_duration_minutes',
+        ],
+        'workout_history_free_activities': <String>[
+          'history_id',
+          'sort_order',
+          'activity_type',
+          'duration_minutes',
+          'intensity',
+          'replaced_planned_workout',
         ],
         'active_session': <String>['id', 'routine_name', 'started_at_ms'],
         'active_session_exercises': <String>['session_id', 'exercise_id'],

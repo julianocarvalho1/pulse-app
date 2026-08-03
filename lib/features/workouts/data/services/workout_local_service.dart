@@ -8,6 +8,7 @@ import '../../domain/models/advanced_workout_prescription.dart';
 import '../../domain/models/active_workout_session.dart';
 import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
+import '../../domain/models/free_activity_log.dart';
 import '../../domain/models/workout_history_item.dart';
 import '../../domain/models/workout_session_status.dart';
 import '../../domain/models/workout_set.dart';
@@ -248,6 +249,27 @@ class WorkoutLocalService {
           )
           .toList(growable: false);
 
+      final freeActivityRows = await db.query(
+        'workout_history_free_activities',
+        where: 'history_id = ?',
+        whereArgs: <Object?>[historyId],
+        orderBy: 'sort_order ASC',
+      );
+
+      final freeActivities = freeActivityRows
+          .map(
+            (row) => FreeActivityLog(
+              type: FreeActivityType.fromStorage(row['activity_type']),
+              durationMinutes: _readInt(row['duration_minutes']),
+              intensity: FreeActivityIntensity.fromStorage(row['intensity']),
+              replacedPlannedWorkout:
+                  _readInt(row['replaced_planned_workout']) == 1,
+              customName: row['custom_name']?.toString() ?? '',
+              notes: row['notes']?.toString() ?? '',
+            ),
+          )
+          .toList(growable: false);
+
       history.add(
         WorkoutHistoryItem(
           id: historyId,
@@ -258,6 +280,7 @@ class WorkoutLocalService {
           duration: historyRow['duration']?.toString() ?? '',
           exercises: exerciseLogs,
           cardio: cardioLogs,
+          freeActivities: freeActivities,
           notes: historyRow['notes']?.toString() ?? '',
           status: WorkoutSessionStatus.fromStorage(historyRow['status']),
         ),
@@ -592,6 +615,29 @@ class WorkoutLocalService {
         });
       }
       await cardioBatch.commit(noResult: true);
+    }
+
+    if (item.freeActivities.isNotEmpty) {
+      final activityBatch = executor.batch();
+      for (
+        var activityIndex = 0;
+        activityIndex < item.freeActivities.length;
+        activityIndex++
+      ) {
+        final entry = item.freeActivities[activityIndex];
+        activityBatch
+            .insert('workout_history_free_activities', <String, Object?>{
+              'history_id': item.id,
+              'sort_order': activityIndex,
+              'activity_type': entry.type.storageValue,
+              'duration_minutes': entry.durationMinutes,
+              'intensity': entry.intensity.storageValue,
+              'replaced_planned_workout': entry.replacedPlannedWorkout ? 1 : 0,
+              'custom_name': entry.customName,
+              'notes': entry.notes,
+            });
+      }
+      await activityBatch.commit(noResult: true);
     }
   }
 
