@@ -59,7 +59,7 @@ void main() {
 
     expect(response.generatedLocally, isFalse);
     expect(response.providerModel, 'gemini-test');
-    expect(response.insights.first.title, 'Revisão com IA');
+    expect(response.insights.first.title, 'Análise da ficha');
     expect(response.insights.first.body, isNot(contains('**')));
     expect(response.insights.length, greaterThan(1));
   });
@@ -111,7 +111,7 @@ void main() {
     );
 
     expect(response.generatedLocally, isTrue);
-    expect(response.fallbackMessage, contains('análise local'));
+    expect(response.fallbackMessage, contains('Sem internet'));
     expect(response.insights, isNotEmpty);
   });
 }

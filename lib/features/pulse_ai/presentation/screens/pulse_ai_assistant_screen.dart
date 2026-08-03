@@ -427,7 +427,11 @@ class _PulseAiAssistantScreenState
             ),
           ),
           const SizedBox(height: 10),
-          for (final mode in PulseAiAssistantMode.values) ...<Widget>[
+          for (final mode in const <PulseAiAssistantMode>[
+            PulseAiAssistantMode.explainWorkout,
+            PulseAiAssistantMode.suggestReplacement,
+            PulseAiAssistantMode.reviewRoutine,
+          ]) ...<Widget>[
             _AssistantOptionCard(
               mode: mode,
               enabled:
@@ -480,7 +484,7 @@ class _PulseAiAssistantScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              'Consultando a IA. Se ela estiver indisponível, o modo local será usado automaticamente…',
+              'Preparando uma análise personalizada…',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -561,18 +565,9 @@ class _PulseAiAssistantScreenState
                     height: 1.45,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _ResponseSourceBadge(response: response),
                 if (response.fallbackMessage != null) ...<Widget>[
-                  const SizedBox(height: 8),
-                  Text(
-                    response.fallbackMessage!,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      height: 1.35,
-                    ),
-                  ),
+                  const SizedBox(height: 12),
+                  _LocalResponseNotice(message: response.fallbackMessage!),
                 ],
               ],
             ),
@@ -704,6 +699,8 @@ class _PulseAiAssistantScreenState
       PulseAiAssistantMode.explainWorkout => Icons.menu_book_rounded,
       PulseAiAssistantMode.suggestReplacement => Icons.swap_horiz_rounded,
       PulseAiAssistantMode.reviewRoutine => Icons.fact_check_rounded,
+      PulseAiAssistantMode.analyzeProgress => Icons.insights_rounded,
+      PulseAiAssistantMode.explainExercise => Icons.fitness_center_rounded,
     };
   }
 }
@@ -763,7 +760,7 @@ class _AssistantHero extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Piloto seguro para analisar fichas',
+                      'Análise inteligente da sua ficha',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -789,8 +786,6 @@ class _AssistantHero extends StatelessWidget {
             '${routine.typeLabel} • ${routine.activitySummary}',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
-          const SizedBox(height: 14),
-          const _AssistantAvailabilityBadge(),
         ],
       ),
     );
@@ -814,6 +809,8 @@ class _AssistantOptionCard extends StatelessWidget {
       PulseAiAssistantMode.explainWorkout => Icons.menu_book_rounded,
       PulseAiAssistantMode.suggestReplacement => Icons.swap_horiz_rounded,
       PulseAiAssistantMode.reviewRoutine => Icons.fact_check_rounded,
+      PulseAiAssistantMode.analyzeProgress => Icons.insights_rounded,
+      PulseAiAssistantMode.explainExercise => Icons.fitness_center_rounded,
     };
 
     return Opacity(
@@ -900,7 +897,7 @@ class _PrivacyAndSafetyCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'A IA recebe apenas a estrutura técnica da ficha: exercícios, séries, repetições e descanso. Nome, foto, dados pessoais e observações livres não são enviados. Se a conexão falhar, o PULSE usa a análise local e nunca altera a ficha sem confirmação.',
+              'Quando há internet, o PULSE envia apenas a estrutura técnica necessária para preparar uma análise mais detalhada. Nome, foto, dados pessoais e observações livres não são enviados. Sem conexão, a resposta é gerada no aparelho e nenhuma alteração acontece sem confirmação.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
@@ -914,85 +911,34 @@ class _PrivacyAndSafetyCard extends StatelessWidget {
   }
 }
 
-class _AssistantAvailabilityBadge extends StatelessWidget {
-  const _AssistantAvailabilityBadge();
+class _LocalResponseNotice extends StatelessWidget {
+  const _LocalResponseNotice({required this.message});
+
+  final String message;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.primaryBorder),
+        color: AppColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(
-            Icons.cloud_done_outlined,
-            size: 13,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            'IA CONECTADA • RESERVA LOCAL',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ResponseSourceBadge extends StatelessWidget {
-  const _ResponseSourceBadge({required this.response});
-
-  final PulseAiResponse response;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLocal = response.generatedLocally;
-    final primary = Theme.of(context).colorScheme.primary;
-    final model = response.providerModel?.trim();
-    final label = isLocal
-        ? 'MODO LOCAL DE RESERVA'
-        : 'IA ONLINE • ${model == null || model.isEmpty ? 'GEMINI' : model.toUpperCase()}';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: isLocal
-            ? AppColors.warning.withValues(alpha: 0.10)
-            : AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: isLocal
-              ? AppColors.warning.withValues(alpha: 0.35)
-              : AppColors.primaryBorder,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            isLocal ? Icons.phone_android_rounded : Icons.cloud_done_outlined,
-            size: 13,
-            color: isLocal ? AppColors.warning : primary,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: isLocal ? AppColors.warning : primary,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.3,
+          Icon(Icons.phone_android_rounded, size: 15, color: AppColors.warning),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
             ),
           ),
         ],

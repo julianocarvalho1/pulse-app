@@ -14,21 +14,15 @@ class FallbackPulseAiRepository implements PulseAiRepository {
   Future<PulseAiResponse> analyze(PulseAiRequest request) async {
     try {
       return await primary.analyze(request);
-    } on PulseAiLimitReachedException {
-      return _localResponse(
-        request,
-        'A cota gratuita da IA está temporariamente indisponível. O PULSE usou a análise local.',
-      );
     } on PulseAiOfflineException {
       return _localResponse(
         request,
-        'Não foi possível acessar a internet. O PULSE usou a análise local.',
+        'Sem internet: resposta rápida gerada no aparelho.',
       );
+    } on PulseAiLimitReachedException {
+      return _localResponse(request, 'Resposta rápida gerada no aparelho.');
     } catch (_) {
-      return _localResponse(
-        request,
-        'A IA conectada não respondeu. O PULSE usou a análise local sem alterar sua ficha.',
-      );
+      return _localResponse(request, 'Resposta rápida gerada no aparelho.');
     }
   }
 

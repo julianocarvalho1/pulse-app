@@ -127,4 +127,43 @@ void main() {
     expect(distribution, contains('Costas: 1 exercício'));
     expect(response.hasApplicableChange, isFalse);
   });
+  test('analisa progresso usando somente o resumo numérico', () async {
+    final response = await repository.analyze(
+      const PulseAiRequest(
+        mode: PulseAiAssistantMode.analyzeProgress,
+        progress: PulseAiProgressSnapshot(
+          periodLabel: 'Últimos 3 meses',
+          workouts: 12,
+          completedWorkouts: 10,
+          incompleteWorkouts: 2,
+          activeDays: 9,
+          durationSeconds: 18000,
+          totalSets: 120,
+          totalReps: 950,
+          totalVolume: 18250,
+          weeklyFrequency: 1.8,
+          currentStreak: 2,
+          longestStreak: 5,
+          volumeChange: 12,
+        ),
+      ),
+    );
+
+    expect(response.title, 'Leitura do seu progresso');
+    expect(response.insights.first.body, contains('10 de 12 treinos'));
+    expect(response.generatedLocally, isTrue);
+  });
+
+  test('explica exercício e a prescrição cadastrada', () async {
+    final response = await repository.analyze(
+      const PulseAiRequest(
+        mode: PulseAiAssistantMode.explainExercise,
+        exercise: chestPress,
+      ),
+    );
+
+    expect(response.title, chestPress.name);
+    expect(response.insights.first.body, contains('peito'));
+    expect(response.insights[1].body, contains('3x 10'));
+  });
 }

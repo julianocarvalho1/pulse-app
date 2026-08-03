@@ -56,29 +56,58 @@ class RemotePulseAiRepository implements PulseAiRepository {
       ..writeln('- Use no máximo 5 parágrafos curtos.')
       ..writeln('- Não invente exercícios, cargas ou informações ausentes.')
       ..writeln('- Não faça diagnóstico nem prescrição médica.')
-      ..writeln()
-      ..writeln('Dados técnicos enviados pelo aplicativo:')
-      ..writeln('Tipo de ficha: ${request.routine.typeLabel}')
-      ..writeln('Quantidade de atividades: ${request.routine.totalActivities}');
+      ..writeln('- Não mencione o nome do modelo ou do provedor de IA.')
+      ..writeln();
 
-    if (request.routine.exercises.isEmpty) {
+    switch (request.mode) {
+      case PulseAiAssistantMode.explainWorkout:
+      case PulseAiAssistantMode.suggestReplacement:
+      case PulseAiAssistantMode.reviewRoutine:
+        _writeRoutineContext(buffer, request, structuredResponse);
+        break;
+      case PulseAiAssistantMode.analyzeProgress:
+        _writeProgressContext(buffer, request.progress!);
+        break;
+      case PulseAiAssistantMode.explainExercise:
+        _writeExerciseContext(buffer, request.exercise!);
+        break;
+    }
+
+    buffer.writeln(
+      'Observação de privacidade: nome do usuário, foto, dados pessoais, observações livres e anotações de saúde não foram enviados.',
+    );
+
+    return buffer.toString();
+  }
+
+  void _writeRoutineContext(
+    StringBuffer buffer,
+    PulseAiRequest request,
+    PulseAiResponse structuredResponse,
+  ) {
+    final routine = request.routine!;
+    buffer
+      ..writeln('Dados técnicos enviados pelo aplicativo:')
+      ..writeln('Tipo de ficha: ${routine.typeLabel}')
+      ..writeln('Quantidade de atividades: ${routine.totalActivities}');
+
+    if (routine.exercises.isEmpty) {
       buffer.writeln('Exercícios: nenhum exercício cadastrado.');
     } else {
       buffer.writeln('Exercícios:');
-      for (final indexed in request.routine.exercises.take(16).indexed) {
-        final exercise = indexed.$2;
-        buffer.writeln(_exerciseLine(indexed.$1 + 1, exercise));
+      for (final indexed in routine.exercises.take(16).indexed) {
+        buffer.writeln(_exerciseLine(indexed.$1 + 1, indexed.$2));
       }
-      if (request.routine.exercises.length > 16) {
+      if (routine.exercises.length > 16) {
         buffer.writeln(
-          '- Existem mais ${request.routine.exercises.length - 16} exercícios não listados para limitar o envio.',
+          '- Existem mais ${routine.exercises.length - 16} exercícios não listados para limitar o envio.',
         );
       }
     }
 
-    if (request.routine.cardio.isNotEmpty) {
+    if (routine.cardio.isNotEmpty) {
       buffer.writeln('Cardio planejado:');
-      for (final cardio in request.routine.cardio.take(5)) {
+      for (final cardio in routine.cardio.take(5)) {
         buffer.writeln(
           '- ${cardio.modality.label}: ${cardio.plannedDurationMinutes} minutos',
         );
@@ -100,12 +129,68 @@ class RemotePulseAiRepository implements PulseAiRepository {
         'Explique brevemente por que as opções permitidas podem cumprir função semelhante. Não cite nenhuma alternativa fora dessa lista.',
       );
     }
+  }
+
+  void _writeProgressContext(
+    StringBuffer buffer,
+    PulseAiProgressSnapshot progress,
+  ) {
+    buffer
+      ..writeln('Resumo numérico do progresso:')
+      ..writeln('Período: ${progress.periodLabel}')
+      ..writeln('Treinos registrados: ${progress.workouts}')
+      ..writeln('Treinos concluídos: ${progress.completedWorkouts}')
+      ..writeln('Treinos incompletos: ${progress.incompleteWorkouts}')
+      ..writeln('Dias ativos: ${progress.activeDays}')
+      ..writeln(
+        'Frequência semanal média: ${progress.weeklyFrequency.toStringAsFixed(2)}',
+      )
+      ..writeln('Duração total em segundos: ${progress.durationSeconds}')
+      ..writeln('Séries registradas: ${progress.totalSets}')
+      ..writeln('Repetições registradas: ${progress.totalReps}')
+      ..writeln('Volume total: ${progress.totalVolume.toStringAsFixed(1)}')
+      ..writeln('Sequência atual: ${progress.currentStreak}')
+      ..writeln('Melhor sequência: ${progress.longestStreak}');
+
+    if (progress.workoutsChange != null ||
+        progress.activeDaysChange != null ||
+        progress.durationChange != null ||
+        progress.volumeChange != null) {
+      buffer
+        ..writeln('Comparação percentual com o período anterior:')
+        ..writeln('Treinos: ${progress.workoutsChange?.toStringAsFixed(1)}')
+        ..writeln(
+          'Dias ativos: ${progress.activeDaysChange?.toStringAsFixed(1)}',
+        )
+        ..writeln('Duração: ${progress.durationChange?.toStringAsFixed(1)}')
+        ..writeln('Volume: ${progress.volumeChange?.toStringAsFixed(1)}');
+    }
 
     buffer.writeln(
-      'Observação de privacidade: nome do usuário, foto, dados pessoais, observações livres e anotações de saúde não foram enviados.',
+      'Analise tendências de consistência e registro. Não prescreva uma frequência ideal e não conclua que houve ganho de saúde, força ou massa muscular apenas com estes números.',
     );
+  }
 
-    return buffer.toString();
+  void _writeExerciseContext(StringBuffer buffer, Exercise exercise) {
+    buffer
+      ..writeln('Exercício selecionado:')
+      ..writeln('Nome: ${exercise.name}')
+      ..writeln('Grupo muscular cadastrado: ${exercise.muscle}')
+      ..writeln('Descrição: ${exercise.description}')
+      ..writeln('Séries e repetições: ${exercise.reps}')
+      ..writeln('Descanso: ${exercise.rest}');
+
+    final sets = exercise.advancedPrescription.primaryPrescription?.sets;
+    if (sets != null && sets.isNotEmpty) {
+      buffer.writeln('Detalhes das séries:');
+      for (final set in sets.take(6)) {
+        buffer.writeln('- ${set.summary}');
+      }
+    }
+
+    buffer.writeln(
+      'Explique somente o que pode ser concluído a partir dos dados acima. Dê orientações gerais de execução segura, sem substituir supervisão profissional.',
+    );
   }
 
   String _taskInstruction(PulseAiAssistantMode mode) => switch (mode) {
@@ -115,12 +200,18 @@ class RemotePulseAiRepository implements PulseAiRepository {
       'Ajude a compreender as alternativas previamente filtradas pelo aplicativo, sem criar novas opções.',
     PulseAiAssistantMode.reviewRoutine =>
       'Faça uma revisão organizacional da ficha, apontando pontos positivos e pontos de atenção sem alterar o treino.',
+    PulseAiAssistantMode.analyzeProgress =>
+      'Faça uma leitura clara de frequência, consistência, volume registrado e comparação do período, sem diagnóstico e sem prescrição automática.',
+    PulseAiAssistantMode.explainExercise =>
+      'Explique o exercício selecionado, a prescrição cadastrada e os termos avançados em linguagem simples.',
   };
 
   String _onlineInsightTitle(PulseAiAssistantMode mode) => switch (mode) {
-    PulseAiAssistantMode.explainWorkout => 'Explicação com IA',
+    PulseAiAssistantMode.explainWorkout => 'Leitura personalizada',
     PulseAiAssistantMode.suggestReplacement => 'Leitura das alternativas',
-    PulseAiAssistantMode.reviewRoutine => 'Revisão com IA',
+    PulseAiAssistantMode.reviewRoutine => 'Análise da ficha',
+    PulseAiAssistantMode.analyzeProgress => 'Análise do período',
+    PulseAiAssistantMode.explainExercise => 'Explicação personalizada',
   };
 
   String _exerciseLine(int index, Exercise exercise) {
@@ -141,7 +232,7 @@ class RemotePulseAiRepository implements PulseAiRepository {
   }
 
   Exercise? _selectedExercise(PulseAiRequest request) {
-    for (final exercise in request.routine.exercises) {
+    for (final exercise in request.routine!.exercises) {
       if (exercise.id == request.selectedExerciseId) {
         return exercise;
       }

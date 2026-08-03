@@ -540,23 +540,6 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'PILOTO',
-                  style: TextStyle(
-                    color: primary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 5),
               Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
             ],
           ),

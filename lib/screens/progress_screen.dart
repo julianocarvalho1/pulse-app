@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
+import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
 import '../features/progress/domain/models/body_measurement_entry.dart';
 import '../features/progress/domain/models/progress_period.dart';
 import '../features/progress/domain/models/workout_progress_summary.dart';
@@ -170,6 +172,8 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 'Conclua ou salve um treino incompleto para começar a acompanhar sua evolução real.',
           )
         else ...<Widget>[
+          _progressAiCard(context, summary),
+          const SizedBox(height: 16),
           Row(
             children: <Widget>[
               Expanded(
@@ -642,6 +646,117 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen> {
                 .map((record) => _recordCard(context, record)),
         ],
       ],
+    );
+  }
+
+  Widget _progressAiCard(BuildContext context, WorkoutProgressSummary summary) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _openProgressAssistant(context, summary),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+                AppColors.surface,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.primaryBorder),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'ANALISAR MEU PROGRESSO',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Entenda frequência, volume e consistência do período.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openProgressAssistant(
+    BuildContext context,
+    WorkoutProgressSummary summary,
+  ) {
+    final stats = summary.current;
+    final comparison = summary.comparison;
+    final snapshot = PulseAiProgressSnapshot(
+      periodLabel: _period.label,
+      workouts: stats.workouts,
+      completedWorkouts: stats.completedWorkouts,
+      incompleteWorkouts: stats.incompleteWorkouts,
+      activeDays: stats.activeDays,
+      durationSeconds: stats.durationSeconds,
+      totalSets: stats.totalSets,
+      totalReps: stats.totalReps,
+      totalVolume: stats.totalVolume,
+      weeklyFrequency: stats.weeklyFrequency,
+      currentStreak: summary.currentStreak,
+      longestStreak: summary.longestStreak,
+      workoutsChange: comparison?.workoutsChange,
+      activeDaysChange: comparison?.activeDaysChange,
+      durationChange: comparison?.durationChange,
+      volumeChange: comparison?.volumeChange,
+    );
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PulseAiContextScreen(
+          appBarTitle: 'Assistente PULSE',
+          heroTitle: 'Analisando seu progresso',
+          heroSubtitle: _period.label,
+          icon: Icons.insights_rounded,
+          request: PulseAiRequest(
+            mode: PulseAiAssistantMode.analyzeProgress,
+            progress: snapshot,
+          ),
+        ),
+      ),
     );
   }
 

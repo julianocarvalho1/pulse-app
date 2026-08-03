@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
+import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
+import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
@@ -749,6 +751,23 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     );
   }
 
+  void _openExerciseAssistant() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PulseAiContextScreen(
+          appBarTitle: 'Assistente PULSE',
+          heroTitle: 'Explicando o exercício',
+          heroSubtitle: widget.exercise.name,
+          icon: Icons.fitness_center_rounded,
+          request: PulseAiRequest(
+            mode: PulseAiAssistantMode.explainExercise,
+            exercise: widget.exercise,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -831,6 +850,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     const SizedBox(height: 18),
 
                     _buildTabContent(),
+
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _openExerciseAssistant,
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        label: const Text('EXPLICAR COM O ASSISTENTE PULSE'),
+                      ),
+                    ),
 
                     const SizedBox(height: 24),
                     Text(

@@ -5,12 +5,16 @@ import '../../../../models/exercise.dart';
 enum PulseAiAssistantMode {
   explainWorkout,
   suggestReplacement,
-  reviewRoutine;
+  reviewRoutine,
+  analyzeProgress,
+  explainExercise;
 
   String get title => switch (this) {
     PulseAiAssistantMode.explainWorkout => 'Explicar meu treino',
     PulseAiAssistantMode.suggestReplacement => 'Sugerir substituição',
     PulseAiAssistantMode.reviewRoutine => 'Revisar minha ficha',
+    PulseAiAssistantMode.analyzeProgress => 'Analisar meu progresso',
+    PulseAiAssistantMode.explainExercise => 'Explicar exercício',
   };
 
   String get description => switch (this) {
@@ -20,6 +24,10 @@ enum PulseAiAssistantMode {
       'Veja alternativas compatíveis com a biblioteca do PULSE.',
     PulseAiAssistantMode.reviewRoutine =>
       'Receba uma leitura geral da distribuição e da organização da ficha.',
+    PulseAiAssistantMode.analyzeProgress =>
+      'Entenda frequência, volume e consistência do período selecionado.',
+    PulseAiAssistantMode.explainExercise =>
+      'Entenda execução, prescrição, descanso e detalhes avançados.',
   };
 }
 
@@ -54,18 +62,72 @@ class PulseAiExerciseAlternative {
 }
 
 @immutable
+class PulseAiProgressSnapshot {
+  const PulseAiProgressSnapshot({
+    required this.periodLabel,
+    required this.workouts,
+    required this.completedWorkouts,
+    required this.incompleteWorkouts,
+    required this.activeDays,
+    required this.durationSeconds,
+    required this.totalSets,
+    required this.totalReps,
+    required this.totalVolume,
+    required this.weeklyFrequency,
+    required this.currentStreak,
+    required this.longestStreak,
+    this.workoutsChange,
+    this.activeDaysChange,
+    this.durationChange,
+    this.volumeChange,
+  });
+
+  final String periodLabel;
+  final int workouts;
+  final int completedWorkouts;
+  final int incompleteWorkouts;
+  final int activeDays;
+  final int durationSeconds;
+  final int totalSets;
+  final int totalReps;
+  final double totalVolume;
+  final double weeklyFrequency;
+  final int currentStreak;
+  final int longestStreak;
+  final double? workoutsChange;
+  final double? activeDaysChange;
+  final double? durationChange;
+  final double? volumeChange;
+
+  bool get isEmpty => workouts == 0;
+}
+
+@immutable
 class PulseAiRequest {
   const PulseAiRequest({
     required this.mode,
-    required this.routine,
-    required this.catalog,
+    this.routine,
+    this.catalog = const <Exercise>[],
     this.selectedExerciseId,
-  });
+    this.progress,
+    this.exercise,
+  }) : assert(
+         (mode == PulseAiAssistantMode.analyzeProgress && progress != null) ||
+             (mode == PulseAiAssistantMode.explainExercise &&
+                 exercise != null) ||
+             ((mode == PulseAiAssistantMode.explainWorkout ||
+                     mode == PulseAiAssistantMode.suggestReplacement ||
+                     mode == PulseAiAssistantMode.reviewRoutine) &&
+                 routine != null),
+         'O contexto necessário para a análise não foi informado.',
+       );
 
   final PulseAiAssistantMode mode;
-  final WorkoutRoutine routine;
+  final WorkoutRoutine? routine;
   final List<Exercise> catalog;
   final String? selectedExerciseId;
+  final PulseAiProgressSnapshot? progress;
+  final Exercise? exercise;
 }
 
 @immutable

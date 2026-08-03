@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
+import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
 import '../features/workouts/domain/models/active_workout_session.dart';
 import '../features/workouts/domain/models/advanced_workout_prescription.dart';
 import '../features/workouts/domain/services/exercise_alternative_service.dart';
@@ -2073,6 +2075,39 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                   ),
                                                 ),
                                               ],
+                                              const SizedBox(height: 16),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: () {
+                                                    Navigator.pop(ctx);
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute<void>(
+                                                        builder: (_) => PulseAiContextScreen(
+                                                          appBarTitle:
+                                                              'Assistente PULSE',
+                                                          heroTitle:
+                                                              'Explicando o exercício',
+                                                          heroSubtitle: ex.name,
+                                                          icon: Icons
+                                                              .fitness_center_rounded,
+                                                          request: PulseAiRequest(
+                                                            mode: PulseAiAssistantMode
+                                                                .explainExercise,
+                                                            exercise: ex,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  icon: const Icon(
+                                                    Icons.auto_awesome_rounded,
+                                                  ),
+                                                  label: const Text(
+                                                    'EXPLICAR COM O ASSISTENTE PULSE',
+                                                  ),
+                                                ),
+                                              ),
                                               const SizedBox(height: 20),
                                               SizedBox(
                                                 width: double.infinity,
