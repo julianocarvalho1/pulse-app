@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/pulse_ai/presentation/screens/pulse_ai_assistant_screen.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
@@ -462,6 +463,108 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
     );
   }
 
+  Future<void> _openPulseAiAssistant(WorkoutRoutine routine) async {
+    final applied = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (_) => PulseAiAssistantScreen(routine: routine),
+      ),
+    );
+
+    if ((applied ?? false) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Substituição aplicada à ficha com sucesso.'),
+        ),
+      );
+    }
+  }
+
+  Widget _buildPulseAiEntry(BuildContext context, WorkoutRoutine routine) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(17),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(17),
+        onTap: () => _openPulseAiAssistant(routine),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: AppColors.primaryBorder),
+            gradient: LinearGradient(
+              colors: <Color>[
+                primary.withValues(alpha: 0.14),
+                AppColors.surface,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.auto_awesome_rounded, color: primary),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Assistente PULSE',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Explique, revise ou encontre alternativas para esta ficha.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'PILOTO',
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
@@ -575,6 +678,8 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            _buildPulseAiEntry(context, routine),
             const SizedBox(height: 24),
             if (routine.exercises.isNotEmpty) ...[
               Row(

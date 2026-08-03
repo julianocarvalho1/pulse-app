@@ -2597,7 +2597,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Descanso Inteligente Ativado',
+                            'Cronômetro automático ativado',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
@@ -2605,7 +2605,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             ),
                           ),
                           Icon(
-                            Icons.auto_awesome,
+                            Icons.timer_outlined,
                             color: Theme.of(context).colorScheme.primary,
                             size: 20,
                           ),
