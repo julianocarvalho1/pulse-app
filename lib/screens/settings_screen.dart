@@ -11,6 +11,8 @@ import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'data_backup_screen.dart';
+import 'how_to_use_screen.dart';
+import 'privacy_ai_info_screen.dart';
 import 'personal_data_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -414,6 +416,51 @@ class _SettingsContent extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 30),
+            _sectionTitle('AJUDA E TRANSPARÊNCIA'),
+            const SizedBox(height: 12),
+            _sectionCard(
+              context,
+              children: [
+                ListTile(
+                  leading: _iconBox(context, Icons.menu_book_outlined),
+                  title: const Text(
+                    'Como usar o PULSE',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: const Text(
+                    'Guia rápido de treinos, progresso e atividades.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HowToUseScreen()),
+                    );
+                  },
+                ),
+                Divider(color: AppColors.border, height: 1),
+                ListTile(
+                  leading: _iconBox(context, Icons.shield_outlined),
+                  title: const Text(
+                    'Privacidade e assistência',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: const Text(
+                    'Entenda o uso de dados e o Assistente PULSE.',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacyAiInfoScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
             _sectionTitle('DADOS E APLICATIVO'),
             const SizedBox(height: 12),
             _sectionCard(
@@ -451,7 +498,8 @@ class _SettingsContent extends ConsumerWidget {
                       context: context,
                       applicationName: 'PULSE',
                       applicationVersion: '1.0.0',
-                      applicationLegalese: 'Diário inteligente de musculação.',
+                      applicationLegalese:
+                          'Treinos, progresso e assistência inteligente.',
                       applicationIcon: Icon(
                         Icons.fitness_center,
                         color: Theme.of(context).colorScheme.primary,

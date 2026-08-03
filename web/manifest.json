@@ -1,11 +1,11 @@
 {
-    "name": "fitapp",
-    "short_name": "fitapp",
+    "name": "PULSE",
+    "short_name": "PULSE",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "PULSE — treinos, progresso e assistência inteligente.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

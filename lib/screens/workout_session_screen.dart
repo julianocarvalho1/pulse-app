@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
 import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
+import '../features/settings/domain/pulse_settings.dart';
+import '../features/settings/presentation/providers/settings_controller.dart';
+import '../core/utils/weight_unit_converter.dart';
 import '../features/workouts/domain/models/active_workout_session.dart';
 import '../features/workouts/domain/models/advanced_workout_prescription.dart';
 import '../features/workouts/domain/services/exercise_alternative_service.dart';
@@ -23,12 +26,14 @@ class SessionStateCache {
   static Map<int, List<String>> weights = {};
   static Map<int, List<String>> reps = {};
   static String? sessionKey;
+  static MeasurementSystem? measurementSystem;
 
   static void clear() {
     setsStatus.clear();
     weights.clear();
     reps.clear();
     sessionKey = null;
+    measurementSystem = null;
   }
 }
 
@@ -388,7 +393,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     return {'steps': steps, 'secondary': secondary};
   }
 
-  void _initializeSets() {
+  void _initializeSets(MeasurementSystem measurementSystem) {
     final workoutState = ref.read(workoutControllerProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
     final exercises = workoutState.currentWorkoutExercises;
@@ -400,6 +405,29 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     if (SessionStateCache.sessionKey != currentSessionKey) {
       SessionStateCache.clear();
       SessionStateCache.sessionKey = currentSessionKey;
+      SessionStateCache.measurementSystem = measurementSystem;
+    } else if (SessionStateCache.measurementSystem != null &&
+        SessionStateCache.measurementSystem != measurementSystem) {
+      final previousSystem = SessionStateCache.measurementSystem!;
+      for (final entry in SessionStateCache.weights.entries) {
+        final exerciseIndex = entry.key;
+        final values = entry.value;
+        for (var setIndex = 0; setIndex < values.length; setIndex++) {
+          final converted = WeightUnitConverter.convertDisplayText(
+            values[setIndex],
+            from: previousSystem,
+            to: measurementSystem,
+          );
+          values[setIndex] = converted;
+          final controllers = _weightControllers[exerciseIndex];
+          if (controllers != null && setIndex < controllers.length) {
+            controllers[setIndex].text = converted;
+          }
+        }
+      }
+      SessionStateCache.measurementSystem = measurementSystem;
+    } else {
+      SessionStateCache.measurementSystem ??= measurementSystem;
     }
 
     if (!_notesInitialized) {
@@ -426,7 +454,10 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
 
         SessionStateCache.weights[i] = List<String>.generate(
           setsCount,
-          (setIndex) => restoredExercise?.sets[setIndex].weightText ?? '',
+          (setIndex) => WeightUnitConverter.displayTextFromKilogramsText(
+            restoredExercise?.sets[setIndex].weightText ?? '',
+            measurementSystem,
+          ),
         );
 
         SessionStateCache.reps[i] = List<String>.generate(
@@ -483,11 +514,28 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       return;
     }
 
+    final measurementSystem =
+        ref.read(settingsControllerProvider).asData?.value.measurementSystem ??
+        MeasurementSystem.metric;
+    final storedWeights = SessionStateCache.weights.map(
+      (exerciseIndex, values) => MapEntry(
+        exerciseIndex,
+        values
+            .map(
+              (value) => WeightUnitConverter.kilogramsTextFromDisplayText(
+                value,
+                measurementSystem,
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+
     ref
         .read(workoutControllerProvider.notifier)
         .saveActiveSessionProgress(
           setsStatus: SessionStateCache.setsStatus,
-          weights: SessionStateCache.weights,
+          weights: storedWeights,
           reps: SessionStateCache.reps,
           notes: _notesController.text,
         );
@@ -1010,6 +1058,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   List<ExerciseLog> _buildWorkoutLogs(WorkoutController provider) {
     final workoutLogs = <ExerciseLog>[];
     final exercises = provider.currentWorkoutExercises;
+    final measurementSystem =
+        ref.read(settingsControllerProvider).asData?.value.measurementSystem ??
+        MeasurementSystem.metric;
 
     for (
       var exerciseIndex = 0;
@@ -1026,11 +1077,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         }
 
         final weight =
-            double.tryParse(
-              _weightControllers[exerciseIndex]![setIndex].text.replaceAll(
-                ',',
-                '.',
-              ),
+            WeightUnitConverter.parseDisplayedWeightToKilograms(
+              _weightControllers[exerciseIndex]![setIndex].text,
+              measurementSystem,
             ) ??
             0;
         var reps =
@@ -1509,6 +1558,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   @override
   Widget build(BuildContext context) {
     final workoutState = ref.watch(workoutControllerProvider);
+    final settings =
+        ref.watch(settingsControllerProvider).asData?.value ??
+        PulseSettings.defaults();
+    final measurementSystem = settings.measurementSystem;
+    final weightUnit = WeightUnitConverter.unitLabel(measurementSystem);
     final sessionProgress = ref.watch(workoutSessionProgressProvider);
     final provider = ref.read(workoutControllerProvider.notifier);
     final exercises = workoutState.currentWorkoutExercises;
@@ -1523,7 +1577,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         ? 0.0
         : (completedSteps / totalSteps).clamp(0, 1).toDouble();
     final combinedPercentage = (combinedFraction * 100).round();
-    _initializeSets();
+    _initializeSets(measurementSystem);
 
     return PopScope(
       canPop: false,
@@ -2364,7 +2418,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                     Expanded(
                                       child: Center(
                                         child: Text(
-                                          'Carga (kg)',
+                                          'Carga ($weightUnit)',
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: AppColors.textSecondary,
@@ -2473,7 +2527,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               child: _buildInputForm(
                                                 context,
                                                 _weightControllers[index]![setIndex],
-                                                'kg',
+                                                weightUnit,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
