@@ -80,6 +80,8 @@ class PulseAiResponse {
     this.safetyNote =
         'Use estas informações como apoio. Em caso de dor, limitação ou condição de saúde, procure orientação profissional.',
     this.generatedLocally = true,
+    this.providerModel,
+    this.fallbackMessage,
   });
 
   final PulseAiAssistantMode mode;
@@ -90,6 +92,43 @@ class PulseAiResponse {
   final String? selectedExerciseId;
   final String safetyNote;
   final bool generatedLocally;
+  final String? providerModel;
+  final String? fallbackMessage;
+
+  PulseAiResponse copyWith({
+    PulseAiAssistantMode? mode,
+    String? title,
+    String? summary,
+    List<PulseAiInsight>? insights,
+    List<PulseAiExerciseAlternative>? alternatives,
+    String? selectedExerciseId,
+    bool clearSelectedExerciseId = false,
+    String? safetyNote,
+    bool? generatedLocally,
+    String? providerModel,
+    bool clearProviderModel = false,
+    String? fallbackMessage,
+    bool clearFallbackMessage = false,
+  }) {
+    return PulseAiResponse(
+      mode: mode ?? this.mode,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      insights: insights ?? this.insights,
+      alternatives: alternatives ?? this.alternatives,
+      selectedExerciseId: clearSelectedExerciseId
+          ? null
+          : (selectedExerciseId ?? this.selectedExerciseId),
+      safetyNote: safetyNote ?? this.safetyNote,
+      generatedLocally: generatedLocally ?? this.generatedLocally,
+      providerModel: clearProviderModel
+          ? null
+          : (providerModel ?? this.providerModel),
+      fallbackMessage: clearFallbackMessage
+          ? null
+          : (fallbackMessage ?? this.fallbackMessage),
+    );
+  }
 
   bool get hasApplicableChange =>
       mode == PulseAiAssistantMode.suggestReplacement &&

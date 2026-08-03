@@ -17,3 +17,12 @@ class PulseAiLimitReachedException implements Exception {
   @override
   String toString() => 'O limite temporário do assistente foi atingido.';
 }
+
+class PulseAiRemoteException implements Exception {
+  const PulseAiRemoteException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}

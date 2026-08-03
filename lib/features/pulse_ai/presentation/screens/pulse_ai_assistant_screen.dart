@@ -480,7 +480,7 @@ class _PulseAiAssistantScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              'Organizando uma resposta segura e estruturada…',
+              'Consultando a IA. Se ela estiver indisponível, o modo local será usado automaticamente…',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -561,9 +561,18 @@ class _PulseAiAssistantScreenState
                     height: 1.45,
                   ),
                 ),
-                if (response.generatedLocally) ...<Widget>[
-                  const SizedBox(height: 12),
-                  const _LocalPreviewBadge(),
+                const SizedBox(height: 12),
+                _ResponseSourceBadge(response: response),
+                if (response.fallbackMessage != null) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Text(
+                    response.fallbackMessage!,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      height: 1.35,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -781,7 +790,7 @@ class _AssistantHero extends StatelessWidget {
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 14),
-          const _LocalPreviewBadge(),
+          const _AssistantAvailabilityBadge(),
         ],
       ),
     );
@@ -891,7 +900,7 @@ class _PrivacyAndSafetyCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Nesta etapa, a análise é simulada localmente e nenhum dado é enviado. O assistente não diagnostica lesões e nunca altera a ficha sem confirmação.',
+              'A IA recebe apenas a estrutura técnica da ficha: exercícios, séries, repetições e descanso. Nome, foto, dados pessoais e observações livres não são enviados. Se a conexão falhar, o PULSE usa a análise local e nunca altera a ficha sem confirmação.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
@@ -905,8 +914,8 @@ class _PrivacyAndSafetyCard extends StatelessWidget {
   }
 }
 
-class _LocalPreviewBadge extends StatelessWidget {
-  const _LocalPreviewBadge();
+class _AssistantAvailabilityBadge extends StatelessWidget {
+  const _AssistantAvailabilityBadge();
 
   @override
   Widget build(BuildContext context) {
@@ -921,18 +930,69 @@ class _LocalPreviewBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(
-            Icons.phone_android_rounded,
+            Icons.cloud_done_outlined,
             size: 13,
             color: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(width: 5),
           Text(
-            'PILOTO LOCAL • SEM ENVIO DE DADOS',
+            'IA CONECTADA • RESERVA LOCAL',
             style: TextStyle(
               color: Theme.of(context).colorScheme.primary,
               fontSize: 9,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResponseSourceBadge extends StatelessWidget {
+  const _ResponseSourceBadge({required this.response});
+
+  final PulseAiResponse response;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocal = response.generatedLocally;
+    final primary = Theme.of(context).colorScheme.primary;
+    final model = response.providerModel?.trim();
+    final label = isLocal
+        ? 'MODO LOCAL DE RESERVA'
+        : 'IA ONLINE • ${model == null || model.isEmpty ? 'GEMINI' : model.toUpperCase()}';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: isLocal
+            ? AppColors.warning.withValues(alpha: 0.10)
+            : AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: isLocal
+              ? AppColors.warning.withValues(alpha: 0.35)
+              : AppColors.primaryBorder,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            isLocal ? Icons.phone_android_rounded : Icons.cloud_done_outlined,
+            size: 13,
+            color: isLocal ? AppColors.warning : primary,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: isLocal ? AppColors.warning : primary,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.3,
             ),
           ),
         ],
