@@ -1,16 +1,18 @@
 # PULSE — preparação para publicação
 
-## Bloqueios técnicos encontrados no estado atual
+## Identidade Android definida
 
-1. O identificador Android ainda é `com.example.fitapp`.
-   - O identificador precisa ser decidido antes da primeira publicação definitiva.
-   - Depois que um aplicativo é publicado com um identificador, ele não pode ser trocado na mesma listagem.
+- `applicationId`: `com.julianocarvalho.pulse`
+- `namespace`: `com.julianocarvalho.pulse`
+- Essa identidade deve ser preservada na primeira listagem do PULSE e em todas as atualizações futuras.
 
-2. O build `release` ainda usa a assinatura de depuração.
+## Bloqueios técnicos restantes
+
+1. O build `release` ainda usa a assinatura de depuração.
    - Antes de gerar o pacote de produção, criar e configurar uma chave de assinatura segura.
    - Não incluir senhas ou o arquivo da chave no Git.
 
-3. A versão atual no `pubspec.yaml` é `1.0.0+1`.
+2. A versão atual no `pubspec.yaml` é `1.0.0+1`.
    - O número após `+` precisa ser maior que o da versão já enviada ao Play Console.
 
 ## Conteúdo e transparência
@@ -42,6 +44,6 @@
 
 ## Itens que não devem ser alterados sem confirmação
 
-- `applicationId`, caso uma listagem do PULSE já tenha sido criada no Play Console.
+- `applicationId` `com.julianocarvalho.pulse`, agora definido como identidade permanente do PULSE.
 - chave de assinatura de uma versão já publicada.
 - formato dos backups sem migração e compatibilidade com arquivos antigos.

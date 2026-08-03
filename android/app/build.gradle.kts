@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -6,7 +6,7 @@
 }
 
 android {
-    namespace = "com.example.fitapp"
+    namespace = "com.julianocarvalho.pulse"
 
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
@@ -17,7 +17,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.fitapp"
+        applicationId = "com.julianocarvalho.pulse"
         minSdk = 24
         targetSdk = 36
 

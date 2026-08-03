@@ -589,7 +589,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             floating: true,
             snap: true,
             pinned: true,
-            toolbarHeight: 56,
+            toolbarHeight: 52,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
             backgroundColor: AppColors.background,
@@ -602,12 +602,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     'assets/icon.png',
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
@@ -676,9 +676,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               20,
-              6,
+              2,
               20,
-              MediaQuery.viewPaddingOf(context).bottom + 20,
+              MediaQuery.viewPaddingOf(context).bottom + 12,
             ),
             sliver: SliverToBoxAdapter(
               child: Column(
@@ -694,16 +694,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Text(
                               _obterSaudacao(userName),
                               style: const TextStyle(
-                                fontSize: 23,
+                                fontSize: 21,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.35,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               'Vamos cuidar do treino de hoje?',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -734,7 +734,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   if (provider.isWorkoutActive) ...[
                     GestureDetector(
@@ -747,7 +747,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
@@ -769,7 +769,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
-                                      vertical: 3,
+                                      vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppColors.warning.withValues(
@@ -787,19 +787,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 7),
+                                  const SizedBox(height: 5),
                                   Text(
                                     'Continuar ${provider.activeRoutineName}',
                                     style: const TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Não deixe seu descanso passar!',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -807,8 +807,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             Container(
-                              width: 46,
-                              height: 46,
+                              width: 42,
+                              height: 42,
                               decoration: BoxDecoration(
                                 color: AppColors.warning.withValues(
                                   alpha: 0.12,
@@ -818,7 +818,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Icon(
                                 Icons.play_arrow_rounded,
                                 color: AppColors.warning,
-                                size: 24,
+                                size: 22,
                               ),
                             ),
                           ],
@@ -838,7 +838,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [AppColors.surfaceLight, AppColors.surface],
@@ -860,7 +860,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
-                                      vertical: 3,
+                                      vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppColors.primarySoft,
@@ -880,19 +880,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 7),
+                                  const SizedBox(height: 5),
                                   Text(
                                     rotinaDoDia.name,
                                     style: const TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 2),
                                   Text(
                                     '${rotinaDoDia.typeLabel} • ${rotinaDoDia.focus}',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -900,8 +900,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ),
                             Container(
-                              width: 46,
-                              height: 46,
+                              width: 42,
+                              height: 42,
                               decoration: BoxDecoration(
                                 color: AppColors.primarySoft,
                                 shape: BoxShape.circle,
@@ -909,14 +909,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: Icon(
                                 _routineIcon(rotinaDoDia.type),
                                 color: Theme.of(context).colorScheme.primary,
-                                size: 24,
+                                size: 22,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -947,7 +947,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             context,
                           ).colorScheme.primary,
                           foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -959,7 +959,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Text(
                               _routineStartLabel(rotinaDoDia.type),
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.5,
                               ),
@@ -1069,7 +1069,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -1137,7 +1137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1145,7 +1145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Text(
                         'RESUMO SEMANAL',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
                           letterSpacing: 0.5,
@@ -1156,7 +1156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Text(
                           'VER PROGRESSO',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1165,7 +1165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Row(
                     children: [
                       Expanded(
@@ -1175,7 +1175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           label: 'Dias ativos',
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: _SummaryStat(
                           icon: Icons.local_fire_department,
@@ -1185,7 +1185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           label: 'Ritmo',
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: _SummaryStat(
                           icon: Icons.calendar_today,
@@ -1197,17 +1197,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
                     'ATIVIDADE RECENTE',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   _RecentActivityCard(
                     workout: latestActivity,
                     onTap: () {
@@ -1274,7 +1274,7 @@ class _HomeQuickActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          height: 108,
+          height: 101,
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             gradient: emphasized
@@ -1294,8 +1294,8 @@ class _HomeQuickActionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: emphasized ? primary : AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(10),
@@ -1303,7 +1303,7 @@ class _HomeQuickActionCard extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: emphasized ? AppColors.onPrimary : primary,
-                  size: 18,
+                  size: 17,
                 ),
               ),
               const Spacer(),
@@ -1333,7 +1333,10 @@ class _HomeQuickActionCard extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 10.5,
+                ),
               ),
             ],
           ),
@@ -1369,7 +1372,7 @@ class _HomeWideActionCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
@@ -1378,15 +1381,15 @@ class _HomeWideActionCard extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Container(
-                width: 38,
-                height: 38,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: primary, size: 20),
+                child: Icon(icon, color: primary, size: 19),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1411,12 +1414,12 @@ class _HomeWideActionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: 10.5,
-                        height: 1.3,
+                        fontSize: 10.25,
+                        height: 1.25,
                       ),
                     ),
                   ],
@@ -1476,8 +1479,8 @@ class _RecentActivityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(17),
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 94),
-          padding: const EdgeInsets.all(12),
+          constraints: const BoxConstraints(minHeight: 86),
+          padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -1501,15 +1504,15 @@ class _RecentActivityCard extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Container(
-                width: 42,
-                height: 42,
+                width: 39,
+                height: 39,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: accent, size: 21),
+                child: Icon(icon, color: accent, size: 20),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1521,31 +1524,31 @@ class _RecentActivityCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: accent,
-                        fontSize: 9.5,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.35,
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3),
                     Text(
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: 10.5,
-                        height: 1.3,
+                        fontSize: 10.25,
+                        height: 1.25,
                       ),
                     ),
                   ],
@@ -1553,8 +1556,8 @@ class _RecentActivityCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.10),
                   shape: BoxShape.circle,
@@ -1564,7 +1567,7 @@ class _RecentActivityCard extends StatelessWidget {
                       ? Icons.arrow_forward_rounded
                       : Icons.chevron_right_rounded,
                   color: accent,
-                  size: 19,
+                  size: 18,
                 ),
               ),
             ],
@@ -1617,7 +1620,7 @@ class _SummaryStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -1625,17 +1628,17 @@ class _SummaryStat extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 5),
+          Icon(icon, size: 15, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 3),
           Text(
             value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 9.5, color: AppColors.textSecondary),
           ),
         ],
       ),

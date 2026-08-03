@@ -1,4 +1,4 @@
-package com.example.fitapp
+package com.julianocarvalho.pulse
 
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
