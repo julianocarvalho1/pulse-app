@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/pulse_ai/data/repositories/fallback_pulse_ai_repository.dart';
 import 'package:pulse/features/pulse_ai/data/repositories/local_pulse_ai_repository.dart';
@@ -48,6 +50,7 @@ void main() {
     final client = _RecordingClient(
       const PulseAiRemoteAnswer(
         answer: '**Análise:** a estrutura está coerente.',
+        responseId: 'response-test',
         model: 'gemini-test',
       ),
     );
@@ -59,6 +62,7 @@ void main() {
 
     expect(response.generatedLocally, isFalse);
     expect(response.providerModel, 'gemini-test');
+    expect(response.remoteResponseId, 'response-test');
     expect(response.insights.first.title, 'Análise da ficha');
     expect(response.insights.first.body, isNot(contains('**')));
     expect(response.insights.length, greaterThan(1));
@@ -66,26 +70,28 @@ void main() {
 
   test('não envia nome da ficha, foco nem observações livres', () async {
     final client = _RecordingClient(
-      const PulseAiRemoteAnswer(answer: 'Resposta segura.'),
+      const PulseAiRemoteAnswer(
+        answer: 'Resposta segura.',
+        responseId: 'response-safe',
+      ),
     );
     final repository = RemotePulseAiRepository(client: client);
 
     await repository.analyze(request(PulseAiAssistantMode.explainWorkout));
 
-    expect(client.lastMessage, contains('Supino Máquina'));
-    expect(client.lastMessage, contains('3x 10'));
-    expect(client.lastMessage, isNot(contains('Nome privado da ficha')));
-    expect(client.lastMessage, isNot(contains('Observação privada de foco')));
-    expect(
-      client.lastMessage,
-      isNot(contains('Não enviar esta anotação pessoal.')),
-    );
+    final sentContext = jsonEncode(client.lastRequest?.context);
+    expect(sentContext, contains('Supino Máquina'));
+    expect(sentContext, contains('3x 10'));
+    expect(sentContext, isNot(contains('Nome privado da ficha')));
+    expect(sentContext, isNot(contains('Observação privada de foco')));
+    expect(sentContext, isNot(contains('Não enviar esta anotação pessoal.')));
   });
 
   test('substituições continuam limitadas ao catálogo do PULSE', () async {
     final client = _RecordingClient(
       const PulseAiRemoteAnswer(
         answer: 'A opção permitida trabalha o mesmo grupo muscular.',
+        responseId: 'response-replacement',
       ),
     );
     final repository = RemotePulseAiRepository(client: client);
@@ -96,13 +102,16 @@ void main() {
 
     expect(response.alternatives, hasLength(1));
     expect(response.alternatives.single.exerciseId, alternative.id);
-    expect(client.lastMessage, contains(alternative.name));
-    expect(client.lastMessage, contains('Não cite nenhuma alternativa fora'));
+    expect(jsonEncode(client.lastRequest?.context), contains(alternative.name));
+    expect(client.lastRequest?.mode, 'suggestReplacement');
   });
 
-  test('envia atividades livres separadas da aderência à ficha', () async {
+  test('mantém métricas de progresso no aparelho', () async {
     final client = _RecordingClient(
-      const PulseAiRemoteAnswer(answer: 'Leitura do período.'),
+      const PulseAiRemoteAnswer(
+        answer: 'Leitura do período.',
+        responseId: 'response-progress',
+      ),
     );
     final repository = RemotePulseAiRepository(client: client);
 
@@ -131,12 +140,11 @@ void main() {
       ),
     );
 
-    expect(client.lastMessage, contains('Atividades livres: 1'));
-    expect(client.lastMessage, contains('CrossFit'));
-    expect(client.lastMessage, contains('não como ficha concluída'));
-    expect(client.lastMessage, contains('conversa natural'));
-    expect(response.insights, hasLength(1));
-    expect(response.insights.single.title, 'Leitura do seu momento');
+    expect(client.lastRequest, isNull);
+    expect(response.generatedLocally, isTrue);
+    expect(response.remoteResponseId, isNull);
+    expect(response.fallbackMessage, contains('feita no aparelho'));
+    expect(response.insights, isNotEmpty);
   });
 
   test('volta ao modo local quando a IA conectada falha', () async {
@@ -159,13 +167,16 @@ class _RecordingClient implements PulseAiRemoteClient {
   _RecordingClient(this.response);
 
   final PulseAiRemoteAnswer response;
-  String lastMessage = '';
+  PulseAiRemoteRequest? lastRequest;
 
   @override
-  Future<PulseAiRemoteAnswer> ask(String message) async {
-    lastMessage = message;
+  Future<PulseAiRemoteAnswer> ask(PulseAiRemoteRequest request) async {
+    lastRequest = request;
     return response;
   }
+
+  @override
+  Future<void> report(PulseAiRemoteReport report) async {}
 }
 
 class _ThrowingRepository implements PulseAiRepository {

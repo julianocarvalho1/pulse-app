@@ -155,6 +155,7 @@ class PulseAiResponse {
         'Use estas informações como apoio. Em caso de dor, limitação ou condição de saúde, procure orientação profissional.',
     this.generatedLocally = true,
     this.providerModel,
+    this.remoteResponseId,
     this.fallbackMessage,
   });
 
@@ -167,6 +168,7 @@ class PulseAiResponse {
   final String safetyNote;
   final bool generatedLocally;
   final String? providerModel;
+  final String? remoteResponseId;
   final String? fallbackMessage;
 
   PulseAiResponse copyWith({
@@ -181,6 +183,8 @@ class PulseAiResponse {
     bool? generatedLocally,
     String? providerModel,
     bool clearProviderModel = false,
+    String? remoteResponseId,
+    bool clearRemoteResponseId = false,
     String? fallbackMessage,
     bool clearFallbackMessage = false,
   }) {
@@ -198,6 +202,9 @@ class PulseAiResponse {
       providerModel: clearProviderModel
           ? null
           : (providerModel ?? this.providerModel),
+      remoteResponseId: clearRemoteResponseId
+          ? null
+          : (remoteResponseId ?? this.remoteResponseId),
       fallbackMessage: clearFallbackMessage
           ? null
           : (fallbackMessage ?? this.fallbackMessage),

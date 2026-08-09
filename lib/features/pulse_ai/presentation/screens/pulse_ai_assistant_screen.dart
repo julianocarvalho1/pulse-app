@@ -6,6 +6,7 @@ import '../../../../theme/app_theme.dart';
 import '../../../workouts/domain/models/advanced_workout_prescription.dart';
 import '../../../workouts/domain/services/exercise_alternative_service.dart';
 import '../../../workouts/presentation/providers/workout_controller.dart';
+import '../../data/repositories/pulse_ai_remote_client.dart';
 import '../../domain/models/pulse_ai_models.dart';
 import '../../domain/repositories/pulse_ai_repository.dart';
 import '../providers/pulse_ai_providers.dart';
@@ -30,6 +31,8 @@ class _PulseAiAssistantScreenState
   PulseAiResponse? _response;
   String? _selectedAlternativeId;
   Object? _error;
+  bool _isReporting = false;
+  String? _reportedResponseId;
 
   WorkoutRoutine _resolveRoutine(List<WorkoutRoutine> routines) {
     return routines.firstWhere(
@@ -167,6 +170,8 @@ class _PulseAiAssistantScreenState
       _response = null;
       _selectedAlternativeId = null;
       _error = null;
+      _isReporting = false;
+      _reportedResponseId = null;
     });
 
     final catalog = ref.read(workoutControllerProvider).allExercises;
@@ -236,7 +241,59 @@ class _PulseAiAssistantScreenState
       _response = null;
       _selectedAlternativeId = null;
       _error = null;
+      _isReporting = false;
+      _reportedResponseId = null;
     });
+  }
+
+  Future<void> _reportResponse(PulseAiResponse response) async {
+    final responseId = response.remoteResponseId;
+    if (responseId == null || _isReporting) {
+      return;
+    }
+
+    final report = await showDialog<PulseAiRemoteReport>(
+      context: context,
+      builder: (_) => _PulseAiReportDialog(responseId: responseId),
+    );
+    if (report == null || !mounted) {
+      return;
+    }
+
+    setState(() => _isReporting = true);
+    try {
+      await ref.read(pulseAiRemoteClientProvider).report(report);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _reportedResponseId = responseId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Denúncia enviada. Obrigado por ajudar a melhorar o PULSE.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is PulseAiRemoteException
+                ? error.message
+                : 'Não foi possível enviar a denúncia agora.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isReporting = false);
+      }
+    }
   }
 
   Future<void> _confirmAndApply(
@@ -602,6 +659,32 @@ class _PulseAiAssistantScreenState
           ],
           const SizedBox(height: 6),
           _SafetyNote(text: response.safetyNote),
+          if (!response.generatedLocally &&
+              response.remoteResponseId != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                key: const Key('reportPulseAiResponseButton'),
+                onPressed:
+                    _isReporting ||
+                        _reportedResponseId == response.remoteResponseId
+                    ? null
+                    : () => _reportResponse(response),
+                icon: Icon(
+                  _reportedResponseId == response.remoteResponseId
+                      ? Icons.check_rounded
+                      : Icons.flag_outlined,
+                  size: 18,
+                ),
+                label: Text(
+                  _reportedResponseId == response.remoteResponseId
+                      ? 'DENÚNCIA ENVIADA'
+                      : 'DENUNCIAR RESPOSTA',
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 18),
           if (response.hasApplicableChange)
             SizedBox(
@@ -702,6 +785,101 @@ class _PulseAiAssistantScreenState
       PulseAiAssistantMode.analyzeProgress => Icons.insights_rounded,
       PulseAiAssistantMode.explainExercise => Icons.fitness_center_rounded,
     };
+  }
+}
+
+class _PulseAiReportDialog extends StatefulWidget {
+  const _PulseAiReportDialog({required this.responseId});
+
+  final String responseId;
+
+  @override
+  State<_PulseAiReportDialog> createState() => _PulseAiReportDialogState();
+}
+
+class _PulseAiReportDialogState extends State<_PulseAiReportDialog> {
+  static const Map<String, String> _categories = <String, String>{
+    'incorrect': 'Conteúdo incorreto',
+    'offensive': 'Conteúdo ofensivo ou impróprio',
+    'unsafe': 'Orientação insegura',
+    'other': 'Outro problema',
+  };
+
+  final TextEditingController _commentController = TextEditingController();
+  String _category = _categories.keys.first;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Denunciar resposta da IA'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Escolha o motivo. A resposta gerada e este relato serão registrados para análise.',
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              key: const Key('pulseAiReportCategoryField'),
+              initialValue: _category,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Motivo'),
+              items: _categories.entries
+                  .map(
+                    (entry) => DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _category = value);
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _commentController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: 500,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Comentário (opcional)',
+                hintText: 'Conte o que houve sem incluir dados pessoais',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton.icon(
+          key: const Key('submitPulseAiReportButton'),
+          onPressed: () => Navigator.pop(
+            context,
+            PulseAiRemoteReport(
+              responseId: widget.responseId,
+              category: _category,
+              comment: _commentController.text,
+            ),
+          ),
+          icon: const Icon(Icons.flag_outlined),
+          label: const Text('Enviar denúncia'),
+        ),
+      ],
+    );
   }
 }
 
@@ -897,7 +1075,7 @@ class _PrivacyAndSafetyCard extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Quando há internet, o PULSE envia apenas a estrutura técnica necessária para preparar uma análise mais detalhada. Nome, foto, dados pessoais e observações livres não são enviados. Sem conexão, a resposta é gerada no aparelho e nenhuma alteração acontece sem confirmação.',
+              'Quando há internet, o PULSE envia apenas a estrutura técnica necessária da ficha ou do exercício. Nome, foto, observações livres e métricas de progresso não são enviados. A análise de progresso e a resposta de reserva são geradas no aparelho; nenhuma alteração acontece sem confirmação.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,

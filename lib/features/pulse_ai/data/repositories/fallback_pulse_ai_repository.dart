@@ -20,7 +20,10 @@ class FallbackPulseAiRepository implements PulseAiRepository {
         'Sem internet: resposta rápida gerada no aparelho.',
       );
     } on PulseAiLimitReachedException {
-      return _localResponse(request, 'Resposta rápida gerada no aparelho.');
+      return _localResponse(
+        request,
+        'Limite online temporariamente atingido: resposta gerada no aparelho.',
+      );
     } catch (_) {
       return _localResponse(request, 'Resposta rápida gerada no aparelho.');
     }
@@ -35,6 +38,7 @@ class FallbackPulseAiRepository implements PulseAiRepository {
       generatedLocally: true,
       fallbackMessage: message,
       clearProviderModel: true,
+      clearRemoteResponseId: true,
     );
   }
 }
