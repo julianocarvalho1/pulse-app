@@ -29,8 +29,8 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 ## Engenharia Android
 
 - [x] `applicationId` definitivo: `com.julianocarvalho.pulse`.
-- [x] `versionCode` 1 já usado no teste fechado; próximo pacote configurado como
-  `1.0.0+2` (`versionCode` 2).
+- [x] `versionCode` 1 e 2 já usados no teste fechado; correção configurada como
+  `1.0.0+3` (`versionCode` 3).
 - [x] `minSdk 24`, `compileSdk 36` e `targetSdk 36`.
 - [x] APK de depuração compila.
 - [x] Formatação, análise estática e suíte automatizada aprovadas.
@@ -48,6 +48,13 @@ no código ou no ambiente local; não significa aprovação da Google Play.
   `8B5244C7F9773A3C269037DA3C473D3084D0EE505401FF647FB3D907FAD5060C`.
 - [x] Enviar o AAB `1.0.0+2` à faixa **Teste fechado - Alpha**. A mudança foi
   enviada para revisão da Google Play em 9 de agosto de 2026.
+- [x] Corrigir a tela cinza observada ao iniciar fichas com prescrições
+  descendentes, como `15-12-10`. A faixa Alpha com `1.0.0+2` revelou que esses
+  valores eram usados como limites invertidos na sugestão de progressão.
+- [x] Gerar o AAB corretivo `1.0.0+3` assinado. Pacote verificado com
+  83.021.139 bytes e SHA-256
+  `92EC17440887670C94A8A796F5D0C723CDCBF6AEB1E094A6DDBD2AD01274356A`.
+- [ ] Enviar o AAB corretivo `1.0.0+3` à faixa **Teste fechado - Alpha**.
 - [ ] Verificar o relatório de pré-lançamento gerado para o pacote `1.0.0+2`.
 - [ ] Corrigir qualquer erro de estabilidade, acessibilidade ou compatibilidade
   apontado pelo relatório de pré-lançamento.

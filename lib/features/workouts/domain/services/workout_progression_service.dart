@@ -95,7 +95,14 @@ class WorkoutProgressionService {
       return _RepRange(values.first, values.first);
     }
 
-    return _RepRange(values.first, values[1]);
+    // Prescrições por série também podem ser descendentes, por exemplo
+    // "15-12-10". `int.clamp` exige que o limite mínimo não seja maior que o
+    // máximo, então normalize todos os alvos encontrados antes de sugerir a
+    // progressão.
+    return _RepRange(
+      values.reduce((current, value) => value < current ? value : current),
+      values.reduce((current, value) => value > current ? value : current),
+    );
   }
 
   String _formatSet(ExerciseSet set) {

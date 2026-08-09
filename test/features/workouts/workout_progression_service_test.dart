@@ -76,4 +76,41 @@ void main() {
     expect(suggestion.nextTarget, contains('42,5 kg'));
     expect(suggestion.nextTarget, contains('8 repetições'));
   });
+
+  test('normaliza prescrição descendente antes de limitar a progressão', () {
+    const descendingExercise = Exercise(
+      id: 'elevacao-lateral',
+      name: 'Elevação lateral',
+      muscle: 'Ombros',
+      description: '',
+      reps: '15-12-10',
+      rest: '60 seg',
+    );
+    final history = <WorkoutHistoryItem>[
+      WorkoutHistoryItem(
+        id: 'history-descending',
+        routineName: 'Treino B',
+        date: DateTime(2026, 8, 9),
+        duration: '30:00',
+        exercises: <ExerciseLog>[
+          ExerciseLog(
+            exerciseId: descendingExercise.id,
+            exerciseName: descendingExercise.name,
+            sets: <ExerciseSet>[
+              ExerciseSet(reps: 15, weight: 8),
+              ExerciseSet(reps: 12, weight: 8),
+              ExerciseSet(reps: 10, weight: 8),
+            ],
+          ),
+        ],
+      ),
+    ];
+
+    final suggestion = service.buildSuggestion(
+      exercise: descendingExercise,
+      history: history,
+    );
+
+    expect(suggestion.nextTarget, contains('15 repetições'));
+  });
 }
