@@ -13,6 +13,7 @@ $sourceAttributionPath = Join-Path $sourceRoot 'ATTRIBUTION.md'
 $mappingPath = Join-Path $repoRoot 'lib\features\exercises\domain\repdb_exercise_mapping.dart'
 $assetTarget = Join-Path $repoRoot 'assets\images'
 $licenseTarget = Join-Path $repoRoot 'third_party\repdb'
+$manifestTarget = Join-Path $licenseTarget 'ASSET-MANIFEST.sha256'
 
 foreach ($requiredPath in @(
   $sourceCatalogPath,
@@ -37,20 +38,25 @@ $exactMatches = [regex]::Matches(
   $mappingCode,
   "RepDbExerciseMatch\.exact\(\s*'([^']+)'"
 )
+$additionMatches = [regex]::Matches(
+  $mappingCode,
+  "RepDbCatalogAddition\(\s*repDbId:\s*'([^']+)'"
+)
 $sourceIds = @(
-  $exactMatches |
+  @($exactMatches) + @($additionMatches) |
     ForEach-Object { $_.Groups[1].Value } |
     Sort-Object -Unique
 )
 
-if ($sourceIds.Count -ne 57) {
-  throw "Esperados 57 exercícios aprovados, encontrados $($sourceIds.Count)."
+if ($sourceIds.Count -ne 101) {
+  throw "Esperados 101 exercícios aprovados, encontrados $($sourceIds.Count)."
 }
 
 New-Item -ItemType Directory -Force -Path $assetTarget | Out-Null
 New-Item -ItemType Directory -Force -Path $licenseTarget | Out-Null
 
 $copiedAssets = 0
+$manifestEntries = @()
 foreach ($sourceId in $sourceIds) {
   if (-not $catalogById.ContainsKey($sourceId)) {
     throw "ID RepDB não encontrado no catálogo oficial: $sourceId"
@@ -72,10 +78,19 @@ foreach ($sourceId in $sourceIds) {
       throw "Imagem oficial não encontrada: $sourceAsset"
     }
 
-    $destinationAsset = Join-Path $assetTarget (
-      Split-Path -Leaf $relativePath
-    )
+    $assetFileName = Split-Path -Leaf $relativePath
+    $destinationAsset = Join-Path $assetTarget $assetFileName
     Copy-Item -LiteralPath $sourceAsset -Destination $destinationAsset -Force
+
+    $sourceHash = (Get-FileHash -LiteralPath $sourceAsset -Algorithm SHA256).Hash
+    $destinationHash = (
+      Get-FileHash -LiteralPath $destinationAsset -Algorithm SHA256
+    ).Hash
+    if ($sourceHash -ne $destinationHash) {
+      throw "Falha de integridade ao copiar: $assetFileName"
+    }
+
+    $manifestEntries += "$destinationHash  assets/images/$assetFileName"
     $copiedAssets++
   }
 }
@@ -86,7 +101,17 @@ Copy-Item -LiteralPath $sourceLicensePath -Destination (
 Copy-Item -LiteralPath $sourceAttributionPath -Destination (
   Join-Path $licenseTarget 'ATTRIBUTION.md'
 ) -Force
+[System.IO.File]::WriteAllLines(
+  $manifestTarget,
+  @(
+    '# RepDB Free - SHA-256 manifest for bundled media'
+    "# Source catalog: $((Get-FileHash -LiteralPath $sourceCatalogPath -Algorithm SHA256).Hash)  exercises.json"
+    $manifestEntries | Sort-Object
+  ),
+  [System.Text.UTF8Encoding]::new($false)
+)
 
 Write-Output "RepDB: $($sourceIds.Count) exercícios aprovados."
 Write-Output "RepDB: $copiedAssets imagens WebP importadas."
+Write-Output "RepDB: manifesto de integridade salvo em $manifestTarget."
 Write-Output "Destino: $assetTarget"

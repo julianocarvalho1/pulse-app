@@ -14,6 +14,8 @@ import 'package:pulse/models/exercise.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _catalogSnapshotPath =
+    'test/fixtures/exercises/exercise_catalog_v3.snapshot';
+const _previousCatalogSnapshotPath =
     'test/fixtures/exercises/exercise_catalog_v2.snapshot';
 const _legacyStateFixturePath =
     'test/fixtures/exercises/legacy_workout_state_v1.json';
@@ -27,14 +29,14 @@ void main() {
     });
   });
 
-  group('contrato do catálogo v2', () {
+  group('contrato do catálogo v3', () {
     late _CatalogSnapshot snapshot;
 
     setUpAll(() {
       snapshot = _CatalogSnapshot.read(_catalogSnapshotPath);
     });
 
-    test('congela as 75 identidades e os nomes de mídia atuais', () {
+    test('congela as 101 identidades e os nomes de mídia oficiais', () {
       final actualEntries = exerciseDatabase
           .map((exercise) {
             final definition = ExerciseCatalog.definitionFor(exercise);
@@ -100,20 +102,46 @@ void main() {
         );
       }
 
-      expect(ids, hasLength(75));
-      expect(mediaPaths, hasLength(75));
+      expect(ids, hasLength(101));
+      expect(mediaPaths, hasLength(101));
       expect(muscleCounts, <String, int>{
-        'Abdômen': 6,
+        'Abdômen': 10,
         'Antebraço': 2,
         'Bíceps': 6,
-        'Costas': 10,
-        'Ombros': 9,
-        'Panturrilha': 3,
-        'Peito': 12,
-        'Pernas': 16,
+        'Costas': 13,
+        'Ombros': 14,
+        'Panturrilha': 4,
+        'Peito': 14,
+        'Pernas': 25,
         'Trapézio': 2,
-        'Tríceps': 9,
+        'Tríceps': 11,
       });
+    });
+
+    test('mantém todos os IDs e nomes do catálogo v2 resolvíveis', () {
+      final previousSnapshot = _CatalogSnapshot.read(
+        _previousCatalogSnapshotPath,
+      );
+      final currentIds = exerciseDatabase
+          .map((exercise) => exercise.id)
+          .toSet();
+
+      expect(previousSnapshot.catalogVersion, 2);
+      expect(previousSnapshot.exerciseCount, 75);
+
+      for (final entry in previousSnapshot.entries) {
+        final fields = entry.split('|');
+        final previousId = fields[0];
+        final previousName = fields[1];
+
+        expect(currentIds, contains(previousId));
+        expect(
+          ExerciseCatalog.canonicalIdFor('', exerciseName: previousName),
+          previousId,
+          reason:
+              'O nome legado "$previousName" precisa resolver para $previousId.',
+        );
+      }
     });
   });
 

@@ -8,7 +8,9 @@ import 'package:pulse/models/exercise.dart';
 void main() {
   group('RepDbExerciseMapping', () {
     test('classifica todos os 75 exercícios legados uma única vez', () {
-      final legacyIds = exerciseDatabase.map((exercise) => exercise.id).toSet();
+      final catalogIds = exerciseDatabase
+          .map((exercise) => exercise.id)
+          .toSet();
       final mappedIds = RepDbExerciseMapping.legacyMatches.keys.toSet();
       final statusCounts = <RepDbMatchStatus, int>{};
 
@@ -20,12 +22,9 @@ void main() {
         );
       }
 
-      expect(mappedIds, legacyIds);
-      expect(statusCounts, <RepDbMatchStatus, int>{
-        RepDbMatchStatus.exact: 57,
-        RepDbMatchStatus.reviewRequired: 14,
-        RepDbMatchStatus.unavailable: 4,
-      });
+      expect(mappedIds, hasLength(75));
+      expect(catalogIds, containsAll(mappedIds));
+      expect(statusCounts, <RepDbMatchStatus, int>{RepDbMatchStatus.exact: 75});
     });
 
     test('aprova somente correspondências com fonte e execução definidas', () {
@@ -46,18 +45,11 @@ void main() {
       );
     });
 
-    test('mantém casos duvidosos bloqueados e documentados', () {
-      final pending = RepDbExerciseMapping.legacyMatches.values.where(
-        (match) => !match.isApproved,
-      );
-
-      expect(pending.every((match) => match.reviewNote.isNotEmpty), isTrue);
+    test('não deixa correspondências legadas pendentes para o lançamento', () {
       expect(
-        pending
-            .where((match) => match.status == RepDbMatchStatus.unavailable)
-            .every(
-              (match) => match.repDbId == null && match.sourceName == null,
-            ),
+        RepDbExerciseMapping.legacyMatches.values.every(
+          (match) => match.isApproved && match.reviewNote.isEmpty,
+        ),
         isTrue,
       );
     });
@@ -65,11 +57,8 @@ void main() {
     test('nomes oficiais aprovados também funcionam como aliases', () {
       for (final exercise in exerciseDatabase) {
         final match = RepDbExerciseMapping.matchFor(exercise.id)!;
-        if (!match.isApproved) {
-          expect(match.approvedAliases, isEmpty);
-          continue;
-        }
 
+        expect(match.isApproved, isTrue);
         expect(
           ExerciseCatalog.aliasesFor(exercise),
           contains(match.sourceName),
@@ -82,10 +71,11 @@ void main() {
       }
     });
 
-    test('fornece 56 pares de poses e uma imagem estática oficiais', () {
-      final approvedMedia = RepDbExerciseMapping.legacyMatches.entries
-          .where((entry) => entry.value.isApproved)
-          .map((entry) => RepDbExerciseMapping.approvedMediaFor(entry.key)!)
+    test('fornece mídia oficial para os 101 exercícios do catálogo', () {
+      final approvedMedia = exerciseDatabase
+          .map(
+            (exercise) => RepDbExerciseMapping.approvedMediaFor(exercise.id)!,
+          )
           .toList(growable: false);
       final paired = approvedMedia.where((media) => media.hasPosePair);
       final single = approvedMedia.where((media) => !media.hasPosePair);
@@ -97,16 +87,17 @@ void main() {
         ],
       ];
 
-      expect(approvedMedia, hasLength(57));
-      expect(paired, hasLength(56));
-      expect(single, hasLength(1));
-      expect(assetPaths, hasLength(113));
+      expect(approvedMedia, hasLength(101));
+      expect(paired, hasLength(99));
+      expect(single, hasLength(2));
+      expect(assetPaths, hasLength(200));
+      expect(assetPaths.toSet(), hasLength(assetPaths.length));
       expect(assetPaths.every((path) => File(path).existsSync()), isTrue);
       expect(assetPaths.every((path) => path.endsWith('.webp')), isTrue);
     });
 
-    test('planeja 26 adições úteis sem reutilizar mídias já mapeadas', () {
-      final additions = RepDbExerciseMapping.plannedAdditions;
+    test('inclui 26 adições úteis sem reutilizar mídias já mapeadas', () {
+      final additions = RepDbExerciseMapping.catalogAdditions;
       final sourceIds = additions.map((item) => item.repDbId).toSet();
       final names = additions.map((item) => item.namePtBr).toSet();
       final mappedSourceIds = RepDbExerciseMapping.legacyMatches.values
@@ -127,6 +118,13 @@ void main() {
       };
 
       expect(additions, hasLength(26));
+      expect(
+        additions.every(
+          (item) =>
+              exerciseDatabase.any((exercise) => exercise.id == item.pulseId),
+        ),
+        isTrue,
+      );
       expect(sourceIds, hasLength(additions.length));
       expect(names, hasLength(additions.length));
       expect(sourceIds.intersection(mappedSourceIds), isEmpty);
@@ -134,6 +132,7 @@ void main() {
         additions.every(
           (item) =>
               item.namePtBr.isNotEmpty &&
+              item.sourceName.isNotEmpty &&
               supportedMuscles.contains(item.primaryMuscle) &&
               item.aliases.isNotEmpty,
         ),
@@ -142,12 +141,44 @@ void main() {
     });
 
     test('mantém a atribuição gratuita em um único contrato', () {
-      expect(RepDbExerciseMapping.version, 1);
+      expect(RepDbExerciseMapping.version, 2);
       expect(
         RepDbExerciseMapping.attributionText,
         'Exercise data by RepDB (repdb.co)',
       );
       expect(RepDbExerciseMapping.attributionUrl, 'https://repdb.co');
+    });
+
+    test('preserva os nomes substituídos como aliases de compatibilidade', () {
+      const oldNamesById = <String, String>{
+        'p5': 'Supino Inclinado Articulado',
+        'p11': 'Crossover na Polia Baixa',
+        'c5': 'Remada Baixa Sentada',
+        'c6': 'Remada Articulada',
+        'c10': 'Voador Inverso na Máquina',
+        'b2': 'Rosca Alternada com Halteres',
+        'b8': 'Flexão de Punho',
+        'tr1': 'Tríceps na Polia com Barra Reta',
+        'tr2': 'Tríceps na Polia com Corda',
+        'tr4': 'Tríceps Testa na Polia',
+        'tr6': 'Tríceps Francês na Polia',
+        'pe9': 'Flexora Unilateral em Pé',
+        'pe15': 'Afundo ou Passada',
+        'pe18': 'Panturrilha no Leg Press',
+        'pe19': 'Stiff com Halteres',
+        'ab3': 'Abdominal na Máquina',
+      };
+
+      for (final entry in oldNamesById.entries) {
+        final exercise = exerciseDatabase.firstWhere(
+          (item) => item.id == entry.key,
+        );
+        expect(ExerciseCatalog.aliasesFor(exercise), contains(entry.value));
+        expect(
+          ExerciseCatalog.canonicalIdFor('', exerciseName: entry.value),
+          entry.key,
+        );
+      }
     });
   });
 }

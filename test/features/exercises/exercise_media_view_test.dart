@@ -40,10 +40,17 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('mantém o GIF legado como fallback para item não aprovado', (
+  testWidgets('mantém fallback local apenas para exercício personalizado', (
     tester,
   ) async {
-    final exercise = exerciseDatabase.firstWhere((item) => item.id == 'c6');
+    const exercise = Exercise(
+      id: 'custom_media_test',
+      name: 'Movimento personalizado',
+      muscle: 'Outros',
+      description: 'Exercício criado pelo usuário.',
+      reps: '3x 10',
+      rest: '1 min',
+    );
     final fallbackPath = ExerciseCatalog.mediaPathFor(exercise);
 
     await tester.pumpWidget(

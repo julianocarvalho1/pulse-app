@@ -106,7 +106,7 @@ void main() {
     expect(definition?.id, 'p1');
     expect(definition?.name, 'Supino Reto com Barra');
     expect(definition?.primaryMuscle, 'Peito');
-    expect(definition?.mediaAssetId, 'supino_reto_com_barra');
+    expect(definition?.mediaAssetId, 'bench-press');
     expect(prescription.repsText, '5x 5');
     expect(prescription.restText, '120 seg');
     expect(

@@ -22,7 +22,7 @@ class ExerciseIdentity {
 class ExerciseCatalog {
   const ExerciseCatalog._();
 
-  static const int version = 2;
+  static const int version = 3;
 
   static const Map<String, String> _legacyIdToCanonicalId = {
     'ex_pm_1': 'p12',
@@ -76,6 +76,7 @@ class ExerciseCatalog {
     'p5': ExerciseCatalogMetadata(
       mediaAssetId: 'supino_inclinado_articulado',
       aliases: <String>[
+        'Supino Inclinado Articulado',
         'Supino Inclinado Máquina',
         'Incline Chest Press Machine',
       ],
@@ -116,7 +117,11 @@ class ExerciseCatalog {
     ),
     'p11': ExerciseCatalogMetadata(
       mediaAssetId: 'crossover_polia_baixa',
-      aliases: <String>['Crossover Baixo', 'Low Cable Crossover'],
+      aliases: <String>[
+        'Crossover na Polia Baixa',
+        'Crossover Baixo',
+        'Low Cable Crossover',
+      ],
     ),
     'p12': ExerciseCatalogMetadata(
       mediaAssetId: 'supino_reto_articulado',
@@ -148,11 +153,16 @@ class ExerciseCatalog {
     ),
     'c5': ExerciseCatalogMetadata(
       mediaAssetId: 'remada_baixa_sentada',
-      aliases: <String>['Remada Baixa', 'Remada Sentada', 'Seated Cable Row'],
+      aliases: <String>[
+        'Remada Baixa Sentada',
+        'Remada Baixa',
+        'Remada Sentada',
+        'Seated Cable Row',
+      ],
     ),
     'c6': ExerciseCatalogMetadata(
       mediaAssetId: 'remada_articulada',
-      aliases: <String>['Machine Row', 'Remada Máquina'],
+      aliases: <String>['Remada Articulada', 'Machine Row', 'Remada Máquina'],
     ),
     'c7': ExerciseCatalogMetadata(
       mediaAssetId: 'serrote_remada_unilateral',
@@ -177,6 +187,7 @@ class ExerciseCatalog {
     'c10': ExerciseCatalogMetadata(
       mediaAssetId: 'voador_dorsal_inverso',
       aliases: <String>[
+        'Voador Inverso na Máquina',
         'Voador Dorsal',
         'Reverse Pec Deck',
         'Rear Delt Fly Machine',
@@ -244,7 +255,11 @@ class ExerciseCatalog {
     ),
     'b2': ExerciseCatalogMetadata(
       mediaAssetId: 'rosca_alternada_com_halteres',
-      aliases: <String>['Rosca Alternada', 'Alternating Dumbbell Curl'],
+      aliases: <String>[
+        'Rosca Alternada com Halteres',
+        'Rosca Alternada',
+        'Alternating Dumbbell Curl',
+      ],
     ),
     'b3': ExerciseCatalogMetadata(
       mediaAssetId: 'rosca_martelo',
@@ -268,13 +283,13 @@ class ExerciseCatalog {
     ),
     'b8': ExerciseCatalogMetadata(
       mediaAssetId: 'flexao_de_punho',
-      aliases: <String>['Wrist Curl'],
+      aliases: <String>['Flexão de Punho', 'Wrist Curl'],
     ),
     'tr1': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_pulley_barra_reta',
       aliases: <String>[
+        'Tríceps na Polia com Barra Reta',
         'Tríceps Pulley Barra Reta',
-        'Tríceps na Polia',
         'Cable Pushdown',
         'Triceps Pushdown',
       ],
@@ -282,6 +297,7 @@ class ExerciseCatalog {
     'tr2': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_corda',
       aliases: <String>[
+        'Tríceps na Polia com Corda',
         'Tríceps Corda',
         'Rope Pushdown',
         'Rope Triceps Pushdown',
@@ -293,7 +309,7 @@ class ExerciseCatalog {
     ),
     'tr4': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_testa_na_polia',
-      aliases: <String>['Cable Skull Crusher'],
+      aliases: <String>['Tríceps Testa na Polia', 'Cable Skull Crusher'],
     ),
     'tr5': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_frances_com_halter',
@@ -301,7 +317,10 @@ class ExerciseCatalog {
     ),
     'tr6': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_frances_na_polia',
-      aliases: <String>['Cable Overhead Triceps Extension'],
+      aliases: <String>[
+        'Tríceps Francês na Polia',
+        'Cable Overhead Triceps Extension',
+      ],
     ),
     'tr7': ExerciseCatalogMetadata(
       mediaAssetId: 'triceps_coice_na_polia',
@@ -349,7 +368,7 @@ class ExerciseCatalog {
     ),
     'pe9': ExerciseCatalogMetadata(
       mediaAssetId: 'flexora_em_pe_unilateral',
-      aliases: <String>['Standing Single Leg Curl'],
+      aliases: <String>['Flexora Unilateral em Pé', 'Standing Single Leg Curl'],
     ),
     'pe10': ExerciseCatalogMetadata(
       mediaAssetId: 'stiff_com_barra',
@@ -382,11 +401,11 @@ class ExerciseCatalog {
     'pe15': ExerciseCatalogMetadata(
       mediaAssetId: 'passada_afundo',
       aliases: <String>[
+        'Afundo ou Passada',
         'Passada / Afundo',
         'Passada',
         'Afundo',
         'Lunge',
-        'Walking Lunge',
       ],
     ),
     'pe16': ExerciseCatalogMetadata(
@@ -399,11 +418,12 @@ class ExerciseCatalog {
     ),
     'pe18': ExerciseCatalogMetadata(
       mediaAssetId: 'panturrilha_no_leg_press',
-      aliases: <String>['Leg Press Calf Raise'],
+      aliases: <String>['Panturrilha no Leg Press', 'Leg Press Calf Raise'],
     ),
     'pe19': ExerciseCatalogMetadata(
       mediaAssetId: 'stiff_com_halteres',
       aliases: <String>[
+        'Stiff com Halteres',
         'Romanian Deadlift Halteres',
         'Dumbbell Romanian Deadlift',
         'Dumbbell RDL',
@@ -419,7 +439,11 @@ class ExerciseCatalog {
     ),
     'ab3': ExerciseCatalogMetadata(
       mediaAssetId: 'abdominal_maquina',
-      aliases: <String>['Machine Crunch', 'Abdominal Máquina'],
+      aliases: <String>[
+        'Abdominal na Máquina',
+        'Machine Crunch',
+        'Abdominal Máquina',
+      ],
     ),
     'ab4': ExerciseCatalogMetadata(
       mediaAssetId: 'abdominal_polia_crunch',
@@ -443,7 +467,9 @@ class ExerciseCatalog {
         primaryMuscle: standardizedMuscle(exercise.muscle),
         description: exercise.description,
         mediaAssetId:
-            _metadataById[exercise.id]?.mediaAssetId ?? _slugify(exercise.name),
+            RepDbExerciseMapping.matchFor(exercise.id)?.repDbId ??
+            _metadataById[exercise.id]?.mediaAssetId ??
+            _slugify(exercise.name),
         aliases: _aliasesFor(exercise.id),
       ),
   };
@@ -514,6 +540,12 @@ class ExerciseCatalog {
       exercise.id,
       exerciseName: exercise.name,
     );
+    final officialMedia = RepDbExerciseMapping.approvedMediaFor(canonicalId);
+
+    if (officialMedia != null) {
+      return officialMedia.mainAssetPath ?? officialMedia.startAssetPath!;
+    }
+
     final mediaAssetId = _definitionsById[canonicalId]?.mediaAssetId;
 
     if (mediaAssetId != null && mediaAssetId.isNotEmpty) {
