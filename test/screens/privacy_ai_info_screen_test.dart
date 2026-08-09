@@ -20,15 +20,29 @@ void main() {
     expect(find.text('Privacidade e assistência'), findsOneWidget);
     expect(find.text('Dados armazenados no aparelho'), findsOneWidget);
     expect(find.text('Como o Assistente PULSE funciona'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Controle de uso e denúncias'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Controle de uso e denúncias'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Resposta local de reserva'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Resposta local de reserva'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Suporte ou relatar resposta'),
+      find.text('Falar com o suporte'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
 
-    expect(find.text('Suporte ou relatar resposta'), findsOneWidget);
+    expect(find.text('Falar com o suporte'), findsOneWidget);
+    expect(find.text('Ler política de privacidade'), findsOneWidget);
     expect(find.text('Contato: pulse.appp@gmail.com'), findsOneWidget);
   });
 }

@@ -64,7 +64,7 @@
 <body>
 <main>
   <h1>Política de Privacidade do PULSE</h1>
-  <p class="meta"><strong>Última atualização:</strong> 3 de agosto de 2026</p>
+  <p class="meta"><strong>Última atualização:</strong> 9 de agosto de 2026</p>
 
   <p>
     Esta Política de Privacidade descreve como o aplicativo <strong>PULSE</strong>,
@@ -84,17 +84,22 @@
 
   <h2>2. Assistente PULSE e processamento por inteligência artificial</h2>
   <p>
-    Quando o usuário escolhe utilizar recursos do Assistente PULSE, o texto enviado e,
-    quando necessário, informações de contexto selecionadas pelo próprio aplicativo
-    podem ser transmitidos pela internet para processamento. A comunicação é realizada
-    por HTTPS por meio de infraestrutura da Cloudflare e de serviços de inteligência
-    artificial do Google Gemini, com a finalidade exclusiva de gerar a resposta
-    solicitada pelo usuário.
+    Quando o usuário escolhe utilizar recursos online do Assistente PULSE, o aplicativo
+    pode transmitir somente a estrutura técnica necessária da ficha ou do exercício,
+    como nomes de exercícios, grupos musculares, séries, repetições e descanso. Nome do
+    usuário, foto, observações livres, anotações de saúde e métricas de progresso não são
+    enviados. A análise de progresso é realizada localmente no aparelho.
   </p>
   <p>
-    O usuário não deve inserir senhas, documentos, dados financeiros ou outras
-    informações altamente confidenciais nos campos destinados ao Assistente PULSE.
-    O desenvolvedor não comercializa essas informações.
+    A comunicação é realizada por HTTPS por meio da Cloudflare e do Google Gemini para
+    gerar a resposta solicitada. O aplicativo envia também um identificador aleatório da
+    instalação, que não contém nome ou e-mail e é armazenado no servidor somente na forma
+    de hash, para aplicar limites de uso e proteger a cota gratuita.
+  </p>
+  <p>
+    Quando o usuário denuncia uma resposta dentro do aplicativo, a resposta gerada, o
+    motivo escolhido e o comentário opcional são registrados para análise. O usuário é
+    orientado a não incluir dados pessoais ou confidenciais nesse comentário.
   </p>
 
   <h2>3. Câmera, fotos e arquivos</h2>
@@ -103,6 +108,11 @@
     que o usuário selecione fotos ou arquivos para funções específicas, como foto de
     perfil, importação, exportação ou restauração de dados. O acesso ocorre apenas
     quando o usuário inicia a ação correspondente.
+  </p>
+  <p>
+    Na leitura de QR Code, as imagens da câmera são processadas no aparelho somente
+    enquanto a tela do leitor está aberta. Elas não são salvas pelo PULSE nem enviadas
+    pela internet.
   </p>
 
   <h2>4. Biometria</h2>
@@ -124,7 +134,7 @@
 
   <h2>6. Publicidade, venda de dados e rastreamento</h2>
   <p>
-    O PULSE não vende dados pessoais. Na versão atualmente publicada, o aplicativo não
+    O PULSE não vende dados pessoais. Na versão atual, o aplicativo não
     exibe anúncios e não utiliza dados pessoais para publicidade comportamental.
   </p>
 
@@ -143,6 +153,12 @@
     limpeza dos dados do app nas configurações do Android ou pela desinstalação. Arquivos
     exportados ou backups salvos fora do aplicativo precisam ser excluídos pelo próprio
     usuário nos locais em que foram armazenados.
+  </p>
+  <p>
+    No serviço online, contadores diários associados ao hash da instalação são mantidos
+    por até 14 dias. Respostas online são mantidas por até 45 dias para permitir o fluxo
+    de denúncia. Denúncias, incluindo a resposta denunciada, motivo e comentário, são
+    mantidas por até 180 dias para revisão e prevenção de abuso.
   </p>
 
   <h2>9. Serviços de terceiros</h2>

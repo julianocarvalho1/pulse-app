@@ -6,6 +6,10 @@ import '../theme/app_theme.dart';
 class PrivacyAiInfoScreen extends StatelessWidget {
   const PrivacyAiInfoScreen({super.key});
 
+  static final Uri _privacyPolicy = Uri.parse(
+    'https://julianocarvalho1.github.io/pulse-app/politica-de-privacidade/',
+  );
+
   static final Uri _supportEmail = Uri(
     scheme: 'mailto',
     path: 'pulse.appp@gmail.com',
@@ -20,6 +24,20 @@ class PrivacyAiInfoScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Não foi possível abrir o aplicativo de e-mail.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final opened = await launchUrl(
+      _privacyPolicy,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível abrir a política de privacidade.'),
         ),
       );
     }
@@ -55,7 +73,14 @@ class PrivacyAiInfoScreen extends StatelessWidget {
             icon: Icons.auto_awesome_rounded,
             title: 'Como o Assistente PULSE funciona',
             body:
-                'Com internet, o aplicativo pode enviar ao serviço online apenas a estrutura técnica necessária para responder: exercícios, séries, repetições, descanso e métricas gerais. Nome, foto, dados pessoais, observações livres e anotações de saúde não são incluídos.',
+                'Com internet, o aplicativo pode enviar ao serviço online apenas a estrutura técnica necessária para responder: exercícios, séries, repetições e descanso. Nome, foto, observações livres, anotações de saúde e métricas de progresso não são incluídos. A análise de progresso é feita no aparelho.',
+          ),
+          const SizedBox(height: 12),
+          const _InfoCard(
+            icon: Icons.flag_outlined,
+            title: 'Controle de uso e denúncias',
+            body:
+                'Uma identificação aleatória da instalação limita o uso da cota online sem criar uma conta. Respostas online podem ser denunciadas dentro do próprio assistente; a resposta, o motivo e o comentário opcional são registrados para análise.',
           ),
           const SizedBox(height: 12),
           const _InfoCard(
@@ -82,7 +107,13 @@ class PrivacyAiInfoScreen extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => _openSupportEmail(context),
             icon: const Icon(Icons.mail_outline_rounded),
-            label: const Text('Suporte ou relatar resposta'),
+            label: const Text('Falar com o suporte'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => _openPrivacyPolicy(context),
+            icon: const Icon(Icons.privacy_tip_outlined),
+            label: const Text('Ler política de privacidade'),
           ),
           const SizedBox(height: 10),
           Text(
