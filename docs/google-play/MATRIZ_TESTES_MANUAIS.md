@@ -25,7 +25,8 @@ distribuído pelo teste interno da Google Play.
 | Histórico | Editar item | Permite corrigir dados registrados sem recriar o treino | [ ] melhoria pós-lançamento |
 | Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [ ] |
 | Progresso | Analisar com histórico | Gera a leitura no aparelho e informa que as métricas não são enviadas | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Medidas | Criar, editar e excluir avaliação | Dados persistem e unidades são claras | [ ] |
+| Medidas | Criar e excluir avaliação | Dados persistem, unidades são claras e a exclusão exige confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Medidas | Editar avaliação existente | Permite corrigir uma avaliação sem recriá-la | [ ] melhoria pós-lançamento |
 | QR Code | Negar câmera | App continua utilizável e explica como tentar novamente | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Conceder e ler código válido | Abre revisão antes de importar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Ler ficha que já existe | Identifica a duplicidade e não sobrescreve os dados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
