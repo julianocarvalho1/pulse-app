@@ -11,7 +11,8 @@ distribuído pelo teste interno da Google Play.
 | Início | Fonte padrão e 130% | Sem texto cortado ou faixa de overflow | [ ] |
 | Início | Tela pequena | Conteúdo rola e navegação inferior permanece utilizável | [ ] |
 | Programas | Importar programa | Fichas corretas aparecem em Meus treinos | [ ] |
-| Fichas | Criar, editar, duplicar e excluir | Mudanças persistem e confirmação evita exclusão acidental | [ ] |
+| Fichas | Criar, editar e excluir | Mudanças persistem e a exclusão exige confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Fichas | Duplicar ficha | Cria uma cópia editável sem alterar a original | [ ] melhoria pós-lançamento |
 | Exercícios | Buscar por nome ou apelido | Encontra o exercício canônico em português e inglês | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Exercícios | Filtrar e pesquisar sem resultado | Filtro e estado vazio são coerentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Exercícios | Abrir demonstrações | Mídia correta do RepDB carrega sem travar | [x] amostra física + cobertura automatizada do catálogo |
