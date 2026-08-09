@@ -33,7 +33,7 @@ distribuído pelo teste interno da Google Play.
 | Arquivo | Importar arquivo válido que já existe | Abre revisão e evita duplicação ou sobrescrita silenciosa | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Arquivo | Importar arquivo inválido | Mostra erro seguro e mantém os dados atuais | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Backup | Exportar backup | Arquivo JSON válido é salvo e pode ser copiado para outro local | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Backup | Restaurar backup | Mostra revisão, exige confirmação e recupera os dados esperados | [ ] |
+| Backup | Restaurar backup | Mostra revisão, exige confirmação e recupera os dados esperados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Backup | Arquivo corrompido | Falha com mensagem e mantém dados atuais | [ ] |
 | Biometria | Ativar, bloquear e autenticar | Android faz a autenticação e app desbloqueia uma vez | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Biometria | Cancelar/falhar | Dados permanecem protegidos e há saída compreensível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
