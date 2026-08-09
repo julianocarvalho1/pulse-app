@@ -18,7 +18,8 @@ distribuído pelo teste interno da Google Play.
 | Gerador | Restrições/sinais de risco | Exibe orientação de segurança apropriada | [ ] |
 | Treino | Iniciar, registrar séries e descanso | Progresso e temporizador permanecem corretos | [ ] |
 | Treino | Minimizar e voltar | Sessão e tempo não são perdidos ou duplicados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Treino | Encerrar/cancelar | Confirmação e histórico refletem a escolha | [ ] |
+| Treino | Descartar sessão | Exige confirmação e não cria item no histórico | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Treino | Finalizar sessão com atividade | Exige confirmação e cria o histórico correto | [ ] |
 | Histórico | Editar/excluir item | Métricas são recalculadas sem inconsistência | [ ] |
 | Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [ ] |
 | Medidas | Criar, editar e excluir avaliação | Dados persistem e unidades são claras | [ ] |
