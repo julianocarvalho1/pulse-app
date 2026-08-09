@@ -36,13 +36,16 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   sqflite_common_ffi: ^2.4.2
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
+  adaptive_icon_background: "#071B20"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - assets/icon.png
+    - assets/icon_foreground.png
