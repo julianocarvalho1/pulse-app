@@ -16,8 +16,8 @@ distribuído pelo teste interno da Google Play.
 | Exercícios | Buscar por nome ou apelido | Encontra o exercício canônico em português e inglês | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Exercícios | Filtrar e pesquisar sem resultado | Filtro e estado vazio são coerentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Exercícios | Abrir demonstrações | Mídia correta do RepDB carrega sem travar | [x] amostra física + cobertura automatizada do catálogo |
-| Gerador | Valores válidos | Gera rotina revisável antes de salvar | [ ] |
-| Gerador | Restrições/sinais de risco | Exibe orientação de segurança apropriada | [ ] |
+| Gerador | Valores válidos | Usa preferências e gera rotina revisável antes de salvar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Gerador | Restrições/sinais de risco | Exibe orientação e bloqueia a geração de forma apropriada | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Iniciar, registrar séries e descanso | Progresso e temporizador permanecem corretos | [ ] |
 | Treino | Minimizar e voltar | Sessão e tempo não são perdidos ou duplicados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Descartar sessão | Exige confirmação e não cria item no histórico | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
