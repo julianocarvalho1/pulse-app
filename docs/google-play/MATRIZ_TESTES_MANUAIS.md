@@ -44,7 +44,7 @@ distribuído pelo teste interno da Google Play.
 | Assistente | Sem internet | Usa contingência local e explica a limitação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Assistente | Resposta online | Avisos aparecem e conteúdo não inventa dados ausentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Assistente | Relatar problema | Relato é gravado no servidor e o app confirma o recebimento | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Links | Política e apps de música | Abrem o destino correto ou mostram falha amigável | [ ] |
+| Links | Política e apps de música | Abrem o destino correto ou mostram falha amigável | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Privacidade | Apagar todos os dados | Retorna ao estado inicial sem resíduos visíveis | [ ] |
 | Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [ ] |
 | Acessibilidade | TalkBack | Ordem, nomes dos controles e ações principais são claros | [ ] |
