@@ -553,6 +553,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
     return Dismissible(
       key: Key(routine.id),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => _confirmRoutineDeletion(context, routine),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -601,132 +602,188 @@ class WorkoutPlanScreen extends ConsumerWidget {
                   : AppColors.border,
             ),
           ),
-          child: ListTile(
-            minVerticalPadding: 8,
-            contentPadding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(12),
+          child: Material(
+            color: Colors.transparent,
+            child: ListTile(
+              minVerticalPadding: 8,
+              contentPadding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+              leading: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _routineIcon(routine.type),
+                  color: primary,
+                  size: 21,
+                ),
               ),
-              child: Icon(_routineIcon(routine.type), color: primary, size: 21),
-            ),
-            title: Text(
-              routine.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14.5,
-                height: 1.15,
-                color: AppColors.textPrimary,
+              title: Text(
+                routine.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14.5,
+                  height: 1.15,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 7),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 5,
-                    children: <Widget>[
-                      _buildRoutineMetaChip(routine.typeLabel),
-                      _buildRoutineMetaChip(routine.activitySummary),
-                    ],
-                  ),
-                  if (routine.focus.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 7),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 1),
-                            child: Icon(
-                              Icons.center_focus_strong_outlined,
-                              size: 13,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              routine.focus,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11.5,
-                                height: 1.18,
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 7),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 5,
+                      children: <Widget>[
+                        _buildRoutineMetaChip(routine.typeLabel),
+                        _buildRoutineMetaChip(routine.activitySummary),
+                      ],
+                    ),
+                    if (routine.focus.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 7),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1),
+                              child: Icon(
+                                Icons.center_focus_strong_outlined,
+                                size: 13,
+                                color: AppColors.textMuted,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                routine.focus,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11.5,
+                                  height: 1.18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                  ],
+                ),
+              ),
+              trailing: PopupMenuButton<String>(
+                tooltip: 'Opções da ficha',
+                icon: Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
+                color: AppColors.surface,
+                onSelected: (value) async {
+                  if (value == 'view') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoutineDetailScreen(routine: routine),
+                      ),
+                    );
+                  } else if (value == 'edit') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute<bool>(
+                        builder: (_) => RoutineEditorScreen(routine: routine),
+                      ),
+                    );
+                  } else if (value == 'delete') {
+                    final confirmed = await _confirmRoutineDeletion(
+                      context,
+                      routine,
+                    );
+                    if (confirmed && context.mounted) {
+                      provider.deleteRoutine(routine.id);
+                      _showRoutineDeletedMessage(context, routine);
+                    }
+                  }
+                },
+                itemBuilder: (context) => <PopupMenuEntry<String>>[
+                  PopupMenuItem<String>(
+                    value: 'view',
+                    child: Text(
+                      'Ver detalhes',
+                      style: TextStyle(color: AppColors.textPrimary),
                     ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text(
+                      'Editar',
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text(
+                      'Excluir',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            trailing: PopupMenuButton<String>(
-              tooltip: 'Opções da ficha',
-              icon: Icon(Icons.more_vert_rounded, color: AppColors.textMuted),
-              color: AppColors.surface,
-              onSelected: (value) {
-                if (value == 'view') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RoutineDetailScreen(routine: routine),
-                    ),
-                  );
-                } else if (value == 'edit') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<bool>(
-                      builder: (_) => RoutineEditorScreen(routine: routine),
-                    ),
-                  );
-                } else if (value == 'delete') {
-                  provider.deleteRoutine(routine.id);
-                }
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RoutineDetailScreen(routine: routine),
+                  ),
+                );
               },
-              itemBuilder: (context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'view',
-                  child: Text(
-                    'Ver detalhes',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Text(
-                    'Editar',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Text(
-                    'Excluir',
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                ),
-              ],
             ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RoutineDetailScreen(routine: routine),
-                ),
-              );
-            },
           ),
         ),
+      ),
+    );
+  }
+
+  Future<bool> _confirmRoutineDeletion(
+    BuildContext context,
+    WorkoutRoutine routine,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir esta ficha?'),
+        content: Text(
+          '“${routine.name}” será removida dos seus treinos. O histórico já registrado será mantido. Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            key: const Key('confirmDeleteRoutineButton'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir ficha'),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  void _showRoutineDeletedMessage(
+    BuildContext context,
+    WorkoutRoutine routine,
+  ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${routine.name} foi apagada.'),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
