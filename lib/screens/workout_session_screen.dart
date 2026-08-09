@@ -2624,122 +2624,114 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.timer,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'DESCANSO',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Row(
                                   children: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          provider.addRestSeconds(-15),
-                                      style: TextButton.styleFrom(
-                                        minimumSize: const Size(36, 32),
-                                        padding: EdgeInsets.zero,
-                                        foregroundColor:
-                                            AppColors.textSecondary,
-                                      ),
-                                      child: const Text('-15'),
+                                    Icon(
+                                      Icons.timer,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      size: 18,
                                     ),
+                                    const SizedBox(width: 6),
                                     Text(
-                                      _formatTime(workoutState.restSeconds),
+                                      'DESCANSO',
                                       style: TextStyle(
-                                        fontSize: 20,
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                        fontFeatures: [
-                                          FontFeature.tabularFigures(),
-                                        ],
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        fontSize: 12,
                                       ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          provider.addRestSeconds(15),
-                                      style: TextButton.styleFrom(
-                                        minimumSize: const Size(36, 32),
-                                        padding: EdgeInsets.zero,
-                                        foregroundColor:
-                                            AppColors.textSecondary,
-                                      ),
-                                      child: const Text('+15'),
                                     ),
                                   ],
                                 ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton(
+                                  onPressed: () => provider.addRestSeconds(-15),
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(30, 30),
+                                    padding: EdgeInsets.zero,
+                                    foregroundColor: AppColors.textSecondary,
+                                  ),
+                                  child: const Text('-15'),
+                                ),
+                                Text(
+                                  _formatTime(workoutState.restSeconds),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => provider.addRestSeconds(15),
+                                  style: TextButton.styleFrom(
+                                    minimumSize: const Size(30, 30),
+                                    padding: EdgeInsets.zero,
+                                    foregroundColor: AppColors.textSecondary,
+                                  ),
+                                  child: const Text('+15'),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(width: 2),
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Expanded(
-                                  child: OutlinedButton(
+                                SizedBox.square(
+                                  dimension: 32,
+                                  child: IconButton(
                                     key: const Key('restPauseResumeButton'),
+                                    tooltip: workoutState.isRestPaused
+                                        ? 'Continuar descanso'
+                                        : 'Pausar descanso',
                                     onPressed: workoutState.isRestPaused
                                         ? provider.resumeRestTimer
                                         : provider.pauseRestTimer,
-                                    style: OutlinedButton.styleFrom(
-                                      minimumSize: const Size(0, 36),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                      textStyle: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints.tightFor(
+                                      width: 32,
+                                      height: 32,
                                     ),
-                                    child: Text(
+                                    iconSize: 19,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    icon: Icon(
                                       workoutState.isRestPaused
-                                          ? 'CONTINUAR'
-                                          : 'PAUSAR',
+                                          ? Icons.play_arrow_rounded
+                                          : Icons.pause_rounded,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextButton(
+                                SizedBox.square(
+                                  dimension: 32,
+                                  child: IconButton(
                                     key: const Key('skipRestButton'),
+                                    tooltip: 'Pular descanso',
                                     onPressed: provider.stopRestTimer,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.redAccent,
-                                      minimumSize: const Size(0, 36),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                      textStyle: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints.tightFor(
+                                      width: 32,
+                                      height: 32,
                                     ),
-                                    child: const Text('PULAR'),
+                                    iconSize: 19,
+                                    color: Colors.redAccent,
+                                    icon: const Icon(Icons.skip_next_rounded),
                                   ),
                                 ),
                               ],

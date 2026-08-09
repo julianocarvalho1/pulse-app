@@ -100,11 +100,11 @@ void main() {
 
     await tester.tap(find.byKey(const Key('restPauseResumeButton')));
     await tester.pump();
-    expect(find.text('CONTINUAR'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('restPauseResumeButton')));
     await tester.pump();
-    expect(find.text('PAUSAR'), findsOneWidget);
+    expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('skipRestButton')));
     await tester.pump();
