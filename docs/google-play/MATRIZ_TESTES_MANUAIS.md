@@ -28,7 +28,7 @@ distribuído pelo teste interno da Google Play.
 | QR Code | Negar câmera | App continua utilizável e explica como tentar novamente | [ ] |
 | QR Code | Conceder e ler código válido | Abre revisão antes de importar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Ler ficha que já existe | Identifica a duplicidade e não sobrescreve os dados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| QR Code | Código inválido | Mostra erro seguro, sem travar ou importar parcialmente | [ ] |
+| QR Code | Código inválido | Mostra erro seguro, sem travar ou importar parcialmente | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Arquivo | Salvar ficha como arquivo .pulse | Arquivo é criado no destino escolhido | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Arquivo | Compartilhar ficha com outro aplicativo | Seletor do Android abre e o destino recebe o arquivo | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Arquivo | Importar arquivo válido que já existe | Abre revisão e evita duplicação ou sobrescrita silenciosa | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
