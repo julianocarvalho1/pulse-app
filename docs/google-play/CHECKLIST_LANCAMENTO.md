@@ -12,21 +12,25 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [x] Implantar no Worker gratuito o relato de problema em conteúdo gerado por
   IA, vinculado à resposta original. Ver `DECISAO_IA.md`.
 - [x] Reduzir a amostragem dos logs persistentes do Worker de 100% para 5%.
-- [x] Localizar a chave de upload já usada na atualização anterior. Não gerar
-  outra; conferir SHA-1/SHA-256 com o certificado de upload da Play antes do AAB.
+- [x] Localizar a chave de upload já usada na atualização anterior e confirmar
+  na Play Console as impressões digitais do certificado de upload: SHA-1
+  `A9:82:C3:28:76:7D:FE:75:07:CC:3A:FD:6A:A6:20:C9:8D:45:97:A7` e SHA-256
+  `BF:89:C2:B0:FE:A3:A9:F4:47:18:DA:DE:58:82:9C:7F:F9:4A:DC:B8:68:02:F9:64:A3:2A:D3:54:67:B8:AA:4E`.
 - [x] Conta de desenvolvedor criada e taxa única de US$ 25 paga.
 - [ ] Aguardar a resposta do chamado `9-5259000041100` sobre a conta pessoal e
   a classificação do PULSE. Não abrir MEI nem declarar categoria falsa antes
   da orientação escrita da Google Play.
 - [ ] Concluir o teste fechado com pelo menos 12 participantes inscritos por 14
-  dias contínuos antes de pedir acesso à produção.
+  dias contínuos antes de pedir acesso à produção. Em 9 de agosto de 2026, a
+  Play Console confirmou 12 testadores contínuos há 4 dias.
 - [x] Testar em pelo menos um celular Android físico, especialmente câmera,
   biometria, seleção de arquivos, compartilhamento e retomada de treino.
 
 ## Engenharia Android
 
 - [x] `applicationId` definitivo: `com.julianocarvalho.pulse`.
-- [x] Versão inicial: `1.0.0+1` (`versionCode` 1).
+- [x] `versionCode` 1 já usado no teste fechado; próximo pacote configurado como
+  `1.0.0+2` (`versionCode` 2).
 - [x] `minSdk 24`, `compileSdk 36` e `targetSdk 36`.
 - [x] APK de depuração compila.
 - [x] Formatação, análise estática e suíte automatizada aprovadas.
@@ -38,8 +42,10 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [x] Backup automático do Android desativado para evitar cópia involuntária de
   dados locais.
 - [x] Credenciais `.jks`, `.keystore` e `key.properties` ignoradas pelo Git.
-- [ ] Gerar AAB assinado com
-  `tool/validate_release.ps1 -BuildAppBundle` depois dos bloqueios acima.
+- [x] Gerar o AAB `1.0.0+2` assinado com
+  `tool/validate_release.ps1 -BuildAppBundle`. Arquivo local verificado com
+  83.020.488 bytes e SHA-256
+  `8B5244C7F9773A3C269037DA3C473D3084D0EE505401FF647FB3D907FAD5060C`.
 - [ ] Enviar primeiro à faixa de teste interno da Play Console e verificar o
   relatório de pré-lançamento.
 - [ ] Corrigir qualquer erro de estabilidade, acessibilidade ou compatibilidade
