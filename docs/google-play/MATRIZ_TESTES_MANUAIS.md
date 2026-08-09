@@ -34,7 +34,7 @@ distribuído pelo teste interno da Google Play.
 | Arquivo | Importar arquivo inválido | Mostra erro seguro e mantém os dados atuais | [ ] |
 | Backup | Exportar, apagar e restaurar | Fichas, histórico, medidas e configurações retornam | [ ] |
 | Backup | Arquivo corrompido | Falha com mensagem e mantém dados atuais | [ ] |
-| Biometria | Ativar, bloquear e autenticar | Android faz a autenticação e app desbloqueia uma vez | [ ] |
+| Biometria | Ativar, bloquear e autenticar | Android faz a autenticação e app desbloqueia uma vez | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Biometria | Cancelar/falhar | Dados permanecem protegidos e há saída compreensível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Assistente | Sem internet | Usa contingência local e explica a limitação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Assistente | Resposta online | Avisos aparecem e conteúdo não inventa dados ausentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
