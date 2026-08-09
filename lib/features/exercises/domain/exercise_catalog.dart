@@ -523,6 +523,14 @@ class ExerciseCatalog {
     return 'assets/images/${_slugify(exercise.name)}.gif';
   }
 
+  static RepDbExerciseMedia? repDbMediaFor(Exercise exercise) {
+    final canonicalId = canonicalIdFor(
+      exercise.id,
+      exerciseName: exercise.name,
+    );
+    return RepDbExerciseMapping.approvedMediaFor(canonicalId);
+  }
+
   static bool matches(Exercise exercise, String rawQuery) {
     final query = normalize(rawQuery);
     if (query.isEmpty) {

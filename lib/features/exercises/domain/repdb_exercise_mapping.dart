@@ -46,6 +46,23 @@ class RepDbCatalogAddition {
   final List<String> aliases;
 }
 
+class RepDbExerciseMedia {
+  const RepDbExerciseMedia.paired({
+    required this.startAssetPath,
+    required this.peakAssetPath,
+  }) : mainAssetPath = null;
+
+  const RepDbExerciseMedia.single({required this.mainAssetPath})
+    : startAssetPath = null,
+      peakAssetPath = null;
+
+  final String? startAssetPath;
+  final String? peakAssetPath;
+  final String? mainAssetPath;
+
+  bool get hasPosePair => startAssetPath != null && peakAssetPath != null;
+}
+
 class RepDbExerciseMapping {
   const RepDbExerciseMapping._();
 
@@ -426,5 +443,24 @@ class RepDbExerciseMapping {
 
   static List<String> approvedAliasesFor(String pulseExerciseId) {
     return legacyMatches[pulseExerciseId]?.approvedAliases ?? const <String>[];
+  }
+
+  static RepDbExerciseMedia? approvedMediaFor(String pulseExerciseId) {
+    final match = legacyMatches[pulseExerciseId];
+    if (match == null || !match.isApproved || match.repDbId == null) {
+      return null;
+    }
+
+    final sourceId = match.repDbId!;
+    final assetPrefix = 'assets/images/$sourceId';
+
+    if (sourceId == 'plank') {
+      return RepDbExerciseMedia.single(mainAssetPath: '$assetPrefix-main.webp');
+    }
+
+    return RepDbExerciseMedia.paired(
+      startAssetPath: '$assetPrefix-start.webp',
+      peakAssetPath: '$assetPrefix-peak.webp',
+    );
   }
 }

@@ -16,7 +16,7 @@ import '../features/workouts/domain/models/workout_set.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workouts/presentation/state/workout_state.dart';
 import '../models/exercise.dart';
-import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/exercises/presentation/widgets/exercise_media_view.dart';
 import '../theme/app_theme.dart';
 import '../widgets/active_cardio_session_card.dart';
 import 'exercises_screen.dart';
@@ -1871,16 +1871,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                       const BoxConstraints(
                                                         maxHeight: 250,
                                                       ),
-                                                  child: Image.asset(
-                                                    ExerciseCatalog.mediaPathFor(
-                                                      ex,
-                                                    ),
+                                                  child: ExerciseMediaView(
+                                                    exercise: ex,
                                                     fit: BoxFit.contain,
-                                                    errorBuilder:
+                                                    showPoseLabel: true,
+                                                    placeholderBuilder:
                                                         (
                                                           context,
-                                                          error,
-                                                          stackTrace,
                                                         ) => const Center(
                                                           child: Column(
                                                             mainAxisAlignment:
@@ -2206,24 +2203,21 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                     ),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(9),
-                                      child: Image.asset(
-                                        ExerciseCatalog.mediaPathFor(ex),
+                                      child: ExerciseMediaView(
+                                        exercise: ex,
                                         fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                Center(
-                                                  child: Text(
-                                                    '${index + 1}',
-                                                    style: TextStyle(
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                ),
+                                        placeholderBuilder: (context) => Center(
+                                          child: Text(
+                                            '${index + 1}',
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/exercises/domain/exercise_catalog.dart';
 import 'package:pulse/features/exercises/domain/repdb_exercise_mapping.dart';
@@ -78,6 +80,29 @@ void main() {
           exercise.id,
         );
       }
+    });
+
+    test('fornece 56 pares de poses e uma imagem estática oficiais', () {
+      final approvedMedia = RepDbExerciseMapping.legacyMatches.entries
+          .where((entry) => entry.value.isApproved)
+          .map((entry) => RepDbExerciseMapping.approvedMediaFor(entry.key)!)
+          .toList(growable: false);
+      final paired = approvedMedia.where((media) => media.hasPosePair);
+      final single = approvedMedia.where((media) => !media.hasPosePair);
+      final assetPaths = <String>[
+        for (final media in approvedMedia) ...<String>[
+          if (media.startAssetPath != null) media.startAssetPath!,
+          if (media.peakAssetPath != null) media.peakAssetPath!,
+          if (media.mainAssetPath != null) media.mainAssetPath!,
+        ],
+      ];
+
+      expect(approvedMedia, hasLength(57));
+      expect(paired, hasLength(56));
+      expect(single, hasLength(1));
+      expect(assetPaths, hasLength(113));
+      expect(assetPaths.every((path) => File(path).existsSync()), isTrue);
+      expect(assetPaths.every((path) => path.endsWith('.webp')), isTrue);
     });
 
     test('planeja 26 adições úteis sem reutilizar mídias já mapeadas', () {

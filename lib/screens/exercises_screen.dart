@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/exercises/presentation/widgets/exercise_media_view.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'exercise_detail_screen.dart';
@@ -545,10 +546,10 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   border: Border.all(color: AppColors.border),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  ExerciseCatalog.mediaPathFor(exercise),
+                child: ExerciseMediaView(
+                  exercise: exercise,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Center(
+                  placeholderBuilder: (context) => Center(
                     child: Icon(
                       Icons.fitness_center_rounded,
                       color: primary,

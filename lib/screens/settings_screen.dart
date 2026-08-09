@@ -10,6 +10,7 @@ import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import 'about_pulse_screen.dart';
 import 'data_backup_screen.dart';
 import 'how_to_use_screen.dart';
 import 'privacy_ai_info_screen.dart';
@@ -494,16 +495,10 @@ class _SettingsContent extends ConsumerWidget {
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: 'PULSE',
-                      applicationVersion: '1.0.0',
-                      applicationLegalese:
-                          'Treinos, progresso e assistência inteligente.',
-                      applicationIcon: Icon(
-                        Icons.fitness_center,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 40,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AboutPulseScreen(),
                       ),
                     );
                   },

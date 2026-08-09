@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
 import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
-import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/exercises/presentation/widgets/exercise_media_view.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -811,30 +811,30 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: Image.asset(
-                          ExerciseCatalog.mediaPathFor(widget.exercise),
+                        child: ExerciseMediaView(
+                          exercise: widget.exercise,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image_not_supported,
-                                      size: 36,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Imagem indisponível',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
+                          showPoseLabel: true,
+                          placeholderBuilder: (context) => const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported,
+                                  size: 36,
+                                  color: Colors.grey,
                                 ),
-                              ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Imagem indisponível',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),

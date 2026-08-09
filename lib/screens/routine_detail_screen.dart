@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
-import '../features/exercises/domain/exercise_catalog.dart';
+import '../features/exercises/presentation/widgets/exercise_media_view.dart';
 import '../features/pulse_ai/presentation/screens/pulse_ai_assistant_screen.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
@@ -124,10 +124,10 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(9),
-                    child: Image.asset(
-                      ExerciseCatalog.mediaPathFor(exercise),
+                    child: ExerciseMediaView(
+                      exercise: exercise,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Center(
+                      placeholderBuilder: (context) => Center(
                         child: Text(
                           '${index + 1}',
                           style: TextStyle(
