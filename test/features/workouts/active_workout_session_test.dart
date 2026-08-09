@@ -12,6 +12,9 @@ void main() {
       startedAt: DateTime(2026, 7, 29, 20),
       elapsedSeconds: 125,
       notes: 'Boa execução',
+      restSeconds: 48,
+      restEndsAt: DateTime(2026, 7, 29, 20, 3),
+      isRestPaused: false,
       exercises: [
         ActiveWorkoutExercise(
           exercise: const Exercise(
@@ -55,6 +58,9 @@ void main() {
     expect(restored.routineName, 'Treino A');
     expect(restored.elapsedSeconds, 125);
     expect(restored.notes, 'Boa execução');
+    expect(restored.restSeconds, 48);
+    expect(restored.restEndsAt, DateTime(2026, 7, 29, 20, 3));
+    expect(restored.isRestPaused, isFalse);
     expect(restored.exercises.single.exercise.id, 'supino');
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
     expect(restored.exercises.single.sets.first.targetText, '8–10 reps');

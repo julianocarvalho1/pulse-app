@@ -61,6 +61,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   bool _disposed = false;
   Timer? _globalTimer;
   Timer? _restTimer;
+  DateTime? _restEndsAt;
   ActiveWorkoutSession? _activeSessionSnapshot;
   Future<void> _persistenceQueue = Future<void>.value();
 
@@ -97,24 +98,57 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   void hydrate(ActiveWorkoutSession? session, {required bool voiceAfterRest}) {
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _restEndsAt = null;
     ref.read(workoutDurationProvider.notifier).reset();
-    _activeSessionSnapshot = session;
+
+    var restoredRestSeconds = 0;
+    var restoredRestPaused = false;
+    var restoredResting = false;
+    var normalizedSession = session;
+
+    if (session != null && session.isRestPaused && session.restSeconds > 0) {
+      restoredRestSeconds = session.restSeconds;
+      restoredRestPaused = true;
+      restoredResting = true;
+    } else if (session?.restEndsAt != null) {
+      final remaining = _remainingRestSeconds(session!.restEndsAt!);
+      if (remaining > 0) {
+        restoredRestSeconds = remaining;
+        restoredResting = true;
+        _restEndsAt = session.restEndsAt;
+      } else {
+        normalizedSession = session.copyWith(
+          restSeconds: 0,
+          clearRestEndsAt: true,
+          isRestPaused: false,
+        );
+      }
+    }
+
+    _activeSessionSnapshot = normalizedSession;
 
     state = WorkoutSessionState(
       voiceAfterRest: voiceAfterRest,
-      isWorkoutActive: session != null,
+      isWorkoutActive: normalizedSession != null,
       exercises:
-          session?.exercises.map((item) => item.exercise).toList() ??
+          normalizedSession?.exercises.map((item) => item.exercise).toList() ??
           const <Exercise>[],
-      routineName: session?.routineName ?? 'Treino do Dia',
-      activeSession: session,
-      isResting: false,
-      restSeconds: 0,
+      routineName: normalizedSession?.routineName ?? 'Treino do Dia',
+      activeSession: normalizedSession,
+      isResting: restoredResting,
+      isRestPaused: restoredRestPaused,
+      restSeconds: restoredRestSeconds,
       isFinishing: false,
     );
 
-    if (session != null) {
-      _startGlobalTimer(initialSeconds: session.elapsedSeconds);
+    if (normalizedSession != null) {
+      _startGlobalTimer(initialSeconds: normalizedSession.elapsedSeconds);
+      if (restoredResting && !restoredRestPaused) {
+        _startRestCountdown();
+      }
+      if (!identical(normalizedSession, session)) {
+        unawaited(_persistActiveSession());
+      }
     }
   }
 
@@ -122,6 +156,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     final voiceAfterRest = state.voiceAfterRest;
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _restEndsAt = null;
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
     state = WorkoutSessionState.initial(voiceAfterRest: voiceAfterRest);
@@ -130,6 +165,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   Future<void> prepareForFactoryReset() async {
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _restEndsAt = null;
     await _persistenceQueue;
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
@@ -224,10 +260,16 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     }
 
     _restTimer?.cancel();
+    _restEndsAt = DateTime.now().add(Duration(seconds: seconds));
     state = state.copyWith(
       isResting: true,
       isRestPaused: false,
       restSeconds: seconds,
+    );
+    _persistRestState(
+      restSeconds: seconds,
+      restEndsAt: _restEndsAt,
+      isRestPaused: false,
     );
 
     _startRestCountdown();
@@ -242,13 +284,20 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
         return;
       }
 
-      if (state.restSeconds <= 1) {
+      final restEndsAt = _restEndsAt;
+      final remaining = restEndsAt == null
+          ? state.restSeconds - 1
+          : _remainingRestSeconds(restEndsAt);
+
+      if (remaining <= 0) {
         stopRestTimer();
         unawaited(_playAlarm());
         return;
       }
 
-      state = state.copyWith(restSeconds: state.restSeconds - 1);
+      if (remaining != state.restSeconds) {
+        state = state.copyWith(restSeconds: remaining);
+      }
     });
   }
 
@@ -258,7 +307,23 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     }
 
     _restTimer?.cancel();
-    state = state.copyWith(isRestPaused: true);
+    final remaining = _restEndsAt == null
+        ? state.restSeconds
+        : _remainingRestSeconds(_restEndsAt!);
+    _restEndsAt = null;
+
+    if (remaining <= 0) {
+      stopRestTimer();
+      unawaited(_playAlarm());
+      return;
+    }
+
+    state = state.copyWith(isRestPaused: true, restSeconds: remaining);
+    _persistRestState(
+      restSeconds: remaining,
+      restEndsAt: null,
+      isRestPaused: true,
+    );
   }
 
   void resumeRestTimer() {
@@ -266,7 +331,13 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       return;
     }
 
+    _restEndsAt = DateTime.now().add(Duration(seconds: state.restSeconds));
     state = state.copyWith(isRestPaused: false);
+    _persistRestState(
+      restSeconds: state.restSeconds,
+      restEndsAt: _restEndsAt,
+      isRestPaused: false,
+    );
     _startRestCountdown();
   }
 
@@ -275,12 +346,24 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       return;
     }
 
-    final nextValue = (state.restSeconds + seconds).clamp(1, 3600).toInt();
+    final currentValue = state.isRestPaused || _restEndsAt == null
+        ? state.restSeconds
+        : _remainingRestSeconds(_restEndsAt!);
+    final nextValue = (currentValue + seconds).clamp(1, 3600).toInt();
+    if (!state.isRestPaused) {
+      _restEndsAt = DateTime.now().add(Duration(seconds: nextValue));
+    }
     state = state.copyWith(restSeconds: nextValue);
+    _persistRestState(
+      restSeconds: nextValue,
+      restEndsAt: _restEndsAt,
+      isRestPaused: state.isRestPaused,
+    );
   }
 
   void stopRestTimer() {
     _restTimer?.cancel();
+    _restEndsAt = null;
 
     if (!state.isResting && state.restSeconds == 0) {
       return;
@@ -291,6 +374,36 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       isRestPaused: false,
       restSeconds: 0,
     );
+    _persistRestState(restSeconds: 0, restEndsAt: null, isRestPaused: false);
+  }
+
+  int _remainingRestSeconds(DateTime restEndsAt) {
+    final milliseconds = restEndsAt.difference(DateTime.now()).inMilliseconds;
+    if (milliseconds <= 0) {
+      return 0;
+    }
+    return (milliseconds + 999) ~/ 1000;
+  }
+
+  void _persistRestState({
+    required int restSeconds,
+    required DateTime? restEndsAt,
+    required bool isRestPaused,
+  }) {
+    final session = activeSession;
+    if (session == null) {
+      return;
+    }
+
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      restSeconds: restSeconds,
+      restEndsAt: restEndsAt,
+      clearRestEndsAt: restEndsAt == null,
+      isRestPaused: isRestPaused,
+    );
+    state = state.copyWith(activeSession: _activeSessionSnapshot);
+    unawaited(_persistActiveSession());
   }
 
   Future<void> _playAlarm() {
@@ -335,6 +448,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
 
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _restEndsAt = null;
 
     final now = DateTime.now();
     final workoutExercises = List<Exercise>.from(exercises);
@@ -592,6 +706,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
 
     _globalTimer?.cancel();
     _restTimer?.cancel();
+    _restEndsAt = null;
     _activeSessionSnapshot = null;
     ref.read(workoutDurationProvider.notifier).reset();
 

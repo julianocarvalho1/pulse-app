@@ -298,6 +298,9 @@ class ActiveWorkoutSession {
     required List<ActiveWorkoutExercise> exercises,
     List<ActiveCardioEntry> cardio = const <ActiveCardioEntry>[],
     this.notes = '',
+    this.restSeconds = 0,
+    this.restEndsAt,
+    this.isRestPaused = false,
   }) : exercises = UnmodifiableListView<ActiveWorkoutExercise>(
          List<ActiveWorkoutExercise>.from(exercises),
        ),
@@ -312,6 +315,9 @@ class ActiveWorkoutSession {
   final List<ActiveWorkoutExercise> exercises;
   final List<ActiveCardioEntry> cardio;
   final String notes;
+  final int restSeconds;
+  final DateTime? restEndsAt;
+  final bool isRestPaused;
 
   ActiveWorkoutSession copyWith({
     String? id,
@@ -321,6 +327,10 @@ class ActiveWorkoutSession {
     List<ActiveWorkoutExercise>? exercises,
     List<ActiveCardioEntry>? cardio,
     String? notes,
+    int? restSeconds,
+    DateTime? restEndsAt,
+    bool clearRestEndsAt = false,
+    bool? isRestPaused,
   }) {
     return ActiveWorkoutSession(
       id: id ?? this.id,
@@ -330,6 +340,9 @@ class ActiveWorkoutSession {
       exercises: exercises ?? this.exercises,
       cardio: cardio ?? this.cardio,
       notes: notes ?? this.notes,
+      restSeconds: restSeconds ?? this.restSeconds,
+      restEndsAt: clearRestEndsAt ? null : (restEndsAt ?? this.restEndsAt),
+      isRestPaused: isRestPaused ?? this.isRestPaused,
     );
   }
 
@@ -342,6 +355,9 @@ class ActiveWorkoutSession {
       'exercises': exercises.map((exercise) => exercise.toMap()).toList(),
       'cardio': cardio.map((entry) => entry.toMap()).toList(),
       'notes': notes,
+      'restSeconds': restSeconds,
+      'restEndsAt': restEndsAt?.toIso8601String(),
+      'isRestPaused': isRestPaused,
     };
   }
 
@@ -377,6 +393,9 @@ class ActiveWorkoutSession {
                 .toList()
           : const <ActiveCardioEntry>[],
       notes: map['notes']?.toString() ?? '',
+      restSeconds: _readInt(map['restSeconds'], 0),
+      restEndsAt: DateTime.tryParse(map['restEndsAt']?.toString() ?? ''),
+      isRestPaused: map['isRestPaused'] == true || map['isRestPaused'] == 1,
     );
   }
 }

@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 6;
+  static const int databaseVersion = 7;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -176,7 +176,10 @@ class PulseDatabase {
         routine_name TEXT NOT NULL,
         started_at_ms INTEGER NOT NULL,
         elapsed_seconds INTEGER NOT NULL DEFAULT 0,
-        notes TEXT NOT NULL DEFAULT ''
+        notes TEXT NOT NULL DEFAULT '',
+        rest_seconds INTEGER NOT NULL DEFAULT 0,
+        rest_end_at_ms INTEGER,
+        is_rest_paused INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -262,6 +265,31 @@ class PulseDatabase {
     if (oldVersion < 6) {
       await _createWorkoutHistoryFreeActivitiesTable(db);
     }
+
+    if (oldVersion < 7) {
+      await _addActiveSessionRestColumns(db);
+    }
+  }
+
+  Future<void> _addActiveSessionRestColumns(DatabaseExecutor db) async {
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session',
+      column: 'rest_seconds',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session',
+      column: 'rest_end_at_ms',
+      definition: 'INTEGER',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session',
+      column: 'is_rest_paused',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
   }
 
   Future<void> _addAdvancedPrescriptionColumns(DatabaseExecutor db) async {

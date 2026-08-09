@@ -96,6 +96,17 @@ void main() {
       'custom_name': '',
       'notes': 'Aula externa.',
     });
+    final restEndsAt = DateTime(2026, 7, 31, 20, 1);
+    await db.insert('active_session', <String, Object?>{
+      'id': 'active-a',
+      'routine_name': 'Treino A',
+      'started_at_ms': DateTime(2026, 7, 31, 20).millisecondsSinceEpoch,
+      'elapsed_seconds': 45,
+      'notes': '',
+      'rest_seconds': 42,
+      'rest_end_at_ms': restEndsAt.millisecondsSinceEpoch,
+      'is_rest_paused': 0,
+    });
 
     await preferences.setString('user_name', 'Juliano');
     await preferences.setString('settings_theme_mode', 'light');
@@ -112,6 +123,7 @@ void main() {
     await db.delete('routines');
     await db.delete('custom_exercises');
     await db.delete('body_measurements');
+    await db.delete('active_session');
     await preferences.clear();
 
     await service.importBytes(bytes);
@@ -132,6 +144,13 @@ void main() {
     expect(restoredActivities.single['activity_type'], 'crossfit');
     expect(restoredActivities.single['replaced_planned_workout'], 1);
     expect(await db.query('body_measurements'), hasLength(1));
+    final restoredActiveSession = (await db.query('active_session')).single;
+    expect(restoredActiveSession['rest_seconds'], 42);
+    expect(
+      restoredActiveSession['rest_end_at_ms'],
+      restEndsAt.millisecondsSinceEpoch,
+    );
+    expect(restoredActiveSession['is_rest_paused'], 0);
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
     expect(preferences.getBool('app_lock_enabled'), isFalse);

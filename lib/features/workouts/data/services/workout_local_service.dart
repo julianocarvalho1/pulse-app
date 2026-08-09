@@ -437,6 +437,11 @@ class WorkoutLocalService {
           )
           .toList(growable: false),
       notes: sessionRow['notes']?.toString() ?? '',
+      restSeconds: _readInt(sessionRow['rest_seconds']),
+      restEndsAt: _dateTimeFromNullableMilliseconds(
+        sessionRow['rest_end_at_ms'],
+      ),
+      isRestPaused: _readInt(sessionRow['is_rest_paused']) == 1,
     );
   }
 
@@ -452,6 +457,9 @@ class WorkoutLocalService {
         'started_at_ms': session.startedAt.millisecondsSinceEpoch,
         'elapsed_seconds': session.elapsedSeconds,
         'notes': session.notes,
+        'rest_seconds': session.restSeconds,
+        'rest_end_at_ms': session.restEndsAt?.millisecondsSinceEpoch,
+        'is_rest_paused': session.isRestPaused ? 1 : 0,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       for (
@@ -736,6 +744,13 @@ class WorkoutLocalService {
       return value.toInt();
     }
     return int.tryParse(value.toString());
+  }
+
+  DateTime? _dateTimeFromNullableMilliseconds(Object? value) {
+    final milliseconds = _readNullableInt(value);
+    return milliseconds == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(milliseconds);
   }
 
   double? _readNullableDouble(Object? value) {

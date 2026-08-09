@@ -125,4 +125,61 @@ void main() {
     await pulseDatabase.close();
     await tempDirectory.delete(recursive: true);
   });
+
+  test('migra banco da versão 6 adicionando estado do descanso', () async {
+    sqfliteFfiInit();
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pulse_rest_migration_',
+    );
+    final databasePath = '${tempDirectory.path}/pulse.db';
+
+    final legacyDatabase = await databaseFactoryFfi.openDatabase(
+      databasePath,
+      options: OpenDatabaseOptions(
+        version: 6,
+        onCreate: (database, version) async {
+          await database.execute('''
+            CREATE TABLE active_session (
+              id TEXT PRIMARY KEY NOT NULL,
+              routine_name TEXT NOT NULL,
+              started_at_ms INTEGER NOT NULL,
+              elapsed_seconds INTEGER NOT NULL DEFAULT 0,
+              notes TEXT NOT NULL DEFAULT ''
+            )
+          ''');
+        },
+      ),
+    );
+    await legacyDatabase.insert('active_session', <String, Object?>{
+      'id': 'legacy-active',
+      'routine_name': 'Treino antigo',
+      'started_at_ms': 123,
+      'elapsed_seconds': 45,
+      'notes': 'preservar',
+    });
+    await legacyDatabase.close();
+
+    final pulseDatabase = PulseDatabase(
+      databaseFactoryOverride: databaseFactoryFfi,
+      databasePathOverride: databasePath,
+    );
+    final migrated = await pulseDatabase.database;
+    final columns = (await migrated.rawQuery(
+      'PRAGMA table_info(active_session)',
+    )).map((row) => row['name']!.toString()).toSet();
+
+    expect(
+      columns,
+      containsAll(<String>['rest_seconds', 'rest_end_at_ms', 'is_rest_paused']),
+    );
+    final row = (await migrated.query('active_session')).single;
+    expect(row['routine_name'], 'Treino antigo');
+    expect(row['elapsed_seconds'], 45);
+    expect(row['rest_seconds'], 0);
+    expect(row['rest_end_at_ms'], isNull);
+    expect(row['is_rest_paused'], 0);
+
+    await pulseDatabase.close();
+    await tempDirectory.delete(recursive: true);
+  });
 }

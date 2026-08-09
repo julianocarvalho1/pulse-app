@@ -49,7 +49,7 @@ distribuído pelo teste interno da Google Play.
 | Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [x] múltiplas atualizações em 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Acessibilidade | TalkBack | Ordem, nomes dos controles e ações principais são claros | [x] 09/08/2026 — tela inicial e navegação principal conferidas no Xiaomi M2012K11AG, Android 13 |
 | Acessibilidade | Contraste/tema escuro | Conteúdo essencial permanece legível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Interrupções | Rotação, chamada, pouca memória | Operação crítica é preservada ou recuperada com segurança | [ ] |
+| Interrupções | Rotação, chamada, pouca memória | Operação crítica é preservada ou recuperada com segurança | [x] 09/08/2026 — retrato bloqueado; sessão, séries e descanso restaurados após encerramento completo do processo no Xiaomi M2012K11AG |
 | Desempenho | Primeira abertura e listas longas | Sem congelamento persistente ou consumo anormal | [x] 09/08/2026 — abertura fria debug em 2,72 s e catálogo com 200 exercícios sem congelamento no Xiaomi M2012K11AG |
 
 ## Aparelhos mínimos sugeridos

@@ -160,6 +160,9 @@ class PulseBackupService {
       'started_at_ms',
       'elapsed_seconds',
       'notes',
+      'rest_seconds',
+      'rest_end_at_ms',
+      'is_rest_paused',
     ],
     'active_session_exercises': <String>[
       'id',

@@ -205,14 +205,20 @@ void main() {
     await controller.initialization;
     controller.startRoutine(routineB);
     controller.startRestTimer('60 seg');
+    await Future<void>.delayed(Duration.zero);
 
     expect(container.read(workoutControllerProvider).isResting, isTrue);
     expect(container.read(workoutControllerProvider).isRestPaused, isFalse);
     expect(container.read(workoutControllerProvider).restSeconds, 60);
+    expect(repository.activeSession?.restEndsAt, isNotNull);
+    expect(repository.activeSession?.isRestPaused, isFalse);
 
     controller.pauseRestTimer();
+    await Future<void>.delayed(Duration.zero);
     expect(container.read(workoutControllerProvider).isRestPaused, isTrue);
     expect(container.read(workoutControllerProvider).restSeconds, 60);
+    expect(repository.activeSession?.restEndsAt, isNull);
+    expect(repository.activeSession?.isRestPaused, isTrue);
 
     controller.addRestSeconds(15);
     expect(container.read(workoutControllerProvider).restSeconds, 75);
@@ -225,6 +231,69 @@ void main() {
     expect(container.read(workoutControllerProvider).isResting, isFalse);
     expect(container.read(workoutControllerProvider).isRestPaused, isFalse);
     expect(container.read(workoutControllerProvider).restSeconds, 0);
+  });
+
+  test('restaura descanso em andamento após recriar o processo', () async {
+    final restEndsAt = DateTime.now().add(const Duration(seconds: 60));
+    final repository =
+        _SessionFakeRepository(routines: <WorkoutRoutine>[routineB])
+          ..activeSession = ActiveWorkoutSession(
+            id: 'active-rest',
+            routineName: routineB.name,
+            startedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+            elapsedSeconds: 300,
+            exercises: <ActiveWorkoutExercise>[
+              ActiveWorkoutExercise(
+                exercise: secondExercise,
+                sets: const <ActiveWorkoutSet>[
+                  ActiveWorkoutSet(setNumber: 1, isCompleted: true),
+                ],
+              ),
+            ],
+            restSeconds: 60,
+            restEndsAt: restEndsAt,
+          );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    final restored = container.read(workoutControllerProvider);
+    expect(restored.isResting, isTrue);
+    expect(restored.isRestPaused, isFalse);
+    expect(restored.restSeconds, inInclusiveRange(59, 60));
+  });
+
+  test('restaura descanso pausado com os segundos preservados', () async {
+    final repository =
+        _SessionFakeRepository(routines: <WorkoutRoutine>[routineB])
+          ..activeSession = ActiveWorkoutSession(
+            id: 'paused-rest',
+            routineName: routineB.name,
+            startedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+            elapsedSeconds: 300,
+            exercises: <ActiveWorkoutExercise>[
+              ActiveWorkoutExercise(
+                exercise: secondExercise,
+                sets: const <ActiveWorkoutSet>[
+                  ActiveWorkoutSet(setNumber: 1, isCompleted: true),
+                ],
+              ),
+            ],
+            restSeconds: 47,
+            isRestPaused: true,
+          );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+
+    final restored = container.read(workoutControllerProvider);
+    expect(restored.isResting, isTrue);
+    expect(restored.isRestPaused, isTrue);
+    expect(restored.restSeconds, 47);
   });
 
   test('não encerra treino sem nenhuma série concluída', () async {

@@ -96,6 +96,9 @@ void main() {
       routineName: 'Treino A',
       startedAt: DateTime(2026, 7, 29, 21),
       elapsedSeconds: 80,
+      restSeconds: 42,
+      restEndsAt: DateTime(2026, 7, 29, 21, 2),
+      isRestPaused: false,
       exercises: [
         ActiveWorkoutExercise(
           exercise: exercise,
@@ -127,6 +130,9 @@ void main() {
 
     expect(restoredSession, isNotNull);
     expect(restoredSession!.elapsedSeconds, 80);
+    expect(restoredSession.restSeconds, 42);
+    expect(restoredSession.restEndsAt, DateTime(2026, 7, 29, 21, 2));
+    expect(restoredSession.isRestPaused, isFalse);
     expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
     expect(restoredSession.cardio, hasLength(1));
     expect(restoredSession.cardio.single.actualDurationMinutes, 18);
