@@ -46,8 +46,9 @@ no código ou no ambiente local; não significa aprovação da Google Play.
   `tool/validate_release.ps1 -BuildAppBundle`. Arquivo local verificado com
   83.020.488 bytes e SHA-256
   `8B5244C7F9773A3C269037DA3C473D3084D0EE505401FF647FB3D907FAD5060C`.
-- [ ] Enviar primeiro à faixa de teste interno da Play Console e verificar o
-  relatório de pré-lançamento.
+- [x] Enviar o AAB `1.0.0+2` à faixa **Teste fechado - Alpha**. A mudança foi
+  enviada para revisão da Google Play em 9 de agosto de 2026.
+- [ ] Verificar o relatório de pré-lançamento gerado para o pacote `1.0.0+2`.
 - [ ] Corrigir qualquer erro de estabilidade, acessibilidade ou compatibilidade
   apontado pelo relatório de pré-lançamento.
 
@@ -91,7 +92,8 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [ ] Executar toda a `MATRIZ_TESTES_MANUAIS.md` na versão assinada.
 - [x] Fazer backup, apagar os dados, restaurar e comparar fichas/histórico.
 - [x] Testar atualização sobre uma versão anterior sem perder dados.
-- [ ] Verificar o tamanho de download exibido pela Play Console.
+- [x] Verificar o tamanho para novas instalações exibido pela Play Console:
+  25,1 MB, redução de 35,7 MB em relação ao pacote anterior.
 - [ ] Usar publicação gerenciada no primeiro lançamento.
 - [ ] Iniciar com distribuição pequena/fechada, acompanhar travamentos e somente
   então liberar produção.
