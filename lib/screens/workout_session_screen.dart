@@ -1598,9 +1598,52 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           ),
           title: Text(
             workoutState.activeRoutineName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           actions: [
+            Consumer(
+              builder: (context, ref, child) {
+                final duration = ref.watch(workoutDurationProvider);
+
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 15,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatTime(duration),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
             IconButton(
               tooltip: 'Abrir música',
               icon: Icon(
@@ -1615,7 +1658,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.fromLTRB(0, 7, 0, 8),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.only(
@@ -1625,31 +1668,6 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
               ),
               child: Column(
                 children: [
-                  Text(
-                    'TEMPO TOTAL',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final duration = ref.watch(workoutDurationProvider);
-                      return Text(
-                        _formatTime(duration),
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w800,
-                          color: Theme.of(context).colorScheme.primary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
@@ -1684,7 +1702,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             value: activeCardio.isEmpty
                                 ? sessionProgress.fraction
                                 : combinedFraction,
-                            minHeight: 7,
+                            minHeight: 6,
                             backgroundColor: AppColors.border,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               Theme.of(context).colorScheme.primary,
@@ -2679,14 +2697,19 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Cronômetro automático ativado',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                          Expanded(
+                            child: Text(
+                              'Cronômetro automático ativado',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Icon(
                             Icons.timer_outlined,
                             color: Theme.of(context).colorScheme.primary,
