@@ -35,6 +35,7 @@ class WorkoutController extends Notifier<WorkoutState> {
       ref.read(workoutBootstrapControllerProvider.future);
 
   bool get isResting => state.isResting;
+  bool get isRestPaused => state.isRestPaused;
   int get restSeconds => state.restSeconds;
   List<Exercise> get allExercises => state.allExercises;
   List<WorkoutRoutine> get myRoutines => state.myRoutines;
@@ -74,6 +75,7 @@ class WorkoutController extends Notifier<WorkoutState> {
       activeProgramName: library.activeProgramName,
       activeSession: session.activeSession,
       isResting: session.isResting,
+      isRestPaused: session.isRestPaused,
       restSeconds: session.restSeconds,
       isFinishing: session.isFinishing,
       initializationError: switch (bootstrap) {
@@ -225,6 +227,14 @@ class WorkoutController extends Notifier<WorkoutState> {
 
   void stopRestTimer() {
     ref.read(workoutSessionControllerProvider.notifier).stopRestTimer();
+  }
+
+  void pauseRestTimer() {
+    ref.read(workoutSessionControllerProvider.notifier).pauseRestTimer();
+  }
+
+  void resumeRestTimer() {
+    ref.read(workoutSessionControllerProvider.notifier).resumeRestTimer();
   }
 
   void setVoiceAfterRest(bool enabled) {

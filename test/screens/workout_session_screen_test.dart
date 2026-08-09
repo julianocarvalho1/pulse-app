@@ -63,6 +63,53 @@ void main() {
     final timerText = tester.widget<Text>(timerFinder);
     expect(timerText.style?.fontSize, 14);
   });
+
+  testWidgets('descanso oferece pausar, continuar e pular', (tester) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final palette = pulsePalettes[1];
+    AppColors.configure(Brightness.light, primaryColor: palette.lightPrimary);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          workoutControllerProvider.overrideWith(_RestingWorkoutController.new),
+          workoutDurationProvider.overrideWith(_FixedDurationController.new),
+          workoutSessionProgressProvider.overrideWithValue(
+            const WorkoutSessionProgress(
+              completedSets: 1,
+              totalSets: 3,
+              completedExercises: 0,
+              totalExercises: 1,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildPulseLightTheme(palette.lightPrimary),
+          home: const WorkoutSessionScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('restPauseResumeButton')), findsOneWidget);
+    expect(find.byKey(const Key('skipRestButton')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('restPauseResumeButton')));
+    await tester.pump();
+    expect(find.text('CONTINUAR'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('restPauseResumeButton')));
+    await tester.pump();
+    expect(find.text('PAUSAR'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('skipRestButton')));
+    await tester.pump();
+    expect(find.text('DESCANSO'), findsNothing);
+  });
 }
 
 class _FixedDurationController extends WorkoutDurationController {
@@ -110,4 +157,32 @@ class _FakeWorkoutController extends WorkoutController {
     required Map<int, List<String>> reps,
     required String notes,
   }) {}
+}
+
+class _RestingWorkoutController extends _FakeWorkoutController {
+  @override
+  WorkoutState build() => super.build().copyWith(
+    isResting: true,
+    isRestPaused: false,
+    restSeconds: 60,
+  );
+
+  @override
+  void pauseRestTimer() {
+    state = state.copyWith(isRestPaused: true);
+  }
+
+  @override
+  void resumeRestTimer() {
+    state = state.copyWith(isRestPaused: false);
+  }
+
+  @override
+  void stopRestTimer() {
+    state = state.copyWith(
+      isResting: false,
+      isRestPaused: false,
+      restSeconds: 0,
+    );
+  }
 }

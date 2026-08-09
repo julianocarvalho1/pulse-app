@@ -23,6 +23,7 @@ class WorkoutState {
     required this.activeProgramName,
     required this.activeSession,
     required this.isResting,
+    this.isRestPaused = false,
     required this.restSeconds,
     required this.isFinishing,
     this.initializationError,
@@ -75,6 +76,7 @@ class WorkoutState {
   final String activeProgramName;
   final ActiveWorkoutSession? activeSession;
   final bool isResting;
+  final bool isRestPaused;
   final int restSeconds;
   final bool isFinishing;
   final Object? initializationError;
@@ -142,6 +144,7 @@ class WorkoutState {
     String? activeProgramName,
     Object? activeSession = _unsetWorkoutStateValue,
     bool? isResting,
+    bool? isRestPaused,
     int? restSeconds,
     bool? isFinishing,
     Object? initializationError = _unsetWorkoutStateValue,
@@ -162,6 +165,7 @@ class WorkoutState {
           ? this.activeSession
           : activeSession as ActiveWorkoutSession?,
       isResting: isResting ?? this.isResting,
+      isRestPaused: isRestPaused ?? this.isRestPaused,
       restSeconds: restSeconds ?? this.restSeconds,
       isFinishing: isFinishing ?? this.isFinishing,
       initializationError:

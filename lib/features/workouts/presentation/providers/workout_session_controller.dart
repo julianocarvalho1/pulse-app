@@ -224,7 +224,17 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     }
 
     _restTimer?.cancel();
-    state = state.copyWith(isResting: true, restSeconds: seconds);
+    state = state.copyWith(
+      isResting: true,
+      isRestPaused: false,
+      restSeconds: seconds,
+    );
+
+    _startRestCountdown();
+  }
+
+  void _startRestCountdown() {
+    _restTimer?.cancel();
 
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_disposed) {
@@ -240,6 +250,24 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
 
       state = state.copyWith(restSeconds: state.restSeconds - 1);
     });
+  }
+
+  void pauseRestTimer() {
+    if (!state.isResting || state.isRestPaused) {
+      return;
+    }
+
+    _restTimer?.cancel();
+    state = state.copyWith(isRestPaused: true);
+  }
+
+  void resumeRestTimer() {
+    if (!state.isResting || !state.isRestPaused || state.restSeconds <= 0) {
+      return;
+    }
+
+    state = state.copyWith(isRestPaused: false);
+    _startRestCountdown();
   }
 
   void addRestSeconds(int seconds) {
@@ -258,7 +286,11 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       return;
     }
 
-    state = state.copyWith(isResting: false, restSeconds: 0);
+    state = state.copyWith(
+      isResting: false,
+      isRestPaused: false,
+      restSeconds: 0,
+    );
   }
 
   Future<void> _playAlarm() {

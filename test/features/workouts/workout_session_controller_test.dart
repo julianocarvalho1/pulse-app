@@ -194,6 +194,39 @@ void main() {
     },
   );
 
+  test('pausa, continua e pula o descanso preservando o tempo', () async {
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[routineB],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    controller.startRoutine(routineB);
+    controller.startRestTimer('60 seg');
+
+    expect(container.read(workoutControllerProvider).isResting, isTrue);
+    expect(container.read(workoutControllerProvider).isRestPaused, isFalse);
+    expect(container.read(workoutControllerProvider).restSeconds, 60);
+
+    controller.pauseRestTimer();
+    expect(container.read(workoutControllerProvider).isRestPaused, isTrue);
+    expect(container.read(workoutControllerProvider).restSeconds, 60);
+
+    controller.addRestSeconds(15);
+    expect(container.read(workoutControllerProvider).restSeconds, 75);
+
+    controller.resumeRestTimer();
+    expect(container.read(workoutControllerProvider).isRestPaused, isFalse);
+    expect(container.read(workoutControllerProvider).isResting, isTrue);
+
+    controller.stopRestTimer();
+    expect(container.read(workoutControllerProvider).isResting, isFalse);
+    expect(container.read(workoutControllerProvider).isRestPaused, isFalse);
+    expect(container.read(workoutControllerProvider).restSeconds, 0);
+  });
+
   test('não encerra treino sem nenhuma série concluída', () async {
     final repository = _SessionFakeRepository(
       routines: <WorkoutRoutine>[routineB],

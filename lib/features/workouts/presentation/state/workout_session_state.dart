@@ -16,6 +16,7 @@ class WorkoutSessionState {
     required this.routineName,
     required this.activeSession,
     required this.isResting,
+    this.isRestPaused = false,
     required this.restSeconds,
     required this.isFinishing,
   }) : exercises = UnmodifiableListView<Exercise>(
@@ -41,6 +42,7 @@ class WorkoutSessionState {
   final String routineName;
   final ActiveWorkoutSession? activeSession;
   final bool isResting;
+  final bool isRestPaused;
   final int restSeconds;
   final bool isFinishing;
 
@@ -51,6 +53,7 @@ class WorkoutSessionState {
     String? routineName,
     Object? activeSession = _unsetSessionValue,
     bool? isResting,
+    bool? isRestPaused,
     int? restSeconds,
     bool? isFinishing,
   }) {
@@ -63,6 +66,7 @@ class WorkoutSessionState {
           ? this.activeSession
           : activeSession as ActiveWorkoutSession?,
       isResting: isResting ?? this.isResting,
+      isRestPaused: isRestPaused ?? this.isRestPaused,
       restSeconds: restSeconds ?? this.restSeconds,
       isFinishing: isFinishing ?? this.isFinishing,
     );
