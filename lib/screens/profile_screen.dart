@@ -340,6 +340,7 @@ class ProfileScreen extends ConsumerWidget {
     return Dismissible(
       key: Key(item.id),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => _confirmHistoryDeletion(context, item),
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -470,6 +471,38 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<bool> _confirmHistoryDeletion(
+    BuildContext context,
+    WorkoutHistoryItem item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir registro do histórico?'),
+        content: Text(
+          '“${item.routineName}” será removido do histórico e das métricas de progresso. Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            key: const Key('confirmDeleteHistoryButton'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
   }
 
   Future<void> _editDisplayName(
