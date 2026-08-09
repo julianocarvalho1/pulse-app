@@ -20,7 +20,7 @@ no código ou no ambiente local; não significa aprovação da Google Play.
   da orientação escrita da Google Play.
 - [ ] Concluir o teste fechado com pelo menos 12 participantes inscritos por 14
   dias contínuos antes de pedir acesso à produção.
-- [ ] Testar em pelo menos um celular Android físico, especialmente câmera,
+- [x] Testar em pelo menos um celular Android físico, especialmente câmera,
   biometria, seleção de arquivos, compartilhamento e retomada de treino.
 
 ## Engenharia Android
@@ -54,7 +54,7 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [x] Explicação destacada aparece antes da permissão do Android para câmera.
 - [x] App não contém anúncios, analytics ou SDKs de rastreamento.
 - [x] Aviso de que o Assistente não diagnostica nem substitui profissionais.
-- [ ] Atualizar no GitHub Pages a revisão local da política de privacidade.
+- [x] Atualizar no GitHub Pages a revisão local da política de privacidade.
 - [ ] Preencher a declaração de Apps de saúde como **Atividade e fitness**.
 - [ ] Preencher Segurança dos dados somente depois de confirmar os registros do
   Worker. O contexto de treino enviado à IA é informação de fitness coletada de
@@ -83,8 +83,8 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 ## Teste e publicação
 
 - [ ] Executar toda a `MATRIZ_TESTES_MANUAIS.md` na versão assinada.
-- [ ] Fazer backup, apagar os dados, restaurar e comparar fichas/histórico.
-- [ ] Testar atualização sobre uma versão anterior sem perder dados.
+- [x] Fazer backup, apagar os dados, restaurar e comparar fichas/histórico.
+- [x] Testar atualização sobre uma versão anterior sem perder dados.
 - [ ] Verificar o tamanho de download exibido pela Play Console.
 - [ ] Usar publicação gerenciada no primeiro lançamento.
 - [ ] Iniciar com distribuição pequena/fechada, acompanhar travamentos e somente
