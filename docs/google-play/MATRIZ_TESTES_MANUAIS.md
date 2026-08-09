@@ -18,7 +18,7 @@ distribuído pelo teste interno da Google Play.
 | Exercícios | Abrir demonstrações | Mídia correta do RepDB carrega sem travar | [x] amostra física + cobertura automatizada do catálogo |
 | Gerador | Valores válidos | Usa preferências e gera rotina revisável antes de salvar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Gerador | Restrições/sinais de risco | Exibe orientação e bloqueia a geração de forma apropriada | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Treino | Iniciar, registrar séries e descanso | Progresso e temporizador permanecem corretos | [ ] |
+| Treino | Iniciar, registrar séries e descanso | Valores persistem e o descanso permite ajustar, pausar, continuar e pular | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Minimizar e voltar | Sessão e tempo não são perdidos ou duplicados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Descartar sessão | Exige confirmação e não cria item no histórico | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Finalizar sessão com atividade | Exige confirmação e cria o histórico correto | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
@@ -46,7 +46,7 @@ distribuído pelo teste interno da Google Play.
 | Assistente | Relatar problema | Relato é gravado no servidor e o app confirma o recebimento | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Links | Política e apps de música | Abrem o destino correto ou mostram falha amigável | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Privacidade | Apagar todos os dados | Retorna ao estado inicial sem resíduos visíveis | [ ] |
-| Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [ ] |
+| Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [x] múltiplas atualizações em 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Acessibilidade | TalkBack | Ordem, nomes dos controles e ações principais são claros | [ ] |
 | Acessibilidade | Contraste/tema escuro | Conteúdo essencial permanece legível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Interrupções | Rotação, chamada, pouca memória | Operação crítica é preservada ou recuperada com segurança | [ ] |
