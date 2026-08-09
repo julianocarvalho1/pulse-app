@@ -31,7 +31,7 @@ distribuído pelo teste interno da Google Play.
 | Arquivo | Salvar ficha como arquivo .pulse | Arquivo é criado no destino escolhido | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Arquivo | Compartilhar ficha com outro aplicativo | Seletor do Android abre e o destino recebe o arquivo | [ ] |
 | Arquivo | Importar arquivo válido que já existe | Abre revisão e evita duplicação ou sobrescrita silenciosa | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Arquivo | Importar arquivo inválido | Mostra erro seguro e mantém os dados atuais | [ ] |
+| Arquivo | Importar arquivo inválido | Mostra erro seguro e mantém os dados atuais | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Backup | Exportar, apagar e restaurar | Fichas, histórico, medidas e configurações retornam | [ ] |
 | Backup | Arquivo corrompido | Falha com mensagem e mantém dados atuais | [ ] |
 | Biometria | Ativar, bloquear e autenticar | Android faz a autenticação e app desbloqueia uma vez | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
