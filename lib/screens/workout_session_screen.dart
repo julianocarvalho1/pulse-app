@@ -2613,8 +2613,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                   children: [
                     if (workoutState.isResting)
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
