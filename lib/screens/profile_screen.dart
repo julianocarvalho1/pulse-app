@@ -118,6 +118,7 @@ class ProfileScreen extends ConsumerWidget {
                     photoPath: profile.photoPath,
                     onPhotoTap: () =>
                         _openPhotoOptions(context, ref, profile.photoPath),
+                    onEditName: () => _editDisplayName(context, ref, profile),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -471,6 +472,40 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _editDisplayName(
+    BuildContext context,
+    WidgetRef ref,
+    UserProfile profile,
+  ) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditProfileNameDialog(initialName: profile.displayName),
+    );
+
+    if (name == null || !context.mounted || name == profile.displayName) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .updateProfile(profile.copyWith(name: name));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nome do perfil atualizado.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível atualizar o nome do perfil.'),
+          ),
+        );
+      }
+    }
+  }
+
   Widget _profileHeader(
     BuildContext context,
     String userName,
@@ -478,6 +513,7 @@ class ProfileScreen extends ConsumerWidget {
     int completedWorkouts, {
     required String photoPath,
     required VoidCallback onPhotoTap,
+    required VoidCallback onEditName,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -498,14 +534,26 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Editar nome do perfil',
+                      onPressed: onEditName,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.edit_outlined, size: 19),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 5),
                 Text(
@@ -602,6 +650,68 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _EditProfileNameDialog extends StatefulWidget {
+  const _EditProfileNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditProfileNameDialog> createState() => _EditProfileNameDialogState();
+}
+
+class _EditProfileNameDialogState extends State<_EditProfileNameDialog> {
+  late final TextEditingController _controller;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final normalized = _controller.text.trim();
+    if (normalized.isEmpty) {
+      setState(() => _errorText = 'Informe um nome ou apelido.');
+      return;
+    }
+    Navigator.pop(context, normalized);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      icon: const Icon(Icons.badge_outlined),
+      title: const Text('Editar nome do perfil'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 40,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'Nome ou apelido',
+          errorText: _errorText,
+        ),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Salvar')),
+      ],
     );
   }
 }
