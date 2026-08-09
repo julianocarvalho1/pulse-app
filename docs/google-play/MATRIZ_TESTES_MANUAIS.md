@@ -26,8 +26,10 @@ distribuído pelo teste interno da Google Play.
 | QR Code | Conceder e ler código válido | Abre revisão antes de importar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Ler ficha que já existe | Identifica a duplicidade e não sobrescreve os dados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Código inválido | Mostra erro seguro, sem travar ou importar parcialmente | [ ] |
-| Arquivo | Exportar e compartilhar ficha | Arquivo abre no destino escolhido | [ ] |
-| Arquivo | Importar arquivo válido/inválido | Valida conteúdo e evita sobrescrita silenciosa | [ ] |
+| Arquivo | Salvar ficha como arquivo .pulse | Arquivo é criado no destino escolhido | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Arquivo | Compartilhar ficha com outro aplicativo | Seletor do Android abre e o destino recebe o arquivo | [ ] |
+| Arquivo | Importar arquivo válido que já existe | Abre revisão e evita duplicação ou sobrescrita silenciosa | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Arquivo | Importar arquivo inválido | Mostra erro seguro e mantém os dados atuais | [ ] |
 | Backup | Exportar, apagar e restaurar | Fichas, histórico, medidas e configurações retornam | [ ] |
 | Backup | Arquivo corrompido | Falha com mensagem e mantém dados atuais | [ ] |
 | Biometria | Ativar, bloquear e autenticar | Android faz a autenticação e app desbloqueia uma vez | [ ] |
