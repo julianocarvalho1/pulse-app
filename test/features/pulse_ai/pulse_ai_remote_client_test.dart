@@ -19,7 +19,7 @@ void main() {
     expect(second, first);
   });
 
-  test('envia payload estruturado, identificador e denúncia interna', () async {
+  test('envia payload estruturado, identificador e relato interno', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final received = <_ReceivedRequest>[];
     Future<PulseAiHttpResponse> post(

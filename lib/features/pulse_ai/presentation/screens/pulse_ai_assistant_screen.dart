@@ -270,7 +270,7 @@ class _PulseAiAssistantScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Denúncia enviada. Obrigado por ajudar a melhorar o PULSE.',
+            'Relato enviado. Obrigado por ajudar a melhorar o PULSE.',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -284,7 +284,7 @@ class _PulseAiAssistantScreenState
           content: Text(
             error is PulseAiRemoteException
                 ? error.message
-                : 'Não foi possível enviar a denúncia agora.',
+                : 'Não foi possível enviar o relato agora.',
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -679,8 +679,8 @@ class _PulseAiAssistantScreenState
                 ),
                 label: Text(
                   _reportedResponseId == response.remoteResponseId
-                      ? 'DENÚNCIA ENVIADA'
-                      : 'DENUNCIAR RESPOSTA',
+                      ? 'RELATO ENVIADO'
+                      : 'RELATAR PROBLEMA',
                 ),
               ),
             ),
@@ -817,7 +817,7 @@ class _PulseAiReportDialogState extends State<_PulseAiReportDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Denunciar resposta da IA'),
+      title: const Text('Relatar problema na resposta'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -876,7 +876,7 @@ class _PulseAiReportDialogState extends State<_PulseAiReportDialog> {
             ),
           ),
           icon: const Icon(Icons.flag_outlined),
-          label: const Text('Enviar denúncia'),
+          label: const Text('Enviar relato'),
         ),
       ],
     );

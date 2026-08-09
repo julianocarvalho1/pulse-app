@@ -22,11 +22,11 @@ void main() {
     expect(find.text('Como o Assistente PULSE funciona'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text('Controle de uso e denúncias'),
+      find.text('Controle de uso e relatos'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Controle de uso e denúncias'), findsOneWidget);
+    expect(find.text('Controle de uso e relatos'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Resposta local de reserva'),

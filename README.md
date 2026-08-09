@@ -96,7 +96,7 @@ A preparação técnica está documentada em `docs/google-play/`. Os bloqueios q
 dependem do responsável pelo app são: guardar a chave de upload com segurança,
 confirmar e documentar a licença das mídias, publicar a política de privacidade
 atualizada e concluir as declarações e os testes exigidos pela Play Console. A
-proteção de cota, a retenção do backend e a denúncia interna da IA já estão
+proteção de cota, a retenção do backend e o relato interno da IA já estão
 implementadas.
 
 ## Licença

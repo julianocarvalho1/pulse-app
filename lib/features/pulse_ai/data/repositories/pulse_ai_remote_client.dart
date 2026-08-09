@@ -183,13 +183,13 @@ class CloudflarePulseAiClient implements PulseAiRemoteClient {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw PulseAiRemoteException(
           decoded['message']?.toString() ??
-              'Não foi possível enviar a denúncia agora.',
+              'Não foi possível enviar o relato agora.',
         );
       }
 
       if (decoded['ok'] != true) {
         throw const PulseAiRemoteException(
-          'O servidor não confirmou o recebimento da denúncia.',
+          'O servidor não confirmou o recebimento do relato.',
         );
       }
     } on PulseAiRemoteException {

@@ -78,9 +78,9 @@ class PrivacyAiInfoScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const _InfoCard(
             icon: Icons.flag_outlined,
-            title: 'Controle de uso e denúncias',
+            title: 'Controle de uso e relatos',
             body:
-                'Uma identificação aleatória da instalação limita o uso da cota online sem criar uma conta. Respostas online podem ser denunciadas dentro do próprio assistente; a resposta, o motivo e o comentário opcional são registrados para análise.',
+                'Uma identificação aleatória da instalação limita o uso da cota online sem criar uma conta. Você pode relatar problemas nas respostas online dentro do próprio assistente; a resposta, o motivo e o comentário opcional são registrados para análise.',
           ),
           const SizedBox(height: 12),
           const _InfoCard(

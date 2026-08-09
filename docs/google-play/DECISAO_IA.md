@@ -14,9 +14,9 @@ aparelho para reduzir o tratamento de dados de atividade física.
 - teto global exato de 150 análises online/dia;
 - fallback local quando há falha, ausência de internet ou cota esgotada;
 - `POST /report` implantado e vinculado à resposta/instalação original;
-- formulário de denúncia dentro do app com motivo e comentário opcional;
+- formulário de relato de problema dentro do app com motivo e comentário opcional;
 - registros em D1 com retenção de 14 dias para contadores, 45 dias para
-  respostas e 180 dias para denúncias;
+  respostas e 180 dias para relatos;
 - amostragem de logs do Worker reduzida de 100% para 5%, sem registrar o
   conteúdo de solicitações ou respostas em `console`;
 - modelo online: `gemini-3.5-flash-lite`;
@@ -29,7 +29,7 @@ gratuitos atuais, sem ativação de cobrança. Os tetos do próprio PULSE são
 intencionalmente menores que os limites de infraestrutura e podem ser ajustados
 em `C:\Users\User\pulse-ai-api\wrangler.jsonc`.
 
-Para consultar denúncias pendentes:
+Para consultar relatos pendentes:
 
 ```powershell
 cd C:\Users\User\pulse-ai-api
@@ -42,10 +42,10 @@ respostas ou comentários para serviços públicos.
 ## Antes de enviar à produção da Google Play
 
 1. executar os testes e a validação de release do aplicativo;
-2. confirmar no APK final uma resposta online e o formulário de denúncia;
+2. confirmar no APK final uma resposta online e o formulário de relato;
 3. publicar a política de privacidade atualizada;
 4. preencher Segurança dos dados de acordo com o comportamento documentado;
-5. revisar periodicamente denúncias pendentes e o consumo diário do D1.
+5. revisar periodicamente relatos pendentes e o consumo diário do D1.
 
 Referências:
 
