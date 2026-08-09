@@ -22,6 +22,7 @@ distribuído pelo teste interno da Google Play.
 | Treino | Finalizar sessão com atividade | Exige confirmação e cria o histórico correto | [ ] |
 | Histórico | Editar/excluir item | Métricas são recalculadas sem inconsistência | [ ] |
 | Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [ ] |
+| Progresso | Analisar com histórico | Gera a leitura no aparelho e informa que as métricas não são enviadas | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Medidas | Criar, editar e excluir avaliação | Dados persistem e unidades são claras | [ ] |
 | QR Code | Negar câmera | App continua utilizável e explica como tentar novamente | [ ] |
 | QR Code | Conceder e ler código válido | Abre revisão antes de importar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
