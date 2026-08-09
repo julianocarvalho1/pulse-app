@@ -1,5 +1,6 @@
 import '../../../models/exercise.dart';
 import 'exercise_definition.dart';
+import 'repdb_exercise_mapping.dart';
 
 class ExerciseCatalogMetadata {
   const ExerciseCatalogMetadata({
@@ -443,9 +444,16 @@ class ExerciseCatalog {
         description: exercise.description,
         mediaAssetId:
             _metadataById[exercise.id]?.mediaAssetId ?? _slugify(exercise.name),
-        aliases: _metadataById[exercise.id]?.aliases ?? const <String>[],
+        aliases: _aliasesFor(exercise.id),
       ),
   };
+
+  static List<String> _aliasesFor(String exerciseId) {
+    return <String>{
+      ...?_metadataById[exerciseId]?.aliases,
+      ...RepDbExerciseMapping.approvedAliasesFor(exerciseId),
+    }.toList(growable: false);
+  }
 
   static List<ExerciseDefinition> get definitions =>
       List<ExerciseDefinition>.unmodifiable(_definitionsById.values);
