@@ -211,6 +211,10 @@ class WorkoutPlanScreen extends ConsumerWidget {
                 subtitle: 'Aponte a câmera para receber uma ficha ou programa.',
                 onTap: () async {
                   Navigator.pop(sheetContext);
+                  final allowed = await _confirmCameraUse(context);
+                  if (!allowed || !context.mounted) {
+                    return;
+                  }
                   final imported = await Navigator.push<bool>(
                     context,
                     MaterialPageRoute<bool>(
@@ -232,6 +236,32 @@ class WorkoutPlanScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<bool> _confirmCameraUse(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.qr_code_scanner_rounded),
+        title: const Text('Uso da câmera'),
+        content: const Text(
+          'O PULSE usará a câmera somente enquanto esta tela estiver aberta '
+          'para reconhecer um QR Code de treino. Imagens e vídeos não são '
+          'salvos nem enviados pela internet.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Agora não'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Usar câmera'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   // =========================================================
