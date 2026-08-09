@@ -1,21 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../exercises/domain/exercise_catalog.dart';
+import '../../../onboarding/domain/onboarding_profile.dart';
+import '../../../onboarding/presentation/providers/onboarding_controller.dart';
 import '../../../workouts/domain/models/cardio_log.dart';
 import '../../domain/models/workout_generation_request.dart';
 import '../../domain/models/workout_generation_result.dart';
 import '../../domain/services/workout_generation_service.dart';
 import 'generated_workout_preview_screen.dart';
 
-class WorkoutGeneratorScreen extends StatefulWidget {
+class WorkoutGeneratorScreen extends ConsumerStatefulWidget {
   const WorkoutGeneratorScreen({super.key});
 
   @override
-  State<WorkoutGeneratorScreen> createState() => _WorkoutGeneratorScreenState();
+  ConsumerState<WorkoutGeneratorScreen> createState() =>
+      _WorkoutGeneratorScreenState();
 }
 
-class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
+class _WorkoutGeneratorScreenState
+    extends ConsumerState<WorkoutGeneratorScreen> {
   WorkoutGoal _goal = WorkoutGoal.hypertrophy;
   TrainingLevel _level = TrainingLevel.beginner;
   GeneratedPlanType _planType = GeneratedPlanType.strength;
@@ -26,6 +34,7 @@ class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
   bool? _hasRestriction;
   final Set<String> _priorityMuscles = <String>{};
   final Set<String> _avoidedExerciseIds = <String>{};
+  bool _usedOnboardingPreferences = false;
 
   static const _service = WorkoutGenerationService();
   static const List<String> _muscles = <String>[
@@ -38,6 +47,104 @@ class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
     'Panturrilha',
     'Abdômen',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadOnboardingPreferences());
+  }
+
+  Future<void> _loadOnboardingPreferences() async {
+    try {
+      final state = await ref.read(onboardingControllerProvider.future);
+      if (!mounted || !state.profile.isPersonalized) {
+        return;
+      }
+
+      setState(() => _applyOnboardingProfile(state.profile));
+    } catch (_) {
+      // O gerador continua utilizável com os valores padrão.
+    }
+  }
+
+  void _applyOnboardingProfile(OnboardingProfile profile) {
+    _goal = switch (profile.goal) {
+      TrainingGoal.hypertrophy => WorkoutGoal.hypertrophy,
+      TrainingGoal.strength => WorkoutGoal.strength,
+      TrainingGoal.fatLoss => WorkoutGoal.weightLoss,
+      TrainingGoal.conditioning ||
+      TrainingGoal.generalHealth => WorkoutGoal.conditioning,
+    };
+    _level = switch (profile.experience) {
+      TrainingExperience.beginner => TrainingLevel.beginner,
+      TrainingExperience.intermediate => TrainingLevel.intermediate,
+      TrainingExperience.advanced => TrainingLevel.advanced,
+    };
+    _planType = switch (profile.goal) {
+      TrainingGoal.fatLoss ||
+      TrainingGoal.generalHealth => GeneratedPlanType.mixed,
+      TrainingGoal.conditioning => GeneratedPlanType.cardio,
+      _ => GeneratedPlanType.strength,
+    };
+    _daysPerWeek = _nearestOption(profile.trainingDaysPerWeek, const <int>[
+      2,
+      3,
+      4,
+      5,
+    ]);
+    _duration = _nearestOption(profile.sessionDurationMinutes, const <int>[
+      30,
+      45,
+      60,
+      75,
+      90,
+    ]);
+    _environment = _environmentFor(profile);
+
+    for (final avoidedName in profile.avoidedExercises) {
+      for (final exercise in exerciseDatabase) {
+        if (ExerciseCatalog.matches(exercise, avoidedName)) {
+          _avoidedExerciseIds.add(exercise.id);
+        }
+      }
+    }
+
+    _usedOnboardingPreferences = true;
+  }
+
+  int _nearestOption(int value, List<int> options) {
+    return options.reduce(
+      (current, candidate) =>
+          (candidate - value).abs() < (current - value).abs()
+          ? candidate
+          : current,
+    );
+  }
+
+  TrainingEnvironment _environmentFor(OnboardingProfile profile) {
+    final equipment = profile.equipment
+        .map((item) => item.toLowerCase())
+        .toSet();
+    final preferences = profile.trainingPreferences
+        .map((item) => item.toLowerCase())
+        .toSet();
+    final prefersMachines = preferences.contains('mais máquinas');
+    final hasMachines = equipment.any(
+      (item) => item == 'máquinas' || item == 'polias' || item == 'smith',
+    );
+    final hasFreeWeights = equipment.any(
+      (item) => item == 'halteres' || item == 'barras e anilhas',
+    );
+
+    if (profile.location == TrainingLocation.home ||
+        (hasFreeWeights && !hasMachines)) {
+      return TrainingEnvironment.freeWeights;
+    }
+    if (prefersMachines || (hasMachines && !hasFreeWeights)) {
+      return TrainingEnvironment.machinesAndCables;
+    }
+    return TrainingEnvironment.fullGym;
+  }
 
   Future<void> _generate() async {
     if (_hasRestriction == null) {
@@ -114,6 +221,39 @@ class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 children: [
                   _IntroCard(),
+                  if (_usedOnboardingPreferences) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(13),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarySoft,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.primaryBorder),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 19,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Pré-configurado com suas respostas iniciais. '
+                              'Revise tudo antes de gerar e salvar o programa.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 18),
                   _Section(
                     title: 'Objetivo',
@@ -155,7 +295,7 @@ class _WorkoutGeneratorScreenState extends State<WorkoutGeneratorScreen> {
                   _Section(
                     title: 'Duração por sessão',
                     child: _ChoiceWrap<int>(
-                      values: const <int>[30, 45, 60, 75],
+                      values: const <int>[30, 45, 60, 75, 90],
                       selected: _duration,
                       label: (value) => '$value min',
                       onSelected: (value) => setState(() => _duration = value),

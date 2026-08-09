@@ -21,7 +21,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const int _pageCount = 5;
+  static const int _pageCount = 3;
   static const List<int> _durationOptions = <int>[30, 45, 60, 75, 90];
   static const List<String> _equipmentOptions = <String>[
     'Máquinas',
@@ -184,11 +184,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildIdentityPage(context),
-                  _buildRoutinePage(context),
+                  _buildIdentityAndRoutinePage(context),
                   _buildEnvironmentPage(context),
-                  _buildPreferencesPage(context),
-                  _buildFinalPage(context),
+                  _buildPreferencesAndFinishPage(context),
                 ],
               ),
             ),
@@ -199,7 +197,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Widget _buildIdentityPage(BuildContext context) {
+  Widget _buildIdentityAndRoutinePage(BuildContext context) {
     return _pageContainer(
       children: [
         _pageHeading(
@@ -207,9 +205,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           icon: Icons.waving_hand_rounded,
           title: widget.isEditing
               ? 'Vamos atualizar seu perfil'
-              : 'Bem-vindo ao PULSE',
+              : 'Seu ponto de partida',
           description:
-              'Usaremos estas respostas para organizar a experiência. Elas não substituem orientação profissional.',
+              'Estas respostas preenchem o gerador de programa e seus filtros. Você poderá revisar tudo antes de salvar.',
         ),
         const SizedBox(height: 26),
         const _FieldLabel('COMO DEVEMOS CHAMAR VOCÊ?'),
@@ -243,21 +241,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             onTap: () => setState(() => _experience = value),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildRoutinePage(BuildContext context) {
-    return _pageContainer(
-      children: [
-        _pageHeading(
-          context,
-          icon: Icons.track_changes_rounded,
-          title: 'Sua rotina de treino',
-          description:
-              'Escolha o objetivo principal e uma frequência que caiba na sua semana.',
-        ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 24),
         const _FieldLabel('OBJETIVO PRINCIPAL'),
         const SizedBox(height: 10),
         Wrap(
@@ -412,7 +396,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Widget _buildPreferencesPage(BuildContext context) {
+  Widget _buildPreferencesAndFinishPage(BuildContext context) {
     return _pageContainer(
       children: [
         _pageHeading(
@@ -465,21 +449,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             alignLabelWithHint: true,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildFinalPage(BuildContext context) {
-    return _pageContainer(
-      children: [
-        _pageHeading(
-          context,
-          icon: Icons.rocket_launch_rounded,
-          title: 'Só falta escolher o próximo passo',
-          description:
-              'Nada será alterado automaticamente. Você sempre confirma fichas, exercícios e cargas.',
-        ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 28),
         const _FieldLabel('SISTEMA DE MEDIDAS'),
         const SizedBox(height: 10),
         Row(
@@ -509,22 +479,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 28),
-        const _FieldLabel('COMO DESEJA COMEÇAR?'),
-        const SizedBox(height: 10),
-        ...OnboardingNextStep.values.map(
-          (value) => _selectionCard(
-            context,
-            selected: _nextStep == value,
-            title: value.label,
-            description: value.description,
-            icon: value == OnboardingNextStep.createRoutine
-                ? Icons.edit_note_rounded
-                : Icons.library_add_rounded,
-            onTap: () => setState(() => _nextStep = value),
-          ),
-        ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -540,9 +495,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           child: Text(
-            _nextStep == OnboardingNextStep.createRoutine
-                ? 'Próximo passo: abra Treinos e toque em “Nova Ficha”.'
-                : 'Próximo passo: abra Treinos, entre no catálogo e importe um programa.',
+            widget.isEditing
+                ? 'Ao salvar, o gerador passará a usar estas preferências como ponto de partida.'
+                : 'Pronto: ao concluir, abra Treinos → Gerar programa inteligente. Objetivo, experiência, dias, duração e equipamentos já estarão preenchidos para você revisar.',
             style: const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
           ),
         ),
@@ -586,7 +541,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         color: AppColors.onPrimary,
                       ),
                     )
-                  : Text(isLastPage ? 'CONCLUIR' : 'CONTINUAR'),
+                  : Text(
+                      isLastPage
+                          ? widget.isEditing
+                                ? 'SALVAR'
+                                : 'CONCLUIR E PREPARAR'
+                          : 'CONTINUAR',
+                    ),
             ),
           ),
         ],
