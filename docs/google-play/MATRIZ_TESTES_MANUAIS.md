@@ -13,7 +13,7 @@ distribuído pelo teste interno da Google Play.
 | Programas | Importar programa | Fichas corretas aparecem em Meus treinos | [ ] |
 | Fichas | Criar, editar, duplicar e excluir | Mudanças persistem e confirmação evita exclusão acidental | [ ] |
 | Exercícios | Buscar por nome ou apelido | Encontra o exercício canônico em português e inglês | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Exercícios | Filtrar e pesquisar sem resultado | Filtro e estado vazio são coerentes | [ ] |
+| Exercícios | Filtrar e pesquisar sem resultado | Filtro e estado vazio são coerentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Exercícios | Abrir demonstrações | Mídia correta do RepDB carrega sem travar | [x] amostra física + cobertura automatizada do catálogo |
 | Gerador | Valores válidos | Gera rotina revisável antes de salvar | [ ] |
 | Gerador | Restrições/sinais de risco | Exibe orientação de segurança apropriada | [ ] |
