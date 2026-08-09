@@ -38,7 +38,7 @@ distribuído pelo teste interno da Google Play.
 | Biometria | Cancelar/falhar | Dados permanecem protegidos e há saída compreensível | [ ] |
 | Assistente | Sem internet | Usa contingência local e explica a limitação | [ ] |
 | Assistente | Resposta online | Avisos aparecem e conteúdo não inventa dados ausentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Assistente | Relatar problema | Relato é enviado dentro do app e confirma protocolo | [ ] |
+| Assistente | Relatar problema | Relato é gravado no servidor e o app confirma o recebimento | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Links | Política e apps de música | Abrem o destino correto ou mostram falha amigável | [ ] |
 | Privacidade | Apagar todos os dados | Retorna ao estado inicial sem resíduos visíveis | [ ] |
 | Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [ ] |
