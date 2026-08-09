@@ -57,16 +57,13 @@ depuração. O mesmo conjunto roda no GitHub Actions.
 
 ## Gerar o AAB da Google Play
 
-1. Resolva todos os itens `PENDENTE` do inventário de licenças em
+1. Confirme que não existem itens `PENDENTE` no inventário em
    `docs/google-play/inventario-licencas-midias.csv`.
-2. Crie uma única vez a chave de upload:
-
-   ```powershell
-   .\tool\generate_upload_keystore.ps1
-   ```
-
+2. Restaure a chave de upload existente no diretório `android/` e configure
+   `android/key.properties` a partir de `android/key.properties.example`. Não
+   gere outra chave para um app que já teve uma versão assinada.
 3. Guarde a chave, o arquivo `key.properties` e a senha em pelo menos duas
-   cópias offline. Eles não são versionados pelo Git.
+   cópias privadas. Eles não são versionados pelo Git.
 4. Gere e verifique o pacote assinado:
 
    ```powershell
@@ -94,13 +91,17 @@ não dependem de ferramenta paga.
 
 A preparação técnica está documentada em `docs/google-play/`. Os bloqueios que
 dependem do responsável pelo app são: guardar a chave de upload com segurança,
-confirmar e documentar a licença das mídias, publicar a política de privacidade
-atualizada e concluir as declarações e os testes exigidos pela Play Console. A
-proteção de cota, a retenção do backend e o relato interno da IA já estão
-implementadas.
+publicar a política de privacidade atualizada e concluir as declarações e os
+testes exigidos pela Play Console. A licença das mídias do RepDB, a proteção de
+cota, a retenção do backend e o relato interno da IA já estão documentados e
+implementados.
 
 ## Licença
 
 Não há licença de código aberto definida. Apesar de o repositório ser público,
 isso não concede automaticamente permissão para reutilizar o código ou as
 mídias. A procedência de cada ativo deve ser registrada antes da publicação.
+
+Os dados e as imagens de exercícios do RepDB seguem a licença específica em
+`third_party/repdb/LICENSE-DATA.md` e exigem atribuição visível. Consulte
+`docs/exercise-data-sources.md`.
