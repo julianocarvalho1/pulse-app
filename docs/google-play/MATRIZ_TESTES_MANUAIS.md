@@ -5,9 +5,9 @@ distribuído pelo teste interno da Google Play.
 
 | Área | Cenário | Resultado esperado | Estado |
 | --- | --- | --- | --- |
-| Instalação | Instalação limpa | Abre onboarding sem erro ou tela vazia persistente | [ ] |
-| Onboarding | Avançar com nome vazio | Mostra validação clara e preserva os demais campos | [ ] |
-| Onboarding | Concluir com valores válidos | Abre início e mantém preferências após reiniciar | [ ] |
+| Instalação | Estado local limpo | Abre onboarding sem erro ou tela vazia persistente | [x] 09/08/2026 — exclusão integral no Xiaomi M2012K11AG, Android 13 |
+| Onboarding | Avançar com nome vazio | Mostra validação clara e preserva os demais campos | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Onboarding | Concluir com valores válidos | Abre início e mantém preferências após reiniciar | [x] 09/08/2026 — preferências confirmadas no gerador após reinícios |
 | Início | Fonte padrão e 130% | Sem texto cortado ou faixa de overflow | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Início | Tela pequena | Conteúdo rola e navegação inferior permanece utilizável | [ ] |
 | Programas | Importar programa | Fichas corretas aparecem em Meus treinos e o programa pode ser removido com confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
@@ -45,7 +45,7 @@ distribuído pelo teste interno da Google Play.
 | Assistente | Resposta online | Avisos aparecem e conteúdo não inventa dados ausentes | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Assistente | Relatar problema | Relato é gravado no servidor e o app confirma o recebimento | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Links | Política e apps de música | Abrem o destino correto ou mostram falha amigável | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Privacidade | Apagar todos os dados | Retorna ao estado inicial sem resíduos visíveis | [ ] |
+| Privacidade | Apagar todos os dados | Retorna ao estado inicial sem resíduos visíveis | [x] 09/08/2026 — backup restaurado após a validação |
 | Atualização | Instalar build novo sobre anterior | Banco migra e dados existentes permanecem | [x] múltiplas atualizações em 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Acessibilidade | TalkBack | Ordem, nomes dos controles e ações principais são claros | [ ] |
 | Acessibilidade | Contraste/tema escuro | Conteúdo essencial permanece legível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
