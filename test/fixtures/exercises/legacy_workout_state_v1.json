@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "customExercises": [
+    {
+      "id": "custom_fixture_1",
+      "name": "Remada adaptada sentada",
+      "muscle": "Costas",
+      "description": "Exercício personalizado salvo antes da migração.",
+      "reps": "3x 15",
+      "rest": "45 seg",
+      "isSuperset": false,
+      "customNote": "Usar faixa elástica azul"
+    }
+  ],
+  "routines": [
+    {
+      "id": "routine_fixture_v1",
+      "name": "Treino legado completo",
+      "focus": "Peito e costas",
+      "groupName": "ABC legado",
+      "exercises": [
+        {
+          "id": "ex_pm_1",
+          "name": "Chest Press",
+          "muscle": "Peito",
+          "description": "Controle a descida em três segundos.",
+          "reps": "4x 8-12",
+          "rest": "75 seg",
+          "isSuperset": false,
+          "customNote": "Última série até a falha técnica"
+        },
+        {
+          "id": "p13",
+          "name": "Crucifixo na Máquina",
+          "muscle": "Peito",
+          "description": "Manter as escápulas apoiadas.",
+          "reps": "4x 12",
+          "rest": "60 seg",
+          "isSuperset": true,
+          "customNote": "BISET com flexão"
+        },
+        {
+          "id": "custom_fixture_1",
+          "name": "Remada adaptada sentada",
+          "muscle": "Costas",
+          "description": "Exercício personalizado salvo antes da migração.",
+          "reps": "3x 15",
+          "rest": "45 seg",
+          "isSuperset": false,
+          "customNote": "Usar faixa elástica azul"
+        }
+      ],
+      "cardio": []
+    }
+  ],
+  "history": [
+    {
+      "id": "history_fixture_v1",
+      "routineName": "Treino legado completo",
+      "date": "2026-07-31T19:30:00.000",
+      "duration": "42:18",
+      "exercises": [
+        {
+          "exerciseId": "ex_pm_1",
+          "exerciseName": "Chest Press",
+          "sets": [
+            {"reps": 10, "weight": 42.5},
+            {"reps": 9, "weight": 42.5}
+          ]
+        },
+        {
+          "exerciseId": "p13",
+          "exerciseName": "Crucifixo na Máquina",
+          "sets": [
+            {"reps": 12, "weight": 30}
+          ]
+        },
+        {
+          "exerciseId": "custom_fixture_1",
+          "exerciseName": "Remada adaptada sentada",
+          "sets": [
+            {"reps": 15, "weight": 0}
+          ]
+        }
+      ],
+      "cardio": [],
+      "freeActivities": [],
+      "notes": "Histórico que não pode perder cargas ou repetições.",
+      "status": "completed"
+    }
+  ],
+  "activeSession": {
+    "id": "active_fixture_v1",
+    "routineName": "Treino legado completo",
+    "startedAt": "2026-08-01T18:15:00.000",
+    "elapsedSeconds": 937,
+    "exercises": [
+      {
+        "exercise": {
+          "id": "p13",
+          "name": "Crucifixo na Máquina",
+          "muscle": "Peito",
+          "description": "Manter as escápulas apoiadas.",
+          "reps": "4x 12",
+          "rest": "60 seg",
+          "isSuperset": true,
+          "customNote": "BISET com flexão"
+        },
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightText": "30",
+            "repsText": "12",
+            "isCompleted": true,
+            "targetText": "12 reps",
+            "targetRir": 2,
+            "cadence": "3-1-1",
+            "technique": "none",
+            "prescribedRestSeconds": 60,
+            "prescriptionNotes": "Sem perder o controle"
+          },
+          {
+            "setNumber": 2,
+            "weightText": "30",
+            "repsText": "",
+            "isCompleted": false
+          }
+        ]
+      },
+      {
+        "exercise": {
+          "id": "custom_fixture_1",
+          "name": "Remada adaptada sentada",
+          "muscle": "Costas",
+          "description": "Exercício personalizado salvo antes da migração.",
+          "reps": "3x 15",
+          "rest": "45 seg",
+          "isSuperset": false,
+          "customNote": "Usar faixa elástica azul"
+        },
+        "sets": [
+          {
+            "setNumber": 1,
+            "weightText": "faixa azul",
+            "repsText": "15",
+            "isCompleted": true
+          }
+        ]
+      }
+    ],
+    "cardio": [],
+    "notes": "Sessão em andamento deve continuar após atualizar o app."
+  }
+}
