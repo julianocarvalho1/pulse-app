@@ -23,7 +23,8 @@ distribuído pelo teste interno da Google Play.
 | Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [ ] |
 | Medidas | Criar, editar e excluir avaliação | Dados persistem e unidades são claras | [ ] |
 | QR Code | Negar câmera | App continua utilizável e explica como tentar novamente | [ ] |
-| QR Code | Conceder e ler código válido | Abre revisão antes de importar | [ ] |
+| QR Code | Conceder e ler código válido | Abre revisão antes de importar | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| QR Code | Ler ficha que já existe | Identifica a duplicidade e não sobrescreve os dados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | QR Code | Código inválido | Mostra erro seguro, sem travar ou importar parcialmente | [ ] |
 | Arquivo | Exportar e compartilhar ficha | Arquivo abre no destino escolhido | [ ] |
 | Arquivo | Importar arquivo válido/inválido | Valida conteúdo e evita sobrescrita silenciosa | [ ] |
