@@ -24,7 +24,7 @@ distribuído pelo teste interno da Google Play.
 | Treino | Finalizar sessão com atividade | Exige confirmação e cria o histórico correto | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Histórico | Excluir item | Exige confirmação e recalcula as métricas sem inconsistência | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Histórico | Editar item | Permite corrigir dados registrados sem recriar o treino | [ ] melhoria pós-lançamento |
-| Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [ ] |
+| Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [x] 09/08/2026 — períodos, totais e gráficos conferidos no Xiaomi M2012K11AG, Android 13 |
 | Progresso | Analisar com histórico | Gera a leitura no aparelho e informa que as métricas não são enviadas | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Medidas | Criar e excluir avaliação | Dados persistem, unidades são claras e a exclusão exige confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Medidas | Editar avaliação existente | Permite corrigir uma avaliação sem recriá-la | [ ] melhoria pós-lançamento |
