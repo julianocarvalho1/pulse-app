@@ -1274,7 +1274,7 @@ class _HomeQuickActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          height: 101,
+          constraints: const BoxConstraints(minHeight: 104),
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             gradient: emphasized
@@ -1291,6 +1291,7 @@ class _HomeQuickActionCard extends StatelessWidget {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
@@ -1306,7 +1307,7 @@ class _HomeQuickActionCard extends StatelessWidget {
                   size: 17,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               Text(
                 eyebrow,
                 maxLines: 1,
