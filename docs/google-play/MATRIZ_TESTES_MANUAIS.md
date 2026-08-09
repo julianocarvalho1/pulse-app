@@ -9,7 +9,7 @@ distribuído pelo teste interno da Google Play.
 | Onboarding | Avançar com nome vazio | Mostra validação clara e preserva os demais campos | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Onboarding | Concluir com valores válidos | Abre início e mantém preferências após reiniciar | [x] 09/08/2026 — preferências confirmadas no gerador após reinícios |
 | Início | Fonte padrão e 130% | Sem texto cortado ou faixa de overflow | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
-| Início | Tela pequena | Conteúdo rola e navegação inferior permanece utilizável | [ ] |
+| Início | Tela pequena | Conteúdo rola e navegação inferior permanece utilizável | [x] 09/08/2026 — 900x2000 a 440 dpi (~327 dp), sem overflow e com navegação utilizável |
 | Programas | Importar programa | Fichas corretas aparecem em Meus treinos e o programa pode ser removido com confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Fichas | Criar, editar e excluir | Mudanças persistem e a exclusão exige confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Fichas | Duplicar ficha | Cria uma cópia editável sem alterar a original | [ ] melhoria pós-lançamento |
@@ -50,7 +50,7 @@ distribuído pelo teste interno da Google Play.
 | Acessibilidade | TalkBack | Ordem, nomes dos controles e ações principais são claros | [ ] |
 | Acessibilidade | Contraste/tema escuro | Conteúdo essencial permanece legível | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Interrupções | Rotação, chamada, pouca memória | Operação crítica é preservada ou recuperada com segurança | [ ] |
-| Desempenho | Primeira abertura e listas longas | Sem congelamento persistente ou consumo anormal | [ ] |
+| Desempenho | Primeira abertura e listas longas | Sem congelamento persistente ou consumo anormal | [x] 09/08/2026 — abertura fria debug em 2,72 s e catálogo com 200 exercícios sem congelamento no Xiaomi M2012K11AG |
 
 ## Aparelhos mínimos sugeridos
 
