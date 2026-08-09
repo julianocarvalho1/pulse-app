@@ -10,7 +10,7 @@ distribuído pelo teste interno da Google Play.
 | Onboarding | Concluir com valores válidos | Abre início e mantém preferências após reiniciar | [ ] |
 | Início | Fonte padrão e 130% | Sem texto cortado ou faixa de overflow | [ ] |
 | Início | Tela pequena | Conteúdo rola e navegação inferior permanece utilizável | [ ] |
-| Programas | Importar programa | Fichas corretas aparecem em Meus treinos | [ ] |
+| Programas | Importar programa | Fichas corretas aparecem em Meus treinos e o programa pode ser removido com confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Fichas | Criar, editar e excluir | Mudanças persistem e a exclusão exige confirmação | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Fichas | Duplicar ficha | Cria uma cópia editável sem alterar a original | [ ] melhoria pós-lançamento |
 | Exercícios | Buscar por nome ou apelido | Encontra o exercício canônico em português e inglês | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
