@@ -152,19 +152,10 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                     ? 'Geral'
                     : customMuscleCtrl.text.trim();
 
-                ref
+                final newEx = ref
                     .read(workoutControllerProvider.notifier)
                     .createCustomExercise(name, muscle);
                 Navigator.pop(ctx);
-
-                final newEx = Exercise(
-                  id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-                  name: name,
-                  muscle: muscle,
-                  description: '',
-                  reps: '3x 10-12',
-                  rest: '60 seg',
-                );
 
                 _showExerciseConfigDialog(routineIndex, newEx);
               }

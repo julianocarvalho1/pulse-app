@@ -97,10 +97,22 @@ class WorkoutController extends Notifier<WorkoutState> {
         .setActiveProgram(programName);
   }
 
-  void createCustomExercise(String name, String muscle) {
-    ref
+  Exercise createCustomExercise(
+    String name,
+    String muscle, {
+    String description = 'Exercício personalizado.',
+    String reps = '3x 10-12',
+    String rest = '60 seg',
+  }) {
+    return ref
         .read(workoutLibraryControllerProvider.notifier)
-        .createCustomExercise(name, muscle);
+        .createCustomExercise(
+          name,
+          muscle,
+          description: description,
+          reps: reps,
+          rest: rest,
+        );
   }
 
   void createRoutine(

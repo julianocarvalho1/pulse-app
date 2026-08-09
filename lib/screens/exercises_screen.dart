@@ -64,6 +64,42 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     return first.name.toLowerCase().compareTo(second.name.toLowerCase());
   }
 
+  Future<void> _showCreateCustomExerciseDialog(
+    WorkoutController provider,
+  ) async {
+    _searchFocusNode.unfocus();
+
+    final exercise = await showDialog<Exercise>(
+      context: context,
+      builder: (dialogContext) => _CreateCustomExerciseDialog(
+        provider: provider,
+        isSelecting: widget.isSelecting,
+        muscles: _muscleOrder,
+      ),
+    );
+
+    if (!mounted || exercise == null) {
+      return;
+    }
+
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _selectedMuscle = 'Personalizados';
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${exercise.name} foi salvo na sua biblioteca.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    if (widget.isSelecting) {
+      _showExerciseConfigDialog(context, exercise, provider);
+    }
+  }
+
   void _showExerciseConfigDialog(
     BuildContext context,
     Exercise ex,
@@ -505,6 +541,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     WorkoutController provider,
   ) {
     final muscle = ExerciseCatalog.standardizedMuscle(exercise.muscle);
+    final isCustom = exercise.id.startsWith('custom_');
     final primary = Theme.of(context).colorScheme.primary;
 
     void openExercise() {
@@ -586,7 +623,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
-                        muscle,
+                        isCustom ? 'Personalizado • $muscle' : muscle,
                         style: TextStyle(
                           color: primary,
                           fontSize: 10,
@@ -629,9 +666,12 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     );
   }
 
-  Widget _buildSearchAndFilters(BuildContext context) {
+  Widget _buildSearchAndFilters(
+    BuildContext context,
+    WorkoutController provider,
+  ) {
     final primary = Theme.of(context).colorScheme.primary;
-    final filters = <String>['Todos', ..._muscleOrder];
+    final filters = <String>['Todos', 'Personalizados', ..._muscleOrder];
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -691,6 +731,16 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           ),
           const SizedBox(height: 10),
           SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const Key('createCustomExerciseButton'),
+              onPressed: () => _showCreateCustomExerciseDialog(provider),
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('Criar exercício personalizado'),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
             height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -745,13 +795,17 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         return true;
       }
 
+      if (_selectedMuscle == 'Personalizados') {
+        return exercise.id.startsWith('custom_');
+      }
+
       return ExerciseCatalog.standardizedMuscle(exercise.muscle) ==
           _selectedMuscle;
     }).toList()..sort(_compareExercises);
 
     final content = Column(
       children: <Widget>[
-        _buildSearchAndFilters(context),
+        _buildSearchAndFilters(context, provider),
         Divider(height: 1, color: AppColors.border),
         Expanded(
           child: allExercises.isEmpty
@@ -838,5 +892,158 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           );
 
     return GestureDetector(onTap: _searchFocusNode.unfocus, child: body);
+  }
+}
+
+class _CreateCustomExerciseDialog extends StatefulWidget {
+  const _CreateCustomExerciseDialog({
+    required this.provider,
+    required this.isSelecting,
+    required this.muscles,
+  });
+
+  final WorkoutController provider;
+  final bool isSelecting;
+  final List<String> muscles;
+
+  @override
+  State<_CreateCustomExerciseDialog> createState() =>
+      _CreateCustomExerciseDialogState();
+}
+
+class _CreateCustomExerciseDialogState
+    extends State<_CreateCustomExerciseDialog> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _repsController = TextEditingController(
+    text: '3x 10-12',
+  );
+  final TextEditingController _restController = TextEditingController(
+    text: '60 seg',
+  );
+  String _selectedMuscle = 'Outros';
+  String? _nameError;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _repsController.dispose();
+    _restController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameError = 'Informe um nome para o exercício.');
+      return;
+    }
+
+    final created = widget.provider.createCustomExercise(
+      name,
+      _selectedMuscle,
+      description: _descriptionController.text,
+      reps: _repsController.text,
+      rest: _restController.text,
+    );
+    Navigator.pop(context, created);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Criar exercício personalizado'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            TextField(
+              key: const Key('customExerciseNameField'),
+              controller: _nameController,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              maxLength: 80,
+              decoration: InputDecoration(
+                labelText: 'Nome do exercício *',
+                hintText: 'Ex.: Remada no aparelho da academia',
+                errorText: _nameError,
+              ),
+              onChanged: (_) {
+                if (_nameError != null) {
+                  setState(() => _nameError = null);
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: const Key('customExerciseMuscleField'),
+              initialValue: _selectedMuscle,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Grupo muscular'),
+              items: widget.muscles
+                  .map(
+                    (muscle) => DropdownMenuItem<String>(
+                      value: muscle,
+                      child: Text(muscle),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedMuscle = value);
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: 240,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Como executar (opcional)',
+                hintText: 'Uma instrução curta para você lembrar',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: TextField(
+                    controller: _repsController,
+                    maxLength: 30,
+                    decoration: const InputDecoration(
+                      labelText: 'Séries/repetições',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _restController,
+                    maxLength: 30,
+                    decoration: const InputDecoration(labelText: 'Descanso'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const Key('saveCustomExerciseButton'),
+          onPressed: _save,
+          child: Text(widget.isSelecting ? 'Criar e usar' : 'Criar'),
+        ),
+      ],
+    );
   }
 }

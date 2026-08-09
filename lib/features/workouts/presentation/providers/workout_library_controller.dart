@@ -48,14 +48,22 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
     );
   }
 
-  void createCustomExercise(String name, String muscle) {
+  Exercise createCustomExercise(
+    String name,
+    String muscle, {
+    String description = 'Exercício personalizado.',
+    String reps = '3x 10-12',
+    String rest = '60 seg',
+  }) {
     final exercise = Exercise(
-      id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      muscle: muscle,
-      description: 'Exercicio personalizado.',
-      reps: '3x 10-12',
-      rest: '60 seg',
+      id: 'custom_${DateTime.now().microsecondsSinceEpoch}',
+      name: name.trim(),
+      muscle: muscle.trim(),
+      description: description.trim().isEmpty
+          ? 'Exercício personalizado.'
+          : description.trim(),
+      reps: reps.trim().isEmpty ? '3x 10-12' : reps.trim(),
+      rest: rest.trim().isEmpty ? '60 seg' : rest.trim(),
     );
 
     final updated = <Exercise>[...state.customExercises, exercise];
@@ -65,6 +73,8 @@ class WorkoutLibraryController extends Notifier<WorkoutLibraryState> {
       () => _repository.saveCustomExercises(updated),
       'salvar exercício personalizado',
     );
+
+    return exercise;
   }
 
   void createRoutine(

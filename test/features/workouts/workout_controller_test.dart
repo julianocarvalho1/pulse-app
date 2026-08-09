@@ -191,7 +191,13 @@ void main() {
 
     final previousState = container.read(workoutControllerProvider);
 
-    controller.createCustomExercise('Remada baixa', 'Costas');
+    final created = controller.createCustomExercise(
+      '  Remada baixa  ',
+      'Costas',
+      description: 'Movimento personalizado',
+      reps: '4x 8',
+      rest: '90 seg',
+    );
     await Future<void>.delayed(Duration.zero);
 
     final nextState = container.read(workoutControllerProvider);
@@ -199,7 +205,15 @@ void main() {
     expect(identical(previousState, nextState), isFalse);
     expect(nextState.customExercises, hasLength(1));
     expect(nextState.customExercises.single.name, 'Remada baixa');
+    expect(nextState.customExercises.single.id, created.id);
+    expect(
+      nextState.customExercises.single.description,
+      'Movimento personalizado',
+    );
+    expect(nextState.customExercises.single.reps, '4x 8');
+    expect(nextState.customExercises.single.rest, '90 seg');
     expect(repository.customExercises, hasLength(1));
+    expect(repository.customExercises.single.id, created.id);
   });
 
   test('não duplica um programa pronto já importado', () async {
