@@ -56,7 +56,10 @@ no código ou no ambiente local; não significa aprovação da Google Play.
   `92EC17440887670C94A8A796F5D0C723CDCBF6AEB1E094A6DDBD2AD01274356A`.
 - [x] Enviar o AAB corretivo `1.0.0+3` à faixa **Teste fechado - Alpha**. A
   mudança foi enviada para revisão da Google Play em 9 de agosto de 2026.
-- [ ] Verificar o relatório de pré-lançamento gerado para o pacote `1.0.0+2`.
+- [x] Atualizar o app oficial pelo Google Play para o `versionCode` 3 e confirmar
+  em celular físico que as fichas A, B, C, D e E iniciam sem tela cinza e que o
+  histórico permanece preservado.
+- [ ] Verificar o relatório de pré-lançamento gerado para o pacote `1.0.0+3`.
 - [ ] Corrigir qualquer erro de estabilidade, acessibilidade ou compatibilidade
   apontado pelo relatório de pré-lançamento.
 
