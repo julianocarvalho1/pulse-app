@@ -111,6 +111,9 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [x] Enviar em 21 de agosto de 2026 a versão e a disponibilidade no Brasil para
   revisão da Google Play. O estado confirmado na Play Console é **Alterações em
   análise**.
+- [x] Substituir na ficha da loja o ícone e o recurso gráfico antigos pelas
+  artes novas do PULSE e reiniciar a análise em 21 de agosto de 2026 para que o
+  primeiro lançamento público já use a identidade visual correta.
 - [ ] Depois da aprovação, revisar o resultado e autorizar manualmente a
   publicação gerenciada. Não publicar sem confirmação final.
 - [ ] Após a publicação, acompanhar travamentos, avaliações e consumo da cota
