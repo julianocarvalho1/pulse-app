@@ -114,8 +114,12 @@ no código ou no ambiente local; não significa aprovação da Google Play.
 - [x] Substituir na ficha da loja o ícone e o recurso gráfico antigos pelas
   artes novas do PULSE e reiniciar a análise em 21 de agosto de 2026 para que o
   primeiro lançamento público já use a identidade visual correta.
-- [ ] Depois da aprovação, revisar o resultado e autorizar manualmente a
-  publicação gerenciada. Não publicar sem confirmação final.
+- [x] Depois da aprovação, revisar o resultado e autorizar manualmente a
+  publicação gerenciada. As quatro mudanças foram publicadas em 21 de agosto de
+  2026, após confirmação final.
+- [x] Confirmar a página pública do PULSE no Brasil, com botão **Instalar**,
+  ícone novo, capturas de tela e data de atualização de 21 de agosto de 2026:
+  `https://play.google.com/store/apps/details?id=com.julianocarvalho.pulse`.
 - [ ] Após a publicação, acompanhar travamentos, avaliações e consumo da cota
   gratuita da IA antes de ampliar a distribuição para outros países.
 
