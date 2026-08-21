@@ -1,0 +1,6 @@
+# Copie para android/key.properties apenas se não usar o gerador em tool/.
+# Nunca envie key.properties ou a chave .jks ao Git.
+storePassword=SENHA_FORTE_AQUI
+keyPassword=SENHA_FORTE_AQUI
+keyAlias=upload
+storeFile=upload-keystore.jks

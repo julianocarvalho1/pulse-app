@@ -1,8 +1,8 @@
 name: pulse
-description: "A new Flutter project."
+description: "PULSE — treinos, progresso e assistência inteligente."
 
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: ^3.12.2
@@ -11,25 +11,41 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  provider: ^6.1.5+1
   intl: ^0.20.3
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
   local_auth: ^3.0.2
   flutter_tts: ^4.2.5
+  flutter_riverpod: ^3.4.2
+  sqflite: ^2.4.3
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  file_picker: 10.3.10
+  image_picker: ^1.2.3
+  image_cropper: ^12.2.1
+  share_plus: ^12.0.2
+  cross_file: ^0.3.5+4
+  archive: ^4.0.9
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+  xml: ^7.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  sqflite_common_ffi: ^2.4.2
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon.png"
+  adaptive_icon_background: "#071B20"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
 
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
     - assets/icon.png
+    - assets/icon_foreground.png

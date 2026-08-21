@@ -1,300 +1,470 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/workout_provider.dart';
+
+import '../features/settings/domain/pulse_settings.dart';
+import '../features/settings/presentation/providers/settings_controller.dart';
+import '../features/workouts/domain/models/workout_history_item.dart';
+import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import 'settings_screen.dart';
 import 'workout_history_detail_screen.dart';
 
-// ============================================================
-//  TELA 1: PERFIL PRINCIPAL
-// ============================================================
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({
+    super.key,
+    this.onBackToHome,
+    this.onOpenWorkouts,
+    this.onOpenProgress,
+  });
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  void _showPersonalDataPanel(BuildContext context, String currentName, double currentWeight, WorkoutProvider provider) {
-    final nameCtrl = TextEditingController(text: currentName == 'Atleta' ? '' : currentName);
-    final weightCtrl = TextEditingController(text: currentWeight > 0 ? currentWeight.toString() : '');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('EDITAR DADOS PESSOAIS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                IconButton(icon: const Icon(Icons.close, color: AppColors.textSecondary), onPressed: () => Navigator.pop(ctx))
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameCtrl,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              decoration: _inputDecoration(context, 'Nome ou Apelido'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: weightCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              decoration: _inputDecoration(context, 'Peso Atual (kg)'),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: _primaryButtonStyle(context),
-                onPressed: () {
-                  if (nameCtrl.text.isNotEmpty) {
-                    provider.setUserName(nameCtrl.text);
-                  }
-                  final parsedWeight = double.tryParse(weightCtrl.text.replaceAll(',', '.'));
-                  if (parsedWeight != null) {
-                    provider.setUserWeight(parsedWeight);
-                  }
-                  Navigator.pop(ctx);
-                },
-                child: const Text('SALVAR ALTERAÇÕES', style: TextStyle(fontWeight: FontWeight.w800)),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(BuildContext context, String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
-      filled: true,
-      fillColor: Theme.of(context).scaffoldBackgroundColor,
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
-    );
-  }
-
-  ButtonStyle _primaryButtonStyle(BuildContext context) {
-    return ElevatedButton.styleFrom(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      foregroundColor: Colors.black,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    );
-  }
+  final VoidCallback? onBackToHome;
+  final VoidCallback? onOpenWorkouts;
+  final VoidCallback? onOpenProgress;
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
-    final history = provider.history;
-    final userName = provider.userName.isEmpty ? 'Atleta' : provider.userName;
-    final userWeight = provider.userWeight;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workoutState = ref.watch(workoutControllerProvider);
+    final workoutController = ref.read(workoutControllerProvider.notifier);
+    final settingsAsync = ref.watch(settingsControllerProvider);
+    final settings = switch (settingsAsync) {
+      AsyncData<PulseSettings>(:final value) => value,
+      _ => PulseSettings.defaults(),
+    };
 
-    final rotinaAtiva = provider.nextRoutineToTrain ?? (provider.myRoutines.isNotEmpty ? provider.myRoutines.first : null);
-    final focoAtual = rotinaAtiva != null ? rotinaAtiva.focus : 'Mantenha a consistência';
+    final history = workoutState.history;
+    final recentHistory = history.take(5).toList(growable: false);
+    final completedHistoryCount = history
+        .where((item) => !item.isIncomplete)
+        .length;
+    final incompleteHistoryCount = history
+        .where((item) => item.isIncomplete)
+        .length;
+    final profile = settings.profile;
+    final activeRoutine =
+        workoutState.nextRoutineToTrain ??
+        (workoutState.myRoutines.isNotEmpty
+            ? workoutState.myRoutines.first
+            : null);
+    final currentFocus = activeRoutine?.focus ?? 'Construa sua primeira rotina';
+    final currentWeightLabel = profile.weightKg <= 0
+        ? '—'
+        : settings.measurementSystem == MeasurementSystem.metric
+        ? '${profile.weightKg.toStringAsFixed(1)} kg'
+        : '${(profile.weightKg * 2.2046226218).toStringAsFixed(1)} lbs';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('PERFIL', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 20),
-
-          // CABEÇALHO DO PERFIL
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), shape: BoxShape.circle),
-                  child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary, size: 34),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 4),
-                      Text('Foco: $focoAtual', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
+    return ColoredBox(
+      color: AppColors.background,
+      child: CustomScrollView(
+        key: const PageStorageKey<String>('profile-scroll'),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: <Widget>[
+          SliverAppBar(
+            primary: true,
+            pinned: true,
+            floating: true,
+            snap: true,
+            toolbarHeight: 56,
+            backgroundColor: AppColors.background,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            automaticallyImplyLeading: onBackToHome == null,
+            leading: onBackToHome == null
+                ? null
+                : IconButton(
+                    tooltip: 'Voltar para o início',
+                    onPressed: onBackToHome,
+                    icon: const Icon(Icons.arrow_back_rounded),
                   ),
-                ),
-              ],
+            titleSpacing: onBackToHome == null ? 20 : 0,
+            title: const Text(
+              'Perfil',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // ATALHOS DE CONFIGURAÇÃO E DADOS
-          _tile(
-              context,
-              Icons.badge_outlined,
-              'Dados Pessoais',
-              subtitle: 'Nome: $userName ${userWeight > 0 ? '•  ${userWeight.toStringAsFixed(1)} kg' : ''}',
-              onTapAction: () => _showPersonalDataPanel(context, userName, userWeight, provider)
-          ),
-
-          _tile(
-              context,
-              Icons.settings_outlined,
-              'Configurações do App',
-              subtitle: 'Temas, Cores e Preferências',
-              onTapAction: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              }
-          ),
-
-          const SizedBox(height: 28),
-
-          // HISTÓRICO RECENTE NO PERFIL
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('MEU HISTÓRICO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5)),
-              Text('${history.length} concluídos', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
+            actions: <Widget>[
+              IconButton(
+                tooltip: 'Abrir configurações',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+                icon: const Icon(Icons.settings_outlined),
+              ),
+              const SizedBox(width: 8),
             ],
           ),
-          const SizedBox(height: 12),
-
-          if (history.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              14,
+              20,
+              MediaQuery.paddingOf(context).bottom + 32,
+            ),
+            sliver: SliverToBoxAdapter(
               child: Column(
-                children: const [
-                  Icon(Icons.fitness_center_outlined, size: 36, color: AppColors.textSecondary),
-                  SizedBox(height: 12),
-                  Text('Nenhum treino concluído ainda.', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('Seus treinos finalizados aparecerão aqui.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: history.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final item = history[index];
-                final dataFormatada = DateFormat("dd/MM/yyyy").format(item.date);
-
-                return Dismissible(
-                  key: Key(item.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _profileHeader(
+                    context,
+                    profile.displayName,
+                    currentFocus,
+                    completedHistoryCount,
+                    photoPath: profile.photoPath,
+                    onPhotoTap: () =>
+                        _openPhotoOptions(context, ref, profile.photoPath),
+                    onEditName: () => _editDisplayName(context, ref, profile),
                   ),
-                  onDismissed: (direction) {
-                    provider.deleteHistoryItem(item.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Treino excluído do histórico!'), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
-                    );
-                  },
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WorkoutHistoryDetailScreen(workout: item),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                              child: Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 22),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.routineName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                                  const SizedBox(height: 3),
-                                  Text(dataFormatada, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(item.duration, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
-                                const SizedBox(height: 3),
-                                Text('${item.totalExercises} exerc.', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                              ],
-                            ),
-                          ],
+                  const SizedBox(height: 14),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: _ProfileMetric(
+                          value: '$completedHistoryCount',
+                          label: 'Sessões',
+                          icon: Icons.check_circle_outline,
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ProfileMetric(
+                          value: '${workoutState.myRoutines.length}',
+                          label: 'Fichas',
+                          icon: Icons.fitness_center_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ProfileMetric(
+                          value: currentWeightLabel,
+                          label: 'Peso atual',
+                          icon: Icons.monitor_weight_outlined,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                  const SizedBox(height: 28),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          'ATIVIDADES RECENTES',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      if (incompleteHistoryCount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '$incompleteHistoryCount incompleto${incompleteHistoryCount == 1 ? '' : 's'}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.warning,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        )
+                      else if (history.isNotEmpty && onOpenProgress != null)
+                        TextButton(
+                          onPressed: onOpenProgress,
+                          child: const Text('Ver todos'),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (recentHistory.isEmpty)
+                    _emptyHistory(context, onOpenWorkouts)
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: recentHistory.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) => _historyItem(
+                        context,
+                        workoutController,
+                        recentHistory[index],
+                      ),
+                    ),
+                  if (history.isNotEmpty &&
+                      incompleteHistoryCount > 0 &&
+                      onOpenProgress != null) ...<Widget>[
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: onOpenProgress,
+                        icon: const Icon(Icons.insights_outlined),
+                        label: const Text('Ver histórico completo'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _tile(BuildContext context, IconData icon, String label, {String? subtitle, required VoidCallback onTapAction}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+  Future<void> _openPhotoOptions(
+    BuildContext context,
+    WidgetRef ref,
+    String currentPath,
+  ) async {
+    final hasPhoto =
+        currentPath.trim().isNotEmpty && File(currentPath).existsSync();
+    final action = await showModalBottomSheet<_ProfilePhotoAction>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          4,
+          20,
+          MediaQuery.viewPaddingOf(sheetContext).bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'Foto do perfil',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'A imagem fica salva somente neste aparelho.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 14),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(hasPhoto ? 'Trocar foto' : 'Escolher foto'),
+              subtitle: const Text('Selecionar uma imagem do aparelho'),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _ProfilePhotoAction.choose),
+            ),
+            if (hasPhoto)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.delete_outline, color: AppColors.danger),
+                title: Text(
+                  'Remover foto',
+                  style: TextStyle(color: AppColors.danger),
+                ),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _ProfilePhotoAction.remove),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == null || !context.mounted) {
+      return;
+    }
+
+    final service = ref.read(profilePhotoServiceProvider);
+    final controller = ref.read(settingsControllerProvider.notifier);
+    try {
+      switch (action) {
+        case _ProfilePhotoAction.choose:
+          final storedPath = await service.pickAndStore(
+            currentPath: currentPath,
+          );
+          if (storedPath == null) {
+            return;
+          }
+          await controller.setProfilePhotoPath(storedPath);
+          break;
+        case _ProfilePhotoAction.remove:
+          await controller.removeProfilePhoto();
+          await service.remove(currentPath);
+          break;
+      }
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível atualizar a foto do perfil.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _historyItem(
+    BuildContext context,
+    WorkoutController controller,
+    WorkoutHistoryItem item,
+  ) {
+    final formattedDate = DateFormat('dd/MM/yyyy').format(item.date);
+    final isIncomplete = item.isIncomplete;
+    final isCardio = item.isCardioOnly;
+    final statusColor = isIncomplete ? AppColors.warning : AppColors.success;
+    final statusIcon = isCardio
+        ? Icons.directions_run_rounded
+        : isIncomplete
+        ? Icons.pending_actions_rounded
+        : Icons.check_circle;
+    final statusLabel = isCardio
+        ? 'CARDIO'
+        : isIncomplete
+        ? 'INCOMPLETO'
+        : 'CONCLUÍDO';
+
+    return Dismissible(
+      key: Key(item.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) => _confirmHistoryDeletion(context, item),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.danger,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+      ),
+      onDismissed: (_) {
+        controller.deleteHistoryItem(item.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro excluído do histórico.')),
+        );
+      },
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: onTapAction,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WorkoutHistoryDetailScreen(workout: item),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
             child: Row(
-              children: [
-                Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+              children: <Widget>[
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(statusIcon, color: statusColor, size: 22),
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                      ]
+                    children: <Widget>[
+                      Text(
+                        item.routineName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: <Widget>[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      isCardio
+                          ? '${item.totalCardioMinutes} min'
+                          : item.duration,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isCardio
+                          ? (item.cardio.length == 1
+                                ? item.cardio.first.modality.label
+                                : '${item.cardio.length} atividades')
+                          : '${item.totalExercises} exerc.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -302,150 +472,418 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<bool> _confirmHistoryDeletion(
+    BuildContext context,
+    WorkoutHistoryItem item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir registro do histórico?'),
+        content: Text(
+          '“${item.routineName}” será removido do histórico e das métricas de progresso. Essa ação não pode ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            key: const Key('confirmDeleteHistoryButton'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _editDisplayName(
+    BuildContext context,
+    WidgetRef ref,
+    UserProfile profile,
+  ) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditProfileNameDialog(initialName: profile.displayName),
+    );
+
+    if (name == null || !context.mounted || name == profile.displayName) {
+      return;
+    }
+
+    try {
+      await ref
+          .read(settingsControllerProvider.notifier)
+          .updateProfile(profile.copyWith(name: name));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nome do perfil atualizado.')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível atualizar o nome do perfil.'),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _profileHeader(
+    BuildContext context,
+    String userName,
+    String currentFocus,
+    int completedWorkouts, {
+    required String photoPath,
+    required VoidCallback onPhotoTap,
+    required VoidCallback onEditName,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[AppColors.primarySoft, AppColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.primaryBorder),
+      ),
+      child: Row(
+        children: <Widget>[
+          _ProfileAvatar(photoPath: photoPath, onTap: onPhotoTap),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Editar nome do perfil',
+                      onPressed: onEditName,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.edit_outlined, size: 19),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  currentFocus,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    completedWorkouts == 0
+                        ? 'Nenhum treino concluído'
+                        : '$completedWorkouts treino${completedWorkouts == 1 ? '' : 's'} concluído${completedWorkouts == 1 ? '' : 's'}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: completedWorkouts == 0
+                          ? AppColors.textSecondary
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyHistory(BuildContext context, VoidCallback? onOpenWorkouts) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: <Widget>[
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.fitness_center_outlined,
+              size: 27,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Seu histórico começa no primeiro treino',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ao concluir ou salvar uma sessão, ela aparecerá aqui com duração, exercícios e status.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          if (onOpenWorkouts != null) ...<Widget>[
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: onOpenWorkouts,
+              icon: const Icon(Icons.fitness_center, size: 18),
+              label: const Text('Abrir treinos'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
-// ============================================================
-//  TELA 2: CONFIGURAÇÕES (Paletas, Alertas e Unidades)
-// ============================================================
+class _EditProfileNameDialog extends StatefulWidget {
+  const _EditProfileNameDialog({required this.initialName});
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  final String initialName;
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<_EditProfileNameDialog> createState() => _EditProfileNameDialogState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _alertaDescanso = true;
-  bool _lembreteTreino = true;
-  String _unidadePeso = 'kg';
+class _EditProfileNameDialogState extends State<_EditProfileNameDialog> {
+  late final TextEditingController _controller;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final normalized = _controller.text.trim();
+    if (normalized.isEmpty) {
+      setState(() => _errorText = 'Informe um nome ou apelido.');
+      return;
+    }
+    Navigator.pop(context, normalized);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final paletas = themeProvider.palettes;
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        title: const Text('Configurações', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+    return AlertDialog(
+      icon: const Icon(Icons.badge_outlined),
+      title: const Text('Editar nome do perfil'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        maxLength: 40,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'Nome ou apelido',
+          errorText: _errorText,
+        ),
+        onSubmitted: (_) => _submit(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Text('APARÊNCIA DO APP', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Escolha sua Paleta de Destaque', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                const SizedBox(height: 4),
-                const Text('O fundo e os cards irão se adaptar para combinar perfeitamente com a cor escolhida.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.4)),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: List.generate(paletas.length, (index) {
-                    final paleta = paletas[index];
-                    final bool isSelected = themeProvider.primaryColor == paleta.primary;
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Salvar')),
+      ],
+    );
+  }
+}
 
-                    return GestureDetector(
-                      onTap: () => context.read<ThemeProvider>().changePalette(index),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: paleta.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: isSelected ? Colors.white : Colors.transparent, width: 3),
-                              boxShadow: [if (isSelected) BoxShadow(color: paleta.primary.withValues(alpha: 0.5), blurRadius: 10, spreadRadius: 2)],
-                            ),
+enum _ProfilePhotoAction { choose, remove }
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.photoPath, required this.onTap});
+
+  final String photoPath;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = photoPath.trim().isEmpty ? null : File(photoPath);
+    final hasPhoto = file?.existsSync() ?? false;
+
+    return Semantics(
+      button: true,
+      label: hasPhoto ? 'Trocar foto do perfil' : 'Adicionar foto ao perfil',
+      child: InkResponse(
+        onTap: onTap,
+        radius: 42,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            SizedBox(
+              width: 68,
+              height: 68,
+              child: ClipOval(
+                clipBehavior: Clip.antiAlias,
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: hasPhoto
+                      ? Image.file(
+                          file!,
+                          width: 68,
+                          height: 68,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                          filterQuality: FilterQuality.high,
+                          gaplessPlayback: true,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.person_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 36,
                           ),
-                          const SizedBox(height: 8),
-                          Text(paleta.name, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white : AppColors.textSecondary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                        ],
-                      ),
-                    );
-                  }),
+                        )
+                      : Icon(
+                          Icons.person_rounded,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 36,
+                        ),
                 ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-
-          const Text('ALERTAS DURANTE O TREINO', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  title: const Text('Vibrar ao fim do descanso', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  subtitle: const Text('Avisa você que é hora da próxima série.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  value: _alertaDescanso,
-                  onChanged: (val) => setState(() => _alertaDescanso = val),
-                ),
-                const Divider(color: AppColors.border, height: 1),
-                SwitchListTile(
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  title: const Text('Lembrete de Inatividade', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  subtitle: const Text('Notificar se eu ficar 2 dias sem treinar.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  value: _lembreteTreino,
-                  onChanged: (val) => setState(() => _lembreteTreino = val),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          const Text('PREFERÊNCIAS GERAIS', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.straighten, color: AppColors.textSecondary),
-                  title: const Text('Sistema de Medidas', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  trailing: DropdownButton<String>(
-                    value: _unidadePeso,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    underline: const SizedBox(),
-                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary),
-                    style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
-                    items: const [
-                      DropdownMenuItem(value: 'kg', child: Text('Kg / Cm')),
-                      DropdownMenuItem(value: 'lbs', child: Text('Lbs / In')),
-                    ],
-                    onChanged: (val) => setState(() => _unidadePeso = val!),
+            Positioned(
+              right: -2,
+              bottom: -2,
+              child: Container(
+                width: 25,
+                height: 25,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surface,
+                    width: 2,
                   ),
                 ),
-                const Divider(color: AppColors.border, height: 1),
-                ListTile(
-                  leading: const Icon(Icons.help_outline, color: AppColors.textSecondary),
-                  title: const Text('Sobre o FitApp', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  onTap: () {
-                    showAboutDialog(
-                      context: context,
-                      applicationName: 'FitApp',
-                      applicationVersion: 'v1.0.0 (Release)',
-                      applicationLegalese: 'Seu assistente de alta performance.',
-                      applicationIcon: Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary, size: 40),
-                    );
-                  },
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 13,
+                  color: Colors.white,
                 ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileMetric extends StatelessWidget {
+  const _ProfileMetric({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 13),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        children: <Widget>[
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 18,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
           ),
         ],
       ),

@@ -1,0 +1,81 @@
+catalog_version=2
+exercise_count=75
+identity_hash=8b4d0bcc
+content_hash=83feb47b
+media_hash=1e30e53b
+---
+p1|Supino Reto com Barra|Peito|supino_reto_com_barra
+p2|Supino Reto com Halteres|Peito|supino_reto_com_halteres
+p3|Supino Inclinado com Barra|Peito|supino_inclinado_com_barra
+p4|Supino Inclinado com Halteres|Peito|supino_inclinado_com_halteres
+p5|Supino Inclinado Articulado|Peito|supino_inclinado_articulado
+p6|Supino Declinado|Peito|supino_declinado
+p7|Crucifixo Reto com Halteres|Peito|crucifixo_reto
+p8|Crucifixo Inclinado|Peito|crucifixo_inclinado
+p9|Voador Peitoral na Máquina|Peito|peck_deck_voador
+p10|Crossover na Polia Alta|Peito|crossover_polia_alta
+p11|Crossover na Polia Baixa|Peito|crossover_polia_baixa
+p12|Supino Reto Articulado|Peito|supino_reto_articulado
+c1|Puxada Frontal Aberta|Costas|puxada_frontal_aberta
+c2|Puxada Fechada com Triângulo|Costas|puxada_triangulo_fechada
+c3|Remada Curvada com Barra|Costas|remada_curvada_com_barra
+c4|Remada Cavalinho|Costas|remada_cavalinho
+c5|Remada Baixa Sentada|Costas|remada_baixa_sentada
+c6|Remada Articulada|Costas|remada_articulada
+c7|Remada Unilateral com Halter|Costas|serrote_remada_unilateral
+c8|Barra Fixa|Costas|barra_fixa
+c9|Puxada com Braços Estendidos na Polia|Costas|pull_down_na_polia
+c10|Voador Inverso na Máquina|Costas|voador_dorsal_inverso
+o1|Desenvolvimento com Halteres|Ombros|desenvolvimento_com_halteres
+o2|Desenvolvimento com Barra|Ombros|desenvolvimento_com_barra
+o3|Desenvolvimento Articulado|Ombros|desenvolvimento_articulado
+o4|Elevação Lateral com Halteres|Ombros|elevacao_lateral_com_halteres
+o5|Elevação Lateral na Polia|Ombros|elevacao_lateral_na_polia
+o6|Elevação Frontal com Halteres|Ombros|elevacao_frontal_com_halteres
+o7|Elevação Frontal com Barra ou Anilha|Ombros|elevacao_frontal_com_barra_anilha
+o8|Crucifixo Inverso com Halteres|Ombros|crucifixo_inverso_com_halteres
+o9|Elevação Frontal na Polia|Ombros|elevacao_frontal_na_polia
+t1|Encolhimento com Halteres|Trapézio|encolhimento_com_halteres
+t2|Encolhimento na Barra Smith|Trapézio|encolhimento_na_barra_smith
+b1|Rosca Direta com Barra|Bíceps|rosca_direta_com_barra
+b2|Rosca Alternada com Halteres|Bíceps|rosca_alternada_com_halteres
+b3|Rosca Martelo|Bíceps|rosca_martelo
+b4|Rosca Scott na Máquina|Bíceps|rosca_scott_maquina
+b5|Rosca Concentrada|Bíceps|rosca_concentrada
+b6|Rosca na Polia Baixa|Bíceps|rosca_na_polia_baixa
+b7|Rosca Inversa|Antebraço|rosca_inversa
+b8|Flexão de Punho|Antebraço|flexao_de_punho
+tr1|Tríceps na Polia com Barra Reta|Tríceps|triceps_pulley_barra_reta
+tr2|Tríceps na Polia com Corda|Tríceps|triceps_corda
+tr3|Tríceps Testa com Barra W|Tríceps|triceps_testa_com_barra_w
+tr4|Tríceps Testa na Polia|Tríceps|triceps_testa_na_polia
+tr5|Tríceps Francês com Halter|Tríceps|triceps_frances_com_halter
+tr6|Tríceps Francês na Polia|Tríceps|triceps_frances_na_polia
+tr7|Tríceps Coice na Polia|Tríceps|triceps_coice_na_polia
+tr8|Mergulho nas Paralelas|Tríceps|mergulho_nas_paralelas
+tr9|Supino Fechado|Tríceps|supino_fechado
+pe1|Agachamento Livre|Pernas|agachamento_livre
+pe2|Agachamento no Smith|Pernas|agachamento_no_smith
+pe3|Agachamento Hack|Pernas|agachamento_hack
+pe4|Leg Press 45°|Pernas|leg_press_45
+pe5|Leg Press Horizontal|Pernas|leg_press_90_horizontal
+pe6|Cadeira Extensora|Pernas|cadeira_extensora
+pe7|Mesa Flexora|Pernas|mesa_flexora
+pe8|Cadeira Flexora|Pernas|cadeira_flexora
+pe9|Flexora Unilateral em Pé|Pernas|flexora_em_pe_unilateral
+pe10|Stiff com Barra|Pernas|stiff_com_barra
+pe11|Levantamento Terra|Pernas|levantamento_terra
+pe12|Elevação Pélvica com Barra|Pernas|levantamento_pelvico_hip_thrust
+pe13|Cadeira Abdutora|Pernas|cadeira_abdutora
+pe14|Cadeira Adutora|Pernas|cadeira_adutora
+pe15|Afundo ou Passada|Pernas|passada_afundo
+pe16|Elevação Plantar em Pé|Panturrilha|elevacao_plantar_em_pe
+pe17|Panturrilha Sentada na Máquina|Panturrilha|gemeos_sentado_maquina
+pe18|Panturrilha no Leg Press|Panturrilha|panturrilha_no_leg_press
+pe19|Stiff com Halteres|Pernas|stiff_com_halteres
+ab1|Abdominal Supra|Abdômen|abdominal_supra
+ab2|Abdominal Infra|Abdômen|abdominal_infra
+ab3|Abdominal na Máquina|Abdômen|abdominal_maquina
+ab4|Abdominal na Polia|Abdômen|abdominal_polia_crunch
+ab5|Prancha Isométrica|Abdômen|prancha_isometrica
+ab6|Abdominal Russo|Abdômen|abdominal_obliquo_russo

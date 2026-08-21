@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/exercise.dart';
 import 'program_builder_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/routine_type_selector.dart';
 
 // ============================================================
 //  TELA: SETUP DO PROGRAMA (PASSO 1)
@@ -24,6 +25,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
   // A divisão padrão será ABC
   String _selectedSplit = 'ABC';
+  RoutineType _selectedRoutineType = RoutineType.strength;
 
   // Opções de divisão de treino disponíveis
   final List<String> _splits = ['Full Body', 'AB', 'ABC', 'ABCD', 'ABCDE'];
@@ -59,7 +61,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     }
 
     final programName = _nameController.text.trim();
-    final programFocus = _focusController.text.trim().isEmpty ? 'Geral' : _focusController.text.trim();
+    final programFocus = _focusController.text.trim().isEmpty
+        ? 'Geral'
+        : _focusController.text.trim();
 
     // Navega para a Tela 2 levando os dados do setup
     Navigator.push(
@@ -69,6 +73,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           programName: programName,
           programFocus: programFocus,
           splitType: _selectedSplit,
+          defaultRoutineType: _selectedRoutineType,
         ),
       ),
     );
@@ -80,13 +85,14 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-            widget.routineToEdit != null ? 'EDITAR PROGRAMA' : 'NOVO PROGRAMA',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)
+          widget.routineToEdit != null ? 'EDITAR PROGRAMA' : 'NOVO PROGRAMA',
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,48 +102,111 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.edit_document, color: Theme.of(context).colorScheme.primary, size: 40),
+                child: Icon(
+                  Icons.edit_document,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 40,
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
             // DADOS DO PROGRAMA
-            const Text('PASSO 1: DADOS GERAIS', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+            Text(
+              'PASSO 1: DADOS GERAIS',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: _nameController,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
               decoration: InputDecoration(
                 labelText: 'Nome do Programa (ex: Foco Emagrecimento)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _focusController,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 labelText: 'Objetivo Principal (ex: Hipertrofia, Cardio)',
-                labelStyle: const TextStyle(color: AppColors.textSecondary),
+                labelStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.surface,
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
+            Text(
+              'PASSO 2: TIPO PADRÃO DAS FICHAS',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 14),
+            RoutineTypeSelector(
+              value: _selectedRoutineType,
+              onChanged: (value) {
+                setState(() => _selectedRoutineType = value);
+              },
+            ),
+            const SizedBox(height: 32),
+
             // DIVISÃO DO TREINO
-            const Text('PASSO 2: DIVISÃO DO TREINO', style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+            Text(
+              'PASSO 3: DIVISÃO DO TREINO',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.0,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text('Como você quer organizar seus dias na academia?', style: TextStyle(color: Colors.white, fontSize: 14)),
+            Text(
+              'Como você quer organizar seus dias na academia?',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
@@ -145,11 +214,23 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               children: _splits.map((split) {
                 final isSelected = _selectedSplit == split;
                 return ChoiceChip(
-                  label: Text(split, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.black : Colors.white)),
+                  label: Text(
+                    split,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? AppColors.onPrimary
+                          : AppColors.textPrimary,
+                    ),
+                  ),
                   selected: isSelected,
                   selectedColor: Theme.of(context).colorScheme.primary,
                   backgroundColor: AppColors.surface,
-                  side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.border),
+                  side: BorderSide(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : AppColors.border,
+                  ),
                   showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
@@ -161,24 +242,35 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          16,
+          24,
+          MediaQuery.viewPaddingOf(context).bottom + 16,
+        ),
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.onPrimary,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onPressed: _nextStep,
-          child: const Text('AVANÇAR E MONTAR FICHAS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+          child: const Text(
+            'AVANÇAR E MONTAR FICHAS',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
         ),
       ),
     );

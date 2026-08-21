@@ -1,0 +1,4 @@
+"arquivo_ou_conjunto","autor_ou_origem","licenca_ou_permissao","url_ou_evidencia","status"
+"assets/icon.png","Criado exclusivamente para o PULSE com OpenAI ImageGen, sem imagem de referência","Uso do arquivo gerado pelo responsável pelo PULSE","Arquivo mestre preservado fora do repositório","OK"
+"assets/icon_foreground.png","Derivado transparente do mesmo ícone original do PULSE","Mesma origem e finalidade do ícone principal","Arquivo mestre preservado fora do repositório","OK"
+"assets/images/*.webp","RepDB Free Tier snapshot 2026-08-08","LICENSE-DATA.md v1.0: uso pessoal e comercial dentro de aplicativos, com atribuição visível; redistribuição como dataset proibida","third_party/repdb/LICENSE-DATA.md; third_party/repdb/ASSET-MANIFEST.sha256; confirmação do RepDB por e-mail em 2026-08-09","OK"

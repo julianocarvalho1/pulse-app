@@ -1,68 +1,119 @@
-import 'package:provider/provider.dart';
-import 'providers/workout_provider.dart';
-import 'screens/exercises_screen.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'features/auth/presentation/auth_gate.dart';
+import 'features/onboarding/presentation/onboarding_gate.dart';
+import 'features/settings/domain/pulse_settings.dart';
+import 'features/settings/presentation/providers/settings_controller.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/progress_screen.dart';
 import 'screens/workout_plan_screen.dart';
-import 'screens/auth_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'theme/app_theme.dart';
+import 'widgets/pulse_startup_splash.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-    ),
-  );
-
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => WorkoutProvider()),
-        // AQUI: Adicionamos o novo cérebro que vai controlar as cores
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: const FitApp(),
-    ),
-  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  runApp(const ProviderScope(child: PulseApp()));
 }
 
-class FitApp extends StatelessWidget {
-  const FitApp({super.key});
+class PulseApp extends ConsumerStatefulWidget {
+  const PulseApp({super.key});
+
+  @override
+  ConsumerState<PulseApp> createState() => _PulseAppState();
+}
+
+class _PulseAppState extends ConsumerState<PulseApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // AQUI: O Consumer envolve o app e reconstrói as telas quando a cor muda
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'FitApp',
-          debugShowCheckedModeBanner: false,
-          theme: themeProvider.currentTheme, // AQUI: Agora a cor puxa do Provider
-          home: const AuthWrapper(),
-        );
-      },
+    final settingsAsync = ref.watch(settingsControllerProvider);
+
+    final loadedSettings = switch (settingsAsync) {
+      AsyncData<PulseSettings>(:final value) => value,
+      _ => null,
+    };
+    final settings = loadedSettings ?? PulseSettings.defaults();
+
+    final platformBrightness =
+        WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    final effectiveBrightness = loadedSettings == null
+        ? platformBrightness
+        : _resolveBrightness(settings.themeMode, platformBrightness);
+    final materialThemeMode = loadedSettings == null
+        ? ThemeMode.system
+        : _toMaterialThemeMode(settings.themeMode);
+    final selectedPalette = pulsePaletteForValue(settings.themeColorValue);
+    final effectivePrimaryColor = selectedPalette.colorFor(effectiveBrightness);
+
+    AppColors.configure(
+      effectiveBrightness,
+      primaryColor: effectivePrimaryColor,
+    );
+    final overlayStyle = pulseSystemUiOverlayStyle(effectiveBrightness);
+    SystemChrome.setSystemUIOverlayStyle(overlayStyle);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: MaterialApp(
+        title: 'PULSE',
+        debugShowCheckedModeBanner: false,
+        theme: buildPulseLightTheme(selectedPalette.lightPrimary),
+        darkTheme: buildPulseDarkTheme(selectedPalette.darkPrimary),
+        themeMode: materialThemeMode,
+        builder: (context, child) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: child ?? const SizedBox.shrink(),
+        ),
+        home: const PulseStartupSplash(
+          child: AuthGate(child: OnboardingGate(child: MainNavigation())),
+        ),
+      ),
     );
   }
-}
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
+  Brightness _resolveBrightness(
+    PulseThemeMode themeMode,
+    Brightness platformBrightness,
+  ) {
+    return switch (themeMode) {
+      PulseThemeMode.system => platformBrightness,
+      PulseThemeMode.light => Brightness.light,
+      PulseThemeMode.dark => Brightness.dark,
+    };
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<WorkoutProvider>();
-
-    if (!provider.isAuthenticated) {
-      return const AuthScreen();
-    }
-
-    return const MainNavigation();
+  ThemeMode _toMaterialThemeMode(PulseThemeMode themeMode) {
+    return switch (themeMode) {
+      PulseThemeMode.system => ThemeMode.system,
+      PulseThemeMode.light => ThemeMode.light,
+      PulseThemeMode.dark => ThemeMode.dark,
+    };
   }
 }
 
@@ -75,56 +126,142 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _index = 0;
+  bool _isExitDialogOpen = false;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    WorkoutPlanScreen(),
-    ExercisesScreen(),
-    ProgressScreen(),
-    ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = <Widget>[
+      HomeScreen(
+        onOpenWorkouts: () => _selectTab(1),
+        onOpenProgress: () => _selectTab(2),
+      ),
+      WorkoutPlanScreen(onBackToHome: () => _selectTab(0)),
+      ProgressScreen(onBackToHome: () => _selectTab(0)),
+      ProfileScreen(
+        onBackToHome: () => _selectTab(0),
+        onOpenWorkouts: () => _selectTab(1),
+        onOpenProgress: () => _selectTab(2),
+      ),
+    ];
+  }
+
+  void _selectTab(int index) {
+    if (_index == index) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _index = index);
+  }
+
+  Future<void> _handleSystemBack() async {
+    if (_index != 0) {
+      _selectTab(0);
+      return;
+    }
+    if (_isExitDialogOpen || !mounted) {
+      return;
+    }
+
+    _isExitDialogOpen = true;
+    try {
+      final shouldExit = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Sair do app?',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Text(
+            'Deseja realmente fechar o PULSE?',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sair'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldExit == true) {
+        SystemNavigator.pop();
+      }
+    } finally {
+      _isExitDialogOpen = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: IndexedStack(index: _index, children: _screens),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _index,
-          onTap: (i) => setState(() => _index = i),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          // AQUI: Usando a cor dinâmica no ícone selecionado do menu inferior
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: const [
-            BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Início'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.fitness_center), label: 'Treinos'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.view_list_outlined),
-                activeIcon: Icon(Icons.view_list),
-                label: 'Exercícios'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart), label: 'Progresso'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Perfil'),
-          ],
+    final systemUiStyle = pulseSystemUiOverlayStyle(
+      Theme.of(context).brightness,
+    ).copyWith(statusBarColor: Colors.transparent);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          unawaited(_handleSystemBack());
+        }
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: systemUiStyle,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: IndexedStack(index: _index, children: _screens),
+          bottomNavigationBar: ColoredBox(
+            color: AppColors.surface,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(top: BorderSide(color: AppColors.border)),
+                ),
+                child: NavigationBar(
+                  height: 68,
+                  backgroundColor: AppColors.surface,
+                  indicatorColor: AppColors.primarySoft,
+                  selectedIndex: _index,
+                  onDestinationSelected: _selectTab,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: const <NavigationDestination>[
+                    NavigationDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: 'Hoje',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.fitness_center_outlined),
+                      selectedIcon: Icon(Icons.fitness_center),
+                      label: 'Treinos',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.insights_outlined),
+                      selectedIcon: Icon(Icons.insights_rounded),
+                      label: 'Progresso',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person_rounded),
+                      label: 'Perfil',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
