@@ -575,6 +575,34 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     unawaited(_persistActiveSession());
   }
 
+  void updateExerciseSessionDetails(
+    int exerciseIndex, {
+    required String notes,
+    required bool isLoadComparable,
+  }) {
+    final session = activeSession;
+    if (session == null ||
+        exerciseIndex < 0 ||
+        exerciseIndex >= session.exercises.length) {
+      return;
+    }
+
+    final updatedExercises = List<ActiveWorkoutExercise>.from(
+      session.exercises,
+    );
+    updatedExercises[exerciseIndex] = updatedExercises[exerciseIndex].copyWith(
+      sessionNotes: notes.trim(),
+      isLoadComparable: isLoadComparable,
+    );
+
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      exercises: updatedExercises,
+    );
+    state = state.copyWith(activeSession: _activeSessionSnapshot);
+    unawaited(_persistActiveSession());
+  }
+
   void saveActiveSessionProgress({
     required Map<int, List<bool>> setsStatus,
     required Map<int, List<String>> weights,
@@ -600,9 +628,10 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       final repsValues = reps[exerciseIndex] ?? const <String>[];
 
       final prescribedSets = _prescribedSetsForExercise(exercise);
-      final restoredSets = session.exercises.length > exerciseIndex
-          ? session.exercises[exerciseIndex].sets
-          : const <ActiveWorkoutSet>[];
+      final restoredExercise = session.exercises.length > exerciseIndex
+          ? session.exercises[exerciseIndex]
+          : null;
+      final restoredSets = restoredExercise?.sets ?? const <ActiveWorkoutSet>[];
       final expectedCount = <int>[
         completedValues.length,
         weightValues.length,
@@ -634,7 +663,12 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       });
 
       updatedExercises.add(
-        ActiveWorkoutExercise(exercise: exercise, sets: activeSets),
+        ActiveWorkoutExercise(
+          exercise: exercise,
+          sets: activeSets,
+          sessionNotes: restoredExercise?.sessionNotes ?? '',
+          isLoadComparable: restoredExercise?.isLoadComparable ?? true,
+        ),
       );
     }
 

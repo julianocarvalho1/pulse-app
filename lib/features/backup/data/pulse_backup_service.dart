@@ -120,6 +120,8 @@ class PulseBackupService {
       'exercise_id',
       'exercise_name',
       'sort_order',
+      'notes',
+      'is_load_comparable',
     ],
     'workout_history_sets': <String>[
       'id',
@@ -177,6 +179,8 @@ class PulseBackupService {
       'is_superset',
       'custom_note',
       'advanced_prescription_json',
+      'session_notes',
+      'is_load_comparable',
     ],
     'active_session_sets': <String>[
       'id',

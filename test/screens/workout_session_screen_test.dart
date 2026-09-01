@@ -59,6 +59,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('TEMPO TOTAL'), findsNothing);
+    expect(find.text('Anotações'), findsOneWidget);
 
     final timerText = tester.widget<Text>(timerFinder);
     expect(timerText.style?.fontSize, 14);
@@ -109,6 +110,102 @@ void main() {
     await tester.tap(find.byKey(const Key('skipRestButton')));
     await tester.pump();
     expect(find.text('DESCANSO'), findsNothing);
+  });
+
+  testWidgets('fecha editor de anotações sem descartar controller em uso', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final palette = pulsePalettes[1];
+    AppColors.configure(Brightness.light, primaryColor: palette.lightPrimary);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          workoutControllerProvider.overrideWith(_FakeWorkoutController.new),
+          workoutDurationProvider.overrideWith(_FixedDurationController.new),
+          workoutSessionProgressProvider.overrideWithValue(
+            const WorkoutSessionProgress(
+              completedSets: 0,
+              totalSets: 3,
+              completedExercises: 0,
+              totalExercises: 1,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildPulseLightTheme(palette.lightPrimary),
+          home: const WorkoutSessionScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('exercise-notes-p1-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Anotação deste exercício'), findsOneWidget);
+
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Anotação deste exercício'), findsNothing);
+  });
+
+  testWidgets('não conclui série vazia e mantém carga opcional', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final palette = pulsePalettes[1];
+    AppColors.configure(Brightness.light, primaryColor: palette.lightPrimary);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          workoutControllerProvider.overrideWith(_FakeWorkoutController.new),
+          workoutDurationProvider.overrideWith(_FixedDurationController.new),
+          workoutSessionProgressProvider.overrideWithValue(
+            const WorkoutSessionProgress(
+              completedSets: 0,
+              totalSets: 3,
+              completedExercises: 0,
+              totalExercises: 1,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildPulseLightTheme(palette.lightPrimary),
+          home: const WorkoutSessionScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+
+    expect(SessionStateCache.setsStatus[0]!.first, isFalse);
+    expect(
+      find.text(
+        'Informe as repetições realizadas antes de concluir a série. A carga é opcional.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextField).at(1), '10');
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+
+    expect(SessionStateCache.weights[0]!.first, isEmpty);
+    expect(SessionStateCache.setsStatus[0]!.first, isTrue);
   });
 }
 

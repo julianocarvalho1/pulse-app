@@ -182,4 +182,102 @@ void main() {
     await pulseDatabase.close();
     await tempDirectory.delete(recursive: true);
   });
+
+  test(
+    'migra banco da versão 7 preservando histórico e sessão ativa',
+    () async {
+      sqfliteFfiInit();
+      final tempDirectory = await Directory.systemTemp.createTemp(
+        'pulse_exercise_notes_migration_',
+      );
+      final databasePath = '${tempDirectory.path}/pulse.db';
+
+      final legacyDatabase = await databaseFactoryFfi.openDatabase(
+        databasePath,
+        options: OpenDatabaseOptions(
+          version: 7,
+          onCreate: (database, version) async {
+            await database.execute('''
+            CREATE TABLE workout_history_exercises (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              history_id TEXT NOT NULL,
+              exercise_id TEXT NOT NULL,
+              exercise_name TEXT NOT NULL,
+              sort_order INTEGER NOT NULL
+            )
+          ''');
+            await database.execute('''
+            CREATE TABLE active_session_exercises (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              session_id TEXT NOT NULL,
+              exercise_id TEXT NOT NULL,
+              sort_order INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              muscle TEXT NOT NULL,
+              description TEXT NOT NULL,
+              reps TEXT NOT NULL,
+              rest TEXT NOT NULL,
+              is_superset INTEGER NOT NULL DEFAULT 0,
+              custom_note TEXT NOT NULL DEFAULT '',
+              advanced_prescription_json TEXT NOT NULL DEFAULT ''
+            )
+          ''');
+          },
+        ),
+      );
+      await legacyDatabase
+          .insert('workout_history_exercises', <String, Object?>{
+            'history_id': 'history-1',
+            'exercise_id': 'supino',
+            'exercise_name': 'Supino',
+            'sort_order': 0,
+          });
+      await legacyDatabase.insert('active_session_exercises', <String, Object?>{
+        'session_id': 'active',
+        'exercise_id': 'supino',
+        'sort_order': 0,
+        'name': 'Supino',
+        'muscle': 'Peito',
+        'description': '',
+        'reps': '3x 8-12',
+        'rest': '90 seg',
+      });
+      await legacyDatabase.close();
+
+      final pulseDatabase = PulseDatabase(
+        databaseFactoryOverride: databaseFactoryFfi,
+        databasePathOverride: databasePath,
+      );
+      final migrated = await pulseDatabase.database;
+
+      Future<Set<String>> columns(String table) async {
+        final rows = await migrated.rawQuery('PRAGMA table_info($table)');
+        return rows.map((row) => row['name']!.toString()).toSet();
+      }
+
+      expect(
+        await columns('workout_history_exercises'),
+        containsAll(<String>['notes', 'is_load_comparable']),
+      );
+      expect(
+        await columns('active_session_exercises'),
+        containsAll(<String>['session_notes', 'is_load_comparable']),
+      );
+      final historyRow = (await migrated.query(
+        'workout_history_exercises',
+      )).single;
+      expect(historyRow['exercise_name'], 'Supino');
+      expect(historyRow['notes'], '');
+      expect(historyRow['is_load_comparable'], 1);
+      final activeRow = (await migrated.query(
+        'active_session_exercises',
+      )).single;
+      expect(activeRow['name'], 'Supino');
+      expect(activeRow['session_notes'], '');
+      expect(activeRow['is_load_comparable'], 1);
+
+      await pulseDatabase.close();
+      await tempDirectory.delete(recursive: true);
+    },
+  );
 }

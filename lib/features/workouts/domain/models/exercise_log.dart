@@ -10,11 +10,15 @@ class ExerciseLog {
     required this.exerciseId,
     required this.exerciseName,
     required List<ExerciseSet> sets,
+    this.notes = '',
+    this.isLoadComparable = true,
   }) : sets = UnmodifiableListView<ExerciseSet>(List<ExerciseSet>.from(sets));
 
   final String exerciseId;
   final String exerciseName;
   final List<ExerciseSet> sets;
+  final String notes;
+  final bool isLoadComparable;
 
   int get totalReps {
     return sets.fold<int>(0, (total, set) => total + set.reps);
@@ -28,11 +32,15 @@ class ExerciseLog {
     String? exerciseId,
     String? exerciseName,
     List<ExerciseSet>? sets,
+    String? notes,
+    bool? isLoadComparable,
   }) {
     return ExerciseLog(
       exerciseId: exerciseId ?? this.exerciseId,
       exerciseName: exerciseName ?? this.exerciseName,
       sets: sets ?? this.sets,
+      notes: notes ?? this.notes,
+      isLoadComparable: isLoadComparable ?? this.isLoadComparable,
     );
   }
 
@@ -41,6 +49,8 @@ class ExerciseLog {
       'exerciseId': exerciseId,
       'exerciseName': exerciseName,
       'sets': sets.map((set) => set.toMap()).toList(),
+      'notes': notes,
+      'isLoadComparable': isLoadComparable,
     };
   }
 
@@ -58,6 +68,11 @@ class ExerciseLog {
                 )
                 .toList()
           : const <ExerciseSet>[],
+      notes: map['notes']?.toString() ?? '',
+      isLoadComparable:
+          map['isLoadComparable'] == null ||
+          map['isLoadComparable'] == true ||
+          map['isLoadComparable'] == 1,
     );
   }
 }

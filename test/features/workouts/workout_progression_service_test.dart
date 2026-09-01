@@ -17,7 +17,7 @@ void main() {
 
   const service = WorkoutProgressionService();
 
-  test('sugere mais uma repetição dentro da faixa', () {
+  test('avança as séries mais baixas sem ultrapassar a faixa', () {
     final history = <WorkoutHistoryItem>[
       WorkoutHistoryItem(
         id: 'history-1',
@@ -43,11 +43,12 @@ void main() {
       history: history,
     );
 
-    expect(suggestion.lastPerformance, '40 kg × 9');
-    expect(suggestion.nextTarget, contains('10 repetições'));
+    expect(suggestion.lastPerformance, '40 kg: 8 / 9 / 8 reps');
+    expect(suggestion.nextTarget, contains('pelo menos 9 repetições'));
+    expect(suggestion.nextTarget, contains('sem passar de 10'));
   });
 
-  test('sugere aumento conservador quando todas as séries atingem o topo', () {
+  test('não inventa carga quando todas as séries atingem o topo', () {
     final history = <WorkoutHistoryItem>[
       WorkoutHistoryItem(
         id: 'history-2',
@@ -73,8 +74,9 @@ void main() {
       history: history,
     );
 
-    expect(suggestion.nextTarget, contains('42,5 kg'));
-    expect(suggestion.nextTarget, contains('8 repetições'));
+    expect(suggestion.nextTarget, contains('menor incremento de carga'));
+    expect(suggestion.nextTarget, contains('retorne a 8 repetições'));
+    expect(suggestion.nextTarget, isNot(contains('42,5 kg')));
   });
 
   test('normaliza prescrição descendente antes de limitar a progressão', () {
@@ -111,6 +113,92 @@ void main() {
       history: history,
     );
 
-    expect(suggestion.nextTarget, contains('15 repetições'));
+    expect(suggestion.nextTarget, contains('Prescrição cumprida'));
+  });
+
+  test('prescrição fixa nunca sugere uma décima terceira repetição', () {
+    const fixedExercise = Exercise(
+      id: 'crucifixo',
+      name: 'Crucifixo',
+      muscle: 'Peito',
+      description: '',
+      reps: '3x 12',
+      rest: '60 seg',
+    );
+    final history = <WorkoutHistoryItem>[
+      WorkoutHistoryItem(
+        id: 'history-fixed',
+        routineName: 'Treino A',
+        date: DateTime(2026, 8, 9),
+        duration: '30:00',
+        exercises: <ExerciseLog>[
+          ExerciseLog(
+            exerciseId: fixedExercise.id,
+            exerciseName: fixedExercise.name,
+            sets: const <ExerciseSet>[
+              ExerciseSet(reps: 12, weight: 0),
+              ExerciseSet(reps: 12, weight: 0),
+              ExerciseSet(reps: 12, weight: 0),
+            ],
+          ),
+        ],
+      ),
+    ];
+
+    final suggestion = service.buildSuggestion(
+      exercise: fixedExercise,
+      history: history,
+    );
+
+    expect(suggestion.nextTarget, contains('Prescrição cumprida'));
+    expect(suggestion.nextTarget, isNot(contains('13')));
+  });
+
+  test('ignora carga marcada como não comparável', () {
+    final history = <WorkoutHistoryItem>[
+      WorkoutHistoryItem(
+        id: 'history-new-machine',
+        routineName: 'Treino A',
+        date: DateTime(2026, 8, 10),
+        duration: '30:00',
+        exercises: <ExerciseLog>[
+          ExerciseLog(
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            isLoadComparable: false,
+            sets: const <ExerciseSet>[
+              ExerciseSet(reps: 10, weight: 80),
+              ExerciseSet(reps: 10, weight: 80),
+              ExerciseSet(reps: 10, weight: 80),
+            ],
+          ),
+        ],
+      ),
+      WorkoutHistoryItem(
+        id: 'history-comparable',
+        routineName: 'Treino A',
+        date: DateTime(2026, 8, 8),
+        duration: '30:00',
+        exercises: <ExerciseLog>[
+          ExerciseLog(
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            sets: const <ExerciseSet>[
+              ExerciseSet(reps: 8, weight: 40),
+              ExerciseSet(reps: 8, weight: 40),
+              ExerciseSet(reps: 8, weight: 40),
+            ],
+          ),
+        ],
+      ),
+    ];
+
+    final suggestion = service.buildSuggestion(
+      exercise: exercise,
+      history: history,
+    );
+
+    expect(suggestion.lastPerformance, contains('40 kg'));
+    expect(suggestion.lastPerformance, isNot(contains('80 kg')));
   });
 }

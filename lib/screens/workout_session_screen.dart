@@ -47,6 +47,135 @@ class _FinishDialogResult {
   final String notes;
 }
 
+class _ExerciseSessionDetails {
+  const _ExerciseSessionDetails({
+    required this.notes,
+    required this.isLoadComparable,
+  });
+
+  final String notes;
+  final bool isLoadComparable;
+}
+
+class _ExerciseNotesEditorSheet extends StatefulWidget {
+  const _ExerciseNotesEditorSheet({
+    required this.exerciseName,
+    required this.initialNotes,
+    required this.initialIsLoadComparable,
+  });
+
+  final String exerciseName;
+  final String initialNotes;
+  final bool initialIsLoadComparable;
+
+  @override
+  State<_ExerciseNotesEditorSheet> createState() =>
+      _ExerciseNotesEditorSheetState();
+}
+
+class _ExerciseNotesEditorSheetState extends State<_ExerciseNotesEditorSheet> {
+  late final TextEditingController _notesController;
+  late bool _isLoadComparable;
+
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController(text: widget.initialNotes);
+    _isLoadComparable = widget.initialIsLoadComparable;
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context).pop(
+      _ExerciseSessionDetails(
+        notes: _notesController.text,
+        isLoadComparable: _isLoadComparable,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        18,
+        20,
+        20 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Anotações',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.exerciseName,
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _notesController,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 5,
+            maxLength: 300,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Anotação deste exercício',
+              hintText:
+                  'Ex.: fiz mais leve; usei outra máquina; senti mais dificuldade.',
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 6),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            value: _isLoadComparable,
+            onChanged: (value) => setState(() => _isLoadComparable = value),
+            title: const Text(
+              'Comparar esta carga na progressão',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: const Text(
+              'Desative se usou outra máquina ou se a carga não pode ser comparada com o treino anterior.',
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: _save,
+                  child: const Text('Salvar'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class WorkoutSessionScreen extends ConsumerStatefulWidget {
   const WorkoutSessionScreen({super.key});
 
@@ -620,6 +749,39 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     );
   }
 
+  Future<void> _showExerciseNotesEditor({
+    required WorkoutController provider,
+    required int exerciseIndex,
+    required Exercise exercise,
+  }) async {
+    final activeExercise =
+        provider.activeSession != null &&
+            exerciseIndex < provider.activeSession!.exercises.length
+        ? provider.activeSession!.exercises[exerciseIndex]
+        : null;
+    final result = await showModalBottomSheet<_ExerciseSessionDetails>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => _ExerciseNotesEditorSheet(
+        exerciseName: exercise.name,
+        initialNotes: activeExercise?.sessionNotes ?? '',
+        initialIsLoadComparable: activeExercise?.isLoadComparable ?? true,
+      ),
+    );
+
+    await _waitForTransientUiToSettle();
+    if (!mounted || result == null) {
+      return;
+    }
+
+    provider.updateExerciseSessionDetails(
+      exerciseIndex,
+      notes: result.notes,
+      isLoadComparable: result.isLoadComparable,
+    );
+  }
+
   Future<void> _chooseExerciseAlternative({
     required WorkoutController provider,
     required WorkoutState workoutState,
@@ -1098,11 +1260,18 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       }
 
       if (setsCompleted.isNotEmpty) {
+        final activeExercise =
+            provider.activeSession != null &&
+                exerciseIndex < provider.activeSession!.exercises.length
+            ? provider.activeSession!.exercises[exerciseIndex]
+            : null;
         workoutLogs.add(
           ExerciseLog(
             exerciseId: exercises[exerciseIndex].id,
             exerciseName: exercises[exerciseIndex].name,
             sets: setsCompleted,
+            notes: activeExercise?.sessionNotes ?? '',
+            isLoadComparable: activeExercise?.isLoadComparable ?? true,
           ),
         );
       }
@@ -1479,29 +1648,26 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     required int setIndex,
     required bool isCompleted,
   }) {
+    final repsController = _repsControllers[exerciseIndex]![setIndex];
+    if (isCompleted && repsController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Informe as repetições realizadas antes de concluir a série. A carga é opcional.',
+            ),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      return;
+    }
+
     setState(() {
       SessionStateCache.setsStatus[exerciseIndex]![setIndex] = isCompleted;
 
       if (!isCompleted) {
         return;
-      }
-
-      final repsController = _repsControllers[exerciseIndex]![setIndex];
-      if (repsController.text.trim().isEmpty) {
-        final sessionSets = provider.activeSession?.exercises;
-        final prescribedTarget =
-            sessionSets != null &&
-                exerciseIndex < sessionSets.length &&
-                setIndex < sessionSets[exerciseIndex].sets.length
-            ? sessionSets[exerciseIndex].sets[setIndex].targetText
-            : '';
-        final smartTarget = prescribedTarget.trim().isNotEmpty
-            ? prescribedTarget
-            : _getSmartTarget(exercises[exerciseIndex].reps, setIndex);
-        final match = RegExp(r'\d+').firstMatch(smartTarget);
-        if (match != null) {
-          repsController.text = match.group(0)!;
-        }
       }
 
       if (setIndex > 0) {
@@ -1775,6 +1941,16 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                         final progression = ref.watch(
                           exerciseProgressionProvider(ex),
                         );
+                        final activeExercise =
+                            workoutState.activeSession != null &&
+                                index <
+                                    workoutState.activeSession!.exercises.length
+                            ? workoutState.activeSession!.exercises[index]
+                            : null;
+                        final exerciseSessionNotes =
+                            activeExercise?.sessionNotes.trim() ?? '';
+                        final isLoadComparable =
+                            activeExercise?.isLoadComparable ?? true;
 
                         return Container(
                           key: ValueKey<String>(
@@ -2322,13 +2498,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          progression.nextTarget,
+                                          'Próximo treino: ${progression.nextTarget}',
                                           style: TextStyle(
                                             color: AppColors.textSecondary,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
-                                          maxLines: 2,
+                                          maxLines: 4,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
@@ -2402,6 +2578,98 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                     ],
                                   ),
                                 ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  10,
+                                ),
+                                child: InkWell(
+                                  key: ValueKey<String>(
+                                    'exercise-notes-${ex.id}-$index',
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () => _showExerciseNotesEditor(
+                                    provider: provider,
+                                    exerciseIndex: index,
+                                    exercise: ex,
+                                  ),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 9,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceLight,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppColors.border,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Icon(
+                                          exerciseSessionNotes.isEmpty
+                                              ? Icons.note_add_outlined
+                                              : Icons.sticky_note_2_outlined,
+                                          size: 18,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              const Text(
+                                                'Anotações',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              Text(
+                                                exerciseSessionNotes.isEmpty
+                                                    ? 'Adicionar uma anotação para este exercício'
+                                                    : exerciseSessionNotes,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (!isLoadComparable) ...<Widget>[
+                                          const SizedBox(width: 6),
+                                          Tooltip(
+                                            message:
+                                                'Carga fora da comparação de progressão',
+                                            child: Icon(
+                                              Icons.compare_arrows_rounded,
+                                              size: 17,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          Icons.chevron_right_rounded,
+                                          size: 18,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
                               Divider(color: AppColors.border, height: 1),
 
                               Padding(

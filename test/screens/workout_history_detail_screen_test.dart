@@ -22,6 +22,8 @@ void main() {
         ExerciseLog(
           exerciseId: 'p12',
           exerciseName: 'Supino Reto Articulado',
+          notes: 'Usei a máquina do segundo andar.',
+          isLoadComparable: false,
           sets: const [
             ExerciseSet(reps: 8, weight: 0),
             ExerciseSet(reps: 10, weight: 20),
@@ -44,6 +46,12 @@ void main() {
     expect(find.text('—'), findsOneWidget);
     expect(find.text('0.0 kg'), findsNothing);
     expect(find.text('20 kg'), findsOneWidget);
+    expect(find.text('Anotações'), findsOneWidget);
+    expect(find.text('Usei a máquina do segundo andar.'), findsOneWidget);
+    expect(
+      find.text('Carga não usada na comparação de progressão.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('treino incompleto destaca o histórico parcial', (tester) async {

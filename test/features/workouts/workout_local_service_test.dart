@@ -79,6 +79,8 @@ void main() {
         ExerciseLog(
           exerciseId: 'p1',
           exerciseName: 'Supino reto',
+          notes: 'Carga mais leve por desconforto no ombro.',
+          isLoadComparable: false,
           sets: const [ExerciseSet(reps: 10, weight: 20)],
         ),
       ],
@@ -90,6 +92,11 @@ void main() {
 
     expect(loadedHistory.single.totalVolume, 200);
     expect(loadedHistory.single.exercises.single.sets.single.reps, 10);
+    expect(
+      loadedHistory.single.exercises.single.notes,
+      'Carga mais leve por desconforto no ombro.',
+    );
+    expect(loadedHistory.single.exercises.single.isLoadComparable, isFalse);
 
     final activeSession = ActiveWorkoutSession(
       id: 'active',
@@ -102,6 +109,8 @@ void main() {
       exercises: [
         ActiveWorkoutExercise(
           exercise: exercise,
+          sessionNotes: 'Máquina diferente.',
+          isLoadComparable: false,
           sets: const [
             ActiveWorkoutSet(
               setNumber: 1,
@@ -134,6 +143,8 @@ void main() {
     expect(restoredSession.restEndsAt, DateTime(2026, 7, 29, 21, 2));
     expect(restoredSession.isRestPaused, isFalse);
     expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
+    expect(restoredSession.exercises.single.sessionNotes, 'Máquina diferente.');
+    expect(restoredSession.exercises.single.isLoadComparable, isFalse);
     expect(restoredSession.cardio, hasLength(1));
     expect(restoredSession.cardio.single.actualDurationMinutes, 18);
     expect(restoredSession.cardio.single.distanceKm, 2.5);

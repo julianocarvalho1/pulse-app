@@ -273,6 +273,20 @@ class WorkoutController extends Notifier<WorkoutState> {
         .updateActiveCardio(entry);
   }
 
+  void updateExerciseSessionDetails(
+    int exerciseIndex, {
+    required String notes,
+    required bool isLoadComparable,
+  }) {
+    ref
+        .read(workoutSessionControllerProvider.notifier)
+        .updateExerciseSessionDetails(
+          exerciseIndex,
+          notes: notes,
+          isLoadComparable: isLoadComparable,
+        );
+  }
+
   void saveActiveSessionProgress({
     required Map<int, List<bool>> setsStatus,
     required Map<int, List<String>> weights,

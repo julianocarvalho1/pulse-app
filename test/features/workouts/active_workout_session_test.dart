@@ -17,6 +17,8 @@ void main() {
       isRestPaused: false,
       exercises: [
         ActiveWorkoutExercise(
+          sessionNotes: 'Usei a máquina do andar de cima.',
+          isLoadComparable: false,
           exercise: const Exercise(
             id: 'supino',
             name: 'Supino',
@@ -62,6 +64,11 @@ void main() {
     expect(restored.restEndsAt, DateTime(2026, 7, 29, 20, 3));
     expect(restored.isRestPaused, isFalse);
     expect(restored.exercises.single.exercise.id, 'supino');
+    expect(
+      restored.exercises.single.sessionNotes,
+      'Usei a máquina do andar de cima.',
+    );
+    expect(restored.exercises.single.isLoadComparable, isFalse);
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
     expect(restored.exercises.single.sets.first.targetText, '8–10 reps');
     expect(restored.exercises.single.sets.first.targetRir, 2);

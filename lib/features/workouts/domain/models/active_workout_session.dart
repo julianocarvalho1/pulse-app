@@ -99,20 +99,28 @@ class ActiveWorkoutExercise {
   ActiveWorkoutExercise({
     required this.exercise,
     required List<ActiveWorkoutSet> sets,
+    this.sessionNotes = '',
+    this.isLoadComparable = true,
   }) : sets = UnmodifiableListView<ActiveWorkoutSet>(
          List<ActiveWorkoutSet>.from(sets),
        );
 
   final Exercise exercise;
   final List<ActiveWorkoutSet> sets;
+  final String sessionNotes;
+  final bool isLoadComparable;
 
   ActiveWorkoutExercise copyWith({
     Exercise? exercise,
     List<ActiveWorkoutSet>? sets,
+    String? sessionNotes,
+    bool? isLoadComparable,
   }) {
     return ActiveWorkoutExercise(
       exercise: exercise ?? this.exercise,
       sets: sets ?? this.sets,
+      sessionNotes: sessionNotes ?? this.sessionNotes,
+      isLoadComparable: isLoadComparable ?? this.isLoadComparable,
     );
   }
 
@@ -120,6 +128,8 @@ class ActiveWorkoutExercise {
     return {
       'exercise': exercise.toMap(),
       'sets': sets.map((set) => set.toMap()).toList(),
+      'sessionNotes': sessionNotes,
+      'isLoadComparable': isLoadComparable,
     };
   }
 
@@ -147,6 +157,11 @@ class ActiveWorkoutExercise {
                 )
                 .toList()
           : const <ActiveWorkoutSet>[],
+      sessionNotes: map['sessionNotes']?.toString() ?? '',
+      isLoadComparable:
+          map['isLoadComparable'] == null ||
+          map['isLoadComparable'] == true ||
+          map['isLoadComparable'] == 1,
     );
   }
 }

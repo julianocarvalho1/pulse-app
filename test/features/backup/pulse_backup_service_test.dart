@@ -72,6 +72,14 @@ void main() {
       'notes': '',
       'status': 'completed',
     });
+    await db.insert('workout_history_exercises', <String, Object>{
+      'history_id': 'history-a',
+      'exercise_id': 'supino',
+      'exercise_name': 'Supino',
+      'sort_order': 0,
+      'notes': 'Máquina diferente.',
+      'is_load_comparable': 0,
+    });
     await db.insert('body_measurements', <String, Object?>{
       'id': 'weight-a',
       'recorded_at_ms': DateTime(2026, 7, 31).millisecondsSinceEpoch,
@@ -107,6 +115,21 @@ void main() {
       'rest_end_at_ms': restEndsAt.millisecondsSinceEpoch,
       'is_rest_paused': 0,
     });
+    await db.insert('active_session_exercises', <String, Object>{
+      'session_id': 'active-a',
+      'exercise_id': 'supino',
+      'sort_order': 0,
+      'name': 'Supino',
+      'muscle': 'Peito',
+      'description': '',
+      'reps': '3x 8-12',
+      'rest': '90 seg',
+      'is_superset': 0,
+      'custom_note': '',
+      'advanced_prescription_json': '',
+      'session_notes': 'Ombro cansado.',
+      'is_load_comparable': 0,
+    });
 
     await preferences.setString('user_name', 'Juliano');
     await preferences.setString('settings_theme_mode', 'light');
@@ -136,6 +159,11 @@ void main() {
       contains('8–10 reps'),
     );
     expect(await db.query('workout_history'), hasLength(1));
+    final restoredHistoryExercise = (await db.query(
+      'workout_history_exercises',
+    )).single;
+    expect(restoredHistoryExercise['notes'], 'Máquina diferente.');
+    expect(restoredHistoryExercise['is_load_comparable'], 0);
     expect(await db.query('workout_history_cardio'), hasLength(1));
     final restoredActivities = await db.query(
       'workout_history_free_activities',
@@ -151,6 +179,11 @@ void main() {
       restEndsAt.millisecondsSinceEpoch,
     );
     expect(restoredActiveSession['is_rest_paused'], 0);
+    final restoredActiveExercise = (await db.query(
+      'active_session_exercises',
+    )).single;
+    expect(restoredActiveExercise['session_notes'], 'Ombro cansado.');
+    expect(restoredActiveExercise['is_load_comparable'], 0);
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
     expect(preferences.getBool('app_lock_enabled'), isFalse);
@@ -216,4 +249,74 @@ void main() {
     final db = await database.database;
     expect(await db.query('workout_history_free_activities'), isEmpty);
   });
+
+  test(
+    'aceita backup anterior aos campos de anotações por exercício',
+    () async {
+      final db = await database.database;
+      await db.insert('workout_history', <String, Object>{
+        'id': 'legacy-history',
+        'routine_name': 'Treino A',
+        'date_ms': 1,
+        'duration': '20:00',
+        'notes': '',
+        'status': 'completed',
+      });
+      await db.insert('workout_history_exercises', <String, Object>{
+        'history_id': 'legacy-history',
+        'exercise_id': 'supino',
+        'exercise_name': 'Supino',
+        'sort_order': 0,
+      });
+      await db.insert('active_session', <String, Object>{
+        'id': 'legacy-active',
+        'routine_name': 'Treino A',
+        'started_at_ms': 1,
+        'elapsed_seconds': 10,
+        'notes': '',
+        'rest_seconds': 0,
+        'is_rest_paused': 0,
+      });
+      await db.insert('active_session_exercises', <String, Object>{
+        'session_id': 'legacy-active',
+        'exercise_id': 'supino',
+        'sort_order': 0,
+        'name': 'Supino',
+        'muscle': 'Peito',
+        'description': '',
+        'reps': '3x 8-12',
+        'rest': '90 seg',
+      });
+
+      final decoded =
+          jsonDecode(utf8.decode(await service.exportBytes()))
+              as Map<String, dynamic>;
+      final tables = decoded['tables'] as Map<String, dynamic>;
+      final historyRows = tables['workout_history_exercises'] as List<dynamic>;
+      final activeRows = tables['active_session_exercises'] as List<dynamic>;
+      for (final row in historyRows.cast<Map<String, dynamic>>()) {
+        row.remove('notes');
+        row.remove('is_load_comparable');
+      }
+      for (final row in activeRows.cast<Map<String, dynamic>>()) {
+        row.remove('session_notes');
+        row.remove('is_load_comparable');
+      }
+
+      await service.importBytes(
+        Uint8List.fromList(utf8.encode(jsonEncode(decoded))),
+      );
+
+      final restoredHistory = (await db.query(
+        'workout_history_exercises',
+      )).single;
+      expect(restoredHistory['notes'], '');
+      expect(restoredHistory['is_load_comparable'], 1);
+      final restoredActive = (await db.query(
+        'active_session_exercises',
+      )).single;
+      expect(restoredActive['session_notes'], '');
+      expect(restoredActive['is_load_comparable'], 1);
+    },
+  );
 }

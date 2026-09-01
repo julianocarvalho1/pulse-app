@@ -364,6 +364,41 @@ void main() {
     expect(repository.clearActiveSessionCalls, 1);
   });
 
+  test('mantém anotações do exercício ao salvar séries da sessão', () async {
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[routineB],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    controller.startRoutine(routineB);
+
+    controller.updateExerciseSessionDetails(
+      0,
+      notes: 'Usei outra máquina hoje.',
+      isLoadComparable: false,
+    );
+    controller.saveActiveSessionProgress(
+      setsStatus: <int, List<bool>>{
+        0: <bool>[true, false, false],
+      },
+      weights: <int, List<String>>{
+        0: <String>['40', '', ''],
+      },
+      reps: <int, List<String>>{
+        0: <String>['10', '', ''],
+      },
+      notes: '',
+    );
+
+    final activeExercise = controller.activeSession!.exercises.single;
+    expect(activeExercise.sessionNotes, 'Usei outra máquina hoje.');
+    expect(activeExercise.isLoadComparable, isFalse);
+    expect(activeExercise.sets.first.isCompleted, isTrue);
+  });
+
   test('inicia, persiste e salva cardio planejado dentro da sessão', () async {
     final repository = _SessionFakeRepository(
       routines: <WorkoutRoutine>[routineWithCardio],

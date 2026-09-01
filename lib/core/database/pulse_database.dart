@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 7;
+  static const int databaseVersion = 8;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -141,6 +141,8 @@ class PulseDatabase {
         exercise_id TEXT NOT NULL,
         exercise_name TEXT NOT NULL,
         sort_order INTEGER NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        is_load_comparable INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY (history_id)
           REFERENCES workout_history (id)
           ON DELETE CASCADE
@@ -197,6 +199,8 @@ class PulseDatabase {
         is_superset INTEGER NOT NULL DEFAULT 0,
         custom_note TEXT NOT NULL DEFAULT '',
         advanced_prescription_json TEXT NOT NULL DEFAULT '',
+        session_notes TEXT NOT NULL DEFAULT '',
+        is_load_comparable INTEGER NOT NULL DEFAULT 1,
         FOREIGN KEY (session_id)
           REFERENCES active_session (id)
           ON DELETE CASCADE
@@ -269,6 +273,37 @@ class PulseDatabase {
     if (oldVersion < 7) {
       await _addActiveSessionRestColumns(db);
     }
+
+    if (oldVersion < 8) {
+      await _addExerciseSessionNoteColumns(db);
+    }
+  }
+
+  Future<void> _addExerciseSessionNoteColumns(DatabaseExecutor db) async {
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_exercises',
+      column: 'session_notes',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_exercises',
+      column: 'is_load_comparable',
+      definition: 'INTEGER NOT NULL DEFAULT 1',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_exercises',
+      column: 'notes',
+      definition: "TEXT NOT NULL DEFAULT ''",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_exercises',
+      column: 'is_load_comparable',
+      definition: 'INTEGER NOT NULL DEFAULT 1',
+    );
   }
 
   Future<void> _addActiveSessionRestColumns(DatabaseExecutor db) async {
