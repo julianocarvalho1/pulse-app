@@ -257,6 +257,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   final TextEditingController _notesController = TextEditingController();
 
   Timer? _sessionSaveDebounce;
+  Timer? _setDurationTicker;
   bool _notesInitialized = false;
   bool _isSubmittingFinish = false;
   bool _isExitDialogOpen = false;
@@ -268,6 +269,20 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   void initState() {
     super.initState();
     _notesController.addListener(_scheduleSessionSave);
+    _setDurationTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        return;
+      }
+      final session = ref.read(workoutControllerProvider).activeSession;
+      final hasRunningTimedSet =
+          session?.exercises.any(
+            (exercise) => exercise.sets.any((set) => set.isDurationRunning),
+          ) ??
+          false;
+      if (hasRunningTimedSet) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -285,6 +300,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       }
     }
     _sessionSaveDebounce?.cancel();
+    _setDurationTicker?.cancel();
     _notesController.dispose();
     super.dispose();
   }
@@ -741,6 +757,106 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     int m = totalSeconds ~/ 60;
     int s = totalSeconds % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  String _formatSetDuration(int totalSeconds) {
+    final safeSeconds = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = safeSeconds ~/ 60;
+    final seconds = safeSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildTimedSetControl(
+    BuildContext context, {
+    required ActiveWorkoutSet set,
+    required String timerKey,
+    required VoidCallback onStartOrPause,
+  }) {
+    final elapsed = set.elapsedDurationSecondsAt(DateTime.now());
+    final planned = set.plannedDurationSeconds;
+    final remaining = planned - elapsed;
+    final isOvertime = planned > 0 && remaining < 0;
+    final displaySeconds = planned <= 0
+        ? elapsed
+        : isOvertime
+        ? -remaining
+        : remaining;
+    final status = set.isCompleted
+        ? 'Realizado: ${_formatSetDuration(elapsed)}'
+        : set.isDurationRunning
+        ? isOvertime
+              ? 'Tempo extra'
+              : 'Em andamento'
+        : elapsed > 0
+        ? 'Pausado'
+        : 'Meta: ${_formatSetDuration(planned)}';
+
+    return Expanded(
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    '${isOvertime ? '+' : ''}${_formatSetDuration(displaySeconds)}',
+                    style: TextStyle(
+                      color: set.isCompleted
+                          ? Theme.of(context).colorScheme.primary
+                          : AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    status,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 38,
+            height: 38,
+            child: IconButton.filledTonal(
+              key: ValueKey<String>('timed-set-toggle-$timerKey'),
+              tooltip: set.isDurationRunning
+                  ? 'Pausar tempo'
+                  : elapsed > 0
+                  ? 'Continuar tempo'
+                  : 'Iniciar tempo',
+              padding: EdgeInsets.zero,
+              onPressed: set.isCompleted ? null : onStartOrPause,
+              icon: Icon(
+                set.isDurationRunning
+                    ? Icons.pause_rounded
+                    : Icons.play_arrow_rounded,
+                size: 21,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildExerciseInfoMetric(
@@ -1413,6 +1529,26 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           continue;
         }
 
+        final activeSet =
+            provider.activeSession != null &&
+                exerciseIndex < provider.activeSession!.exercises.length &&
+                setIndex <
+                    provider.activeSession!.exercises[exerciseIndex].sets.length
+            ? provider.activeSession!.exercises[exerciseIndex].sets[setIndex]
+            : null;
+        if (activeSet?.isTimed ?? false) {
+          setsCompleted.add(
+            ExerciseSet(
+              reps: 0,
+              weight: 0,
+              targetType: WorkoutSetTargetType.duration,
+              plannedDurationSeconds: activeSet!.plannedDurationSeconds,
+              actualDurationSeconds: activeSet.actualDurationSeconds,
+            ),
+          );
+          continue;
+        }
+
         final weight =
             WeightUnitConverter.parseDisplayedWeightToKilograms(
               _weightControllers[exerciseIndex]![setIndex].text,
@@ -1870,6 +2006,78 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       setIndex: setIndex,
     );
 
+    _showRestOutcome(
+      outcome: outcome,
+      exercises: exercises,
+      exerciseIndex: exerciseIndex,
+    );
+  }
+
+  void _handleTimedSetStartOrPause({
+    required WorkoutController provider,
+    required int exerciseIndex,
+    required int setIndex,
+    required ActiveWorkoutSet set,
+  }) {
+    final changed = set.isDurationRunning
+        ? provider.pauseTimedSet(exerciseIndex, setIndex)
+        : provider.startTimedSet(exerciseIndex, setIndex);
+    if (changed && mounted) {
+      setState(() {});
+    }
+  }
+
+  void _handleTimedSetCompletion({
+    required WorkoutController provider,
+    required List<Exercise> exercises,
+    required int exerciseIndex,
+    required int setIndex,
+    required bool isCompleted,
+  }) {
+    final changed = isCompleted
+        ? provider.completeTimedSet(exerciseIndex, setIndex)
+        : provider.reopenTimedSet(exerciseIndex, setIndex);
+
+    if (!changed) {
+      if (isCompleted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Inicie o cronômetro antes de concluir uma série por tempo.',
+              ),
+            ),
+          );
+      }
+      return;
+    }
+
+    setState(() {
+      SessionStateCache.setsStatus[exerciseIndex]![setIndex] = isCompleted;
+    });
+    _persistSessionNow();
+
+    if (!isCompleted) {
+      return;
+    }
+
+    final outcome = provider.startRestAfterSet(
+      exerciseIndex,
+      setIndex: setIndex,
+    );
+    _showRestOutcome(
+      outcome: outcome,
+      exercises: exercises,
+      exerciseIndex: exerciseIndex,
+    );
+  }
+
+  void _showRestOutcome({
+    required RestStartOutcome outcome,
+    required List<Exercise> exercises,
+    required int exerciseIndex,
+  }) {
     if (outcome == RestStartOutcome.skippedForSuperset &&
         exerciseIndex + 1 < exercises.length) {
       final nextExerciseName = exercises[exerciseIndex + 1].name;
@@ -2123,6 +2331,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                     workoutState.activeSession!.exercises.length
                             ? workoutState.activeSession!.exercises[index]
                             : null;
+                        final hasTimedSets =
+                            activeExercise?.sets.any((set) => set.isTimed) ??
+                            false;
                         final exerciseSessionNotes =
                             activeExercise?.sessionNotes.trim() ?? '';
                         final isLoadComparable =
@@ -2924,31 +3135,46 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Center(
-                                        child: Text(
-                                          'Carga ($weightUnit)',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                            fontWeight: FontWeight.bold,
+                                    if (hasTimedSets)
+                                      Expanded(
+                                        child: Center(
+                                          child: Text(
+                                            'Tempo da série',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    else ...<Widget>[
+                                      Expanded(
+                                        child: Center(
+                                          child: Text(
+                                            'Carga ($weightUnit)',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Center(
-                                        child: Text(
-                                          'Reps',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                            fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Center(
+                                          child: Text(
+                                            'Reps',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                     const SizedBox(width: 6),
                                     SizedBox(
                                       width: 30,
@@ -3005,6 +3231,8 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                         smartTarget =
                                             '$smartTarget • RIR ${prescribedSet!.targetRir}';
                                       }
+                                      final isTimedSet =
+                                          prescribedSet?.isTimed ?? false;
 
                                       return Padding(
                                         padding: EdgeInsets.only(
@@ -3032,22 +3260,37 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                               ),
                                             ),
                                             const SizedBox(width: 6),
-                                            Expanded(
-                                              child: _buildInputForm(
+                                            if (isTimedSet)
+                                              _buildTimedSetControl(
                                                 context,
-                                                _weightControllers[index]![setIndex],
-                                                weightUnit,
+                                                set: prescribedSet!,
+                                                timerKey: '$index-$setIndex',
+                                                onStartOrPause: () =>
+                                                    _handleTimedSetStartOrPause(
+                                                      provider: provider,
+                                                      exerciseIndex: index,
+                                                      setIndex: setIndex,
+                                                      set: prescribedSet,
+                                                    ),
+                                              )
+                                            else ...<Widget>[
+                                              Expanded(
+                                                child: _buildInputForm(
+                                                  context,
+                                                  _weightControllers[index]![setIndex],
+                                                  weightUnit,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: _buildInputForm(
-                                                context,
-                                                _repsControllers[index]![setIndex],
-                                                smartTarget,
-                                                isReps: true,
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: _buildInputForm(
+                                                  context,
+                                                  _repsControllers[index]![setIndex],
+                                                  smartTarget,
+                                                  isReps: true,
+                                                ),
                                               ),
-                                            ),
+                                            ],
                                             const SizedBox(width: 6),
                                             SizedBox(
                                               width: 30,
@@ -3075,13 +3318,23 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                       BorderRadius.circular(4),
                                                 ),
                                                 onChanged: (val) {
-                                                  _handleSetChanged(
-                                                    provider: provider,
-                                                    exercises: exercises,
-                                                    exerciseIndex: index,
-                                                    setIndex: setIndex,
-                                                    isCompleted: val ?? false,
-                                                  );
+                                                  if (isTimedSet) {
+                                                    _handleTimedSetCompletion(
+                                                      provider: provider,
+                                                      exercises: exercises,
+                                                      exerciseIndex: index,
+                                                      setIndex: setIndex,
+                                                      isCompleted: val ?? false,
+                                                    );
+                                                  } else {
+                                                    _handleSetChanged(
+                                                      provider: provider,
+                                                      exercises: exercises,
+                                                      exerciseIndex: index,
+                                                      setIndex: setIndex,
+                                                      isCompleted: val ?? false,
+                                                    );
+                                                  }
                                                 },
                                               ),
                                             ),

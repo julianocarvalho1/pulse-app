@@ -71,7 +71,7 @@ void main() {
       }
     });
 
-    test('fornece mídia oficial para os 101 exercícios do catálogo', () {
+    test('fornece mídia oficial para os 104 exercícios do catálogo', () {
       final approvedMedia = exerciseDatabase
           .map(
             (exercise) => RepDbExerciseMapping.approvedMediaFor(exercise.id)!,
@@ -87,16 +87,21 @@ void main() {
         ],
       ];
 
-      expect(approvedMedia, hasLength(101));
-      expect(paired, hasLength(99));
+      expect(approvedMedia, hasLength(104));
+      expect(paired, hasLength(102));
       expect(single, hasLength(2));
-      expect(assetPaths, hasLength(200));
+      expect(assetPaths, hasLength(206));
       expect(assetPaths.toSet(), hasLength(assetPaths.length));
       expect(assetPaths.every((path) => File(path).existsSync()), isTrue);
       expect(assetPaths.every((path) => path.endsWith('.webp')), isTrue);
+
+      final manifest = File(
+        'third_party/repdb/ASSET-MANIFEST.sha256',
+      ).readAsStringSync();
+      expect(assetPaths.every(manifest.contains), isTrue);
     });
 
-    test('inclui 26 adições úteis sem reutilizar mídias já mapeadas', () {
+    test('inclui 29 adições úteis sem reutilizar mídias já mapeadas', () {
       final additions = RepDbExerciseMapping.catalogAdditions;
       final sourceIds = additions.map((item) => item.repDbId).toSet();
       final names = additions.map((item) => item.namePtBr).toSet();
@@ -117,7 +122,7 @@ void main() {
         'Tríceps',
       };
 
-      expect(additions, hasLength(26));
+      expect(additions, hasLength(29));
       expect(
         additions.every(
           (item) =>
@@ -141,7 +146,7 @@ void main() {
     });
 
     test('mantém a atribuição gratuita em um único contrato', () {
-      expect(RepDbExerciseMapping.version, 2);
+      expect(RepDbExerciseMapping.version, 3);
       expect(
         RepDbExerciseMapping.attributionText,
         'Exercise data by RepDB (repdb.co)',

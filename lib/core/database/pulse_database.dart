@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 9;
+  static const int databaseVersion = 10;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -162,6 +162,9 @@ class PulseDatabase {
         set_order INTEGER NOT NULL,
         reps INTEGER NOT NULL,
         weight REAL NOT NULL,
+        target_type TEXT NOT NULL DEFAULT 'repetitions',
+        planned_duration_seconds INTEGER NOT NULL DEFAULT 0,
+        actual_duration_seconds INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (history_exercise_id)
           REFERENCES workout_history_exercises (id)
           ON DELETE CASCADE
@@ -228,6 +231,10 @@ class PulseDatabase {
         technique TEXT NOT NULL DEFAULT 'none',
         prescribed_rest_seconds INTEGER,
         prescription_notes TEXT NOT NULL DEFAULT '',
+        target_type TEXT NOT NULL DEFAULT 'repetitions',
+        planned_duration_seconds INTEGER NOT NULL DEFAULT 0,
+        actual_duration_seconds INTEGER NOT NULL DEFAULT 0,
+        duration_started_at_ms INTEGER,
         FOREIGN KEY (session_exercise_id)
           REFERENCES active_session_exercises (id)
           ON DELETE CASCADE
@@ -283,6 +290,55 @@ class PulseDatabase {
     if (oldVersion < 9) {
       await _addExercisePerceivedRirColumns(db);
     }
+
+    if (oldVersion < 10) {
+      await _addTimedSetColumns(db);
+    }
+  }
+
+  Future<void> _addTimedSetColumns(DatabaseExecutor db) async {
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'target_type',
+      definition: "TEXT NOT NULL DEFAULT 'repetitions'",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'planned_duration_seconds',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'actual_duration_seconds',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_sets',
+      column: 'duration_started_at_ms',
+      definition: 'INTEGER',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_sets',
+      column: 'target_type',
+      definition: "TEXT NOT NULL DEFAULT 'repetitions'",
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_sets',
+      column: 'planned_duration_seconds',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_sets',
+      column: 'actual_duration_seconds',
+      definition: 'INTEGER NOT NULL DEFAULT 0',
+    );
   }
 
   Future<void> _addExercisePerceivedRirColumns(DatabaseExecutor db) async {

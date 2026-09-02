@@ -7,10 +7,12 @@ import '../../../../models/exercise.dart';
 import '../../data/mappers/legacy_workout_mapper.dart';
 import '../../data/services/workout_feedback_service.dart';
 import '../../domain/models/active_workout_session.dart';
+import '../../domain/models/advanced_workout_prescription.dart';
 import '../../domain/models/cardio_log.dart';
 import '../../domain/models/exercise_log.dart';
 import '../../domain/models/workout_session_progress.dart';
 import '../../domain/models/workout_session_status.dart';
+import '../../domain/models/workout_set.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../state/workout_session_state.dart';
 import 'workout_dependencies.dart';
@@ -685,6 +687,168 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     unawaited(_persistActiveSession());
   }
 
+  bool startTimedSet(int exerciseIndex, int setIndex) {
+    final session = activeSession;
+    if (session == null ||
+        exerciseIndex < 0 ||
+        exerciseIndex >= session.exercises.length ||
+        setIndex < 0 ||
+        setIndex >= session.exercises[exerciseIndex].sets.length) {
+      return false;
+    }
+
+    final selected = session.exercises[exerciseIndex].sets[setIndex];
+    if (!selected.isTimed || selected.isCompleted) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    final updatedExercises = <ActiveWorkoutExercise>[];
+
+    for (
+      var currentExerciseIndex = 0;
+      currentExerciseIndex < session.exercises.length;
+      currentExerciseIndex++
+    ) {
+      final activeExercise = session.exercises[currentExerciseIndex];
+      final updatedSets = <ActiveWorkoutSet>[];
+
+      for (
+        var currentSetIndex = 0;
+        currentSetIndex < activeExercise.sets.length;
+        currentSetIndex++
+      ) {
+        final set = activeExercise.sets[currentSetIndex];
+        final isSelected =
+            currentExerciseIndex == exerciseIndex &&
+            currentSetIndex == setIndex;
+
+        if (isSelected) {
+          updatedSets.add(set.copyWith(durationStartedAt: now));
+        } else if (set.isDurationRunning) {
+          updatedSets.add(
+            set.copyWith(
+              actualDurationSeconds: set.elapsedDurationSecondsAt(now),
+              clearDurationStartedAt: true,
+            ),
+          );
+        } else {
+          updatedSets.add(set);
+        }
+      }
+
+      updatedExercises.add(activeExercise.copyWith(sets: updatedSets));
+    }
+
+    _saveTimedSetUpdate(session, updatedExercises);
+    return true;
+  }
+
+  bool pauseTimedSet(int exerciseIndex, int setIndex) {
+    final session = activeSession;
+    final set = _timedSetAt(session, exerciseIndex, setIndex);
+    if (session == null || set == null || !set.isDurationRunning) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    return _replaceTimedSet(
+      session,
+      exerciseIndex,
+      setIndex,
+      set.copyWith(
+        actualDurationSeconds: set.elapsedDurationSecondsAt(now),
+        clearDurationStartedAt: true,
+      ),
+    );
+  }
+
+  bool completeTimedSet(int exerciseIndex, int setIndex) {
+    final session = activeSession;
+    final set = _timedSetAt(session, exerciseIndex, setIndex);
+    if (session == null || set == null || !set.isTimed) {
+      return false;
+    }
+
+    final elapsed = set.elapsedDurationSecondsAt(DateTime.now());
+    if (elapsed <= 0) {
+      return false;
+    }
+
+    return _replaceTimedSet(
+      session,
+      exerciseIndex,
+      setIndex,
+      set.copyWith(
+        actualDurationSeconds: elapsed,
+        isCompleted: true,
+        clearDurationStartedAt: true,
+      ),
+    );
+  }
+
+  bool reopenTimedSet(int exerciseIndex, int setIndex) {
+    final session = activeSession;
+    final set = _timedSetAt(session, exerciseIndex, setIndex);
+    if (session == null || set == null || !set.isTimed) {
+      return false;
+    }
+
+    return _replaceTimedSet(
+      session,
+      exerciseIndex,
+      setIndex,
+      set.copyWith(isCompleted: false, clearDurationStartedAt: true),
+    );
+  }
+
+  ActiveWorkoutSet? _timedSetAt(
+    ActiveWorkoutSession? session,
+    int exerciseIndex,
+    int setIndex,
+  ) {
+    if (session == null ||
+        exerciseIndex < 0 ||
+        exerciseIndex >= session.exercises.length ||
+        setIndex < 0 ||
+        setIndex >= session.exercises[exerciseIndex].sets.length) {
+      return null;
+    }
+    return session.exercises[exerciseIndex].sets[setIndex];
+  }
+
+  bool _replaceTimedSet(
+    ActiveWorkoutSession session,
+    int exerciseIndex,
+    int setIndex,
+    ActiveWorkoutSet replacement,
+  ) {
+    final updatedExercises = List<ActiveWorkoutExercise>.from(
+      session.exercises,
+    );
+    final updatedSets = List<ActiveWorkoutSet>.from(
+      updatedExercises[exerciseIndex].sets,
+    );
+    updatedSets[setIndex] = replacement;
+    updatedExercises[exerciseIndex] = updatedExercises[exerciseIndex].copyWith(
+      sets: updatedSets,
+    );
+    _saveTimedSetUpdate(session, updatedExercises);
+    return true;
+  }
+
+  void _saveTimedSetUpdate(
+    ActiveWorkoutSession session,
+    List<ActiveWorkoutExercise> exercises,
+  ) {
+    _activeSessionSnapshot = session.copyWith(
+      elapsedSeconds: ref.read(workoutDurationProvider),
+      exercises: exercises,
+    );
+    state = state.copyWith(activeSession: _activeSessionSnapshot);
+    unawaited(_persistActiveSession());
+  }
+
   Future<bool> finishWorkout(
     String duration, {
     required bool isIncomplete,
@@ -779,7 +943,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     if (advancedWeek != null && advancedWeek.sets.isNotEmpty) {
       return <ActiveWorkoutSet>[
         for (var index = 0; index < advancedWeek.sets.length; index++)
-          ActiveWorkoutSet(
+          _activeSetFromPrescription(
             setNumber: index + 1,
             targetText: advancedWeek.sets[index].target,
             targetRir: advancedWeek.sets[index].targetRir,
@@ -795,9 +959,34 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
       reps: exercise.reps,
       rest: exercise.rest,
     );
-    return List<ActiveWorkoutSet>.generate(
-      config.seriesCount,
-      (index) => ActiveWorkoutSet(setNumber: index + 1),
+    return List<ActiveWorkoutSet>.generate(config.seriesCount, (index) {
+      return _activeSetFromPrescription(
+        setNumber: index + 1,
+        targetText: exercise.reps,
+      );
+    });
+  }
+
+  ActiveWorkoutSet _activeSetFromPrescription({
+    required int setNumber,
+    required String targetText,
+    int? targetRir,
+    String cadence = '',
+    WorkoutTechnique technique = WorkoutTechnique.none,
+    int? prescribedRestSeconds,
+    String prescriptionNotes = '',
+  }) {
+    final target = WorkoutSetTarget.fromText(targetText);
+    return ActiveWorkoutSet(
+      setNumber: setNumber,
+      targetText: targetText,
+      targetRir: targetRir,
+      cadence: cadence,
+      technique: technique,
+      prescribedRestSeconds: prescribedRestSeconds,
+      prescriptionNotes: prescriptionNotes,
+      targetType: target.type,
+      plannedDurationSeconds: target.plannedDurationSeconds,
     );
   }
 

@@ -48,8 +48,8 @@ $sourceIds = @(
     Sort-Object -Unique
 )
 
-if ($sourceIds.Count -ne 101) {
-  throw "Esperados 101 exercícios aprovados, encontrados $($sourceIds.Count)."
+if ($sourceIds.Count -ne 104) {
+  throw "Esperados 104 exercícios aprovados, encontrados $($sourceIds.Count)."
 }
 
 New-Item -ItemType Directory -Force -Path $assetTarget | Out-Null

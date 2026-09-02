@@ -305,6 +305,30 @@ class WorkoutController extends Notifier<WorkoutState> {
         );
   }
 
+  bool startTimedSet(int exerciseIndex, int setIndex) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .startTimedSet(exerciseIndex, setIndex);
+  }
+
+  bool pauseTimedSet(int exerciseIndex, int setIndex) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .pauseTimedSet(exerciseIndex, setIndex);
+  }
+
+  bool completeTimedSet(int exerciseIndex, int setIndex) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .completeTimedSet(exerciseIndex, setIndex);
+  }
+
+  bool reopenTimedSet(int exerciseIndex, int setIndex) {
+    return ref
+        .read(workoutSessionControllerProvider.notifier)
+        .reopenTimedSet(exerciseIndex, setIndex);
+  }
+
   Future<bool> finishWorkout(
     String duration, {
     required bool isIncomplete,

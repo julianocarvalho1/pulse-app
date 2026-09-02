@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
 import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
+import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/models/exercise.dart';
 
 void main() {
@@ -28,7 +29,7 @@ void main() {
             reps: '3x 8-10',
             rest: '90 seg',
           ),
-          sets: const [
+          sets: [
             ActiveWorkoutSet(
               setNumber: 1,
               weightText: '20',
@@ -41,6 +42,13 @@ void main() {
               prescribedRestSeconds: 90,
             ),
             ActiveWorkoutSet(setNumber: 2, weightText: '20', repsText: '9'),
+            ActiveWorkoutSet(
+              setNumber: 3,
+              targetType: WorkoutSetTargetType.duration,
+              plannedDurationSeconds: 45,
+              actualDurationSeconds: 28,
+              durationStartedAt: DateTime(2026, 7, 29, 20, 2),
+            ),
           ],
         ),
       ],
@@ -78,7 +86,17 @@ void main() {
       restored.exercises.single.sets.first.technique,
       WorkoutTechnique.isometry,
     );
-    expect(restored.exercises.single.sets.last.repsText, '9');
+    expect(restored.exercises.single.sets[1].repsText, '9');
+    expect(
+      restored.exercises.single.sets[2].targetType,
+      WorkoutSetTargetType.duration,
+    );
+    expect(restored.exercises.single.sets[2].plannedDurationSeconds, 45);
+    expect(restored.exercises.single.sets[2].actualDurationSeconds, 28);
+    expect(
+      restored.exercises.single.sets[2].durationStartedAt,
+      DateTime(2026, 7, 29, 20, 2),
+    );
     expect(restored.cardio.single.modality, CardioModality.elliptical);
     expect(restored.cardio.single.actualDurationMinutes, 18);
     expect(restored.cardio.single.isCompleted, isTrue);

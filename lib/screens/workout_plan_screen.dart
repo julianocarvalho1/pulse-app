@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/exercise.dart';
 import '../features/personal_workout_import/presentation/screens/personal_workout_import_screen.dart';
 import '../features/workout_generator/presentation/screens/workout_generator_screen.dart';
+import '../features/workouts/data/catalogs/core_extra_session_catalog.dart';
+import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workout_sharing/domain/services/pulse_workout_codec.dart';
 import '../features/workout_sharing/presentation/screens/pulse_workout_import_screen.dart';
@@ -27,7 +29,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
     final preMadePrograms = workoutState.preMadePrograms;
 
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -67,6 +69,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
             tabs: const <Widget>[
               Tab(text: 'Fichas'),
               Tab(text: 'Programas'),
+              Tab(text: 'Extras'),
               Tab(text: 'Exercícios'),
             ],
           ),
@@ -75,6 +78,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
           children: <Widget>[
             _buildMyRoutinesTab(context, provider, myRoutines),
             _buildCatalogTab(context, provider, preMadePrograms),
+            _buildExtraSessionsTab(context, provider, myRoutines),
             const ExercisesScreen(embedded: true),
           ],
         ),
@@ -856,6 +860,221 @@ class WorkoutPlanScreen extends ConsumerWidget {
       RoutineType.cardio => Icons.directions_run_rounded,
       RoutineType.mixed => Icons.sports_gymnastics_rounded,
     };
+  }
+
+  Widget _buildExtraSessionsTab(
+    BuildContext context,
+    WorkoutController provider,
+    List<WorkoutRoutine> savedRoutines,
+  ) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final routines = CoreExtraSessionCatalog.routines;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: primary.withValues(alpha: 0.45)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(Icons.add_circle_outline_rounded, color: primary, size: 20),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  'Faça uma sessão extra sem alterar a sequência do seu programa atual. Você também pode salvar uma cópia para personalizar.',
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        for (final routine in routines) ...<Widget>[
+          Container(
+            key: Key('extra-session-${routine.id}'),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.sports_gymnastics_rounded,
+                        color: primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            routine.name,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            routine.focus,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11.5,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 11),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: <Widget>[
+                    _buildRoutineMetaChip(routine.activitySummary),
+                    _buildRoutineMetaChip(_extraSessionDuration(routine.id)),
+                    _buildRoutineMetaChip(_extraSessionEquipment(routine.id)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  routine.exercises
+                      .map((exercise) => exercise.name)
+                      .join(' • '),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11.5,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        key: Key('view-${routine.id}'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (_) => RoutineDetailScreen(
+                                routine: routine,
+                                allowEditing: false,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                        label: const Text('Ver e iniciar'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        key: Key('copy-${routine.id}'),
+                        onPressed: () => _copyExtraSession(
+                          context,
+                          provider,
+                          routine,
+                          savedRoutines,
+                        ),
+                        icon: const Icon(Icons.copy_rounded, size: 17),
+                        label: const Text('Salvar cópia'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  String _extraSessionDuration(String id) {
+    return switch (id) {
+      'extra_core_express' => '≈ 10 min',
+      'extra_core_complete' => '≈ 20 min',
+      'extra_core_circuit' => '≈ 15 min',
+      _ => 'Sessão curta',
+    };
+  }
+
+  String _extraSessionEquipment(String id) {
+    return switch (id) {
+      'extra_core_complete' => 'Colchonete + polia',
+      _ => 'Sem equipamento',
+    };
+  }
+
+  void _copyExtraSession(
+    BuildContext context,
+    WorkoutController provider,
+    WorkoutRoutine routine,
+    List<WorkoutRoutine> savedRoutines,
+  ) {
+    final existingNames = savedRoutines
+        .map((item) => item.name.trim().toLowerCase())
+        .toSet();
+    var copyName = routine.name;
+    var copyNumber = 1;
+
+    while (existingNames.contains(copyName.toLowerCase())) {
+      copyNumber++;
+      copyName = copyNumber == 2
+          ? '${routine.name} (cópia)'
+          : '${routine.name} (cópia $copyNumber)';
+    }
+
+    provider.createRoutine(
+      copyName,
+      routine.focus,
+      '',
+      List<Exercise>.from(routine.exercises),
+      cardio: List<RoutineCardio>.from(routine.cardio),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$copyName foi salva em Fichas.'),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'VER',
+          onPressed: () => DefaultTabController.maybeOf(context)?.animateTo(0),
+        ),
+      ),
+    );
   }
 
   // =========================================================

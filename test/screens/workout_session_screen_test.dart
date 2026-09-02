@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
 import 'package:pulse/features/workouts/domain/models/workout_session_progress.dart';
+import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/features/workouts/presentation/providers/workout_controller.dart';
 import 'package:pulse/features/workouts/presentation/state/workout_state.dart';
 import 'package:pulse/models/exercise.dart';
@@ -276,6 +277,54 @@ void main() {
     expect(_NotesWorkoutController.savedPerceivedRir, 2);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'série por tempo mostra controles próprios e pode ser concluída',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final palette = pulsePalettes[1];
+      AppColors.configure(Brightness.light, primaryColor: palette.lightPrimary);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            workoutControllerProvider.overrideWith(_TimedWorkoutController.new),
+            workoutDurationProvider.overrideWith(_FixedDurationController.new),
+            workoutSessionProgressProvider.overrideWithValue(
+              const WorkoutSessionProgress(
+                completedSets: 0,
+                totalSets: 1,
+                completedExercises: 0,
+                totalExercises: 1,
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            theme: buildPulseLightTheme(palette.lightPrimary),
+            home: const WorkoutSessionScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Tempo da série'), findsOneWidget);
+      expect(find.text('00:30'), findsOneWidget);
+      expect(find.text('Carga (kg)'), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('timed-set-toggle-0-0')));
+      await tester.pump();
+      expect(find.byIcon(Icons.pause_rounded), findsOneWidget);
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pump();
+      expect(SessionStateCache.setsStatus[0]!.first, isTrue);
+      expect(find.text('Realizado: 00:31'), findsOneWidget);
+    },
+  );
 }
 
 class _FixedDurationController extends WorkoutDurationController {
@@ -400,5 +449,105 @@ class _NotesWorkoutController extends _FakeWorkoutController {
     savedNotes = notes;
     savedIsLoadComparable = isLoadComparable;
     savedPerceivedRir = perceivedRir;
+  }
+}
+
+class _TimedWorkoutController extends _FakeWorkoutController {
+  static const _timedExercise = Exercise(
+    id: 'ab5',
+    name: 'Prancha Isométrica',
+    muscle: 'Abdômen',
+    description: 'Sustentação do core.',
+    reps: '1x 30 seg',
+    rest: '45 seg',
+  );
+
+  @override
+  WorkoutState build() {
+    return super.build().copyWith(
+      currentWorkoutExercises: const <Exercise>[_timedExercise],
+      activeSession: ActiveWorkoutSession(
+        id: 'active-timed',
+        routineName: 'Core',
+        startedAt: DateTime(2026, 9, 2),
+        elapsedSeconds: 0,
+        exercises: <ActiveWorkoutExercise>[
+          ActiveWorkoutExercise(
+            exercise: _timedExercise,
+            sets: const <ActiveWorkoutSet>[
+              ActiveWorkoutSet(
+                setNumber: 1,
+                targetText: '30 seg',
+                targetType: WorkoutSetTargetType.duration,
+                plannedDurationSeconds: 30,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  ActiveWorkoutSession? get activeSession => state.activeSession;
+
+  @override
+  bool startTimedSet(int exerciseIndex, int setIndex) {
+    _replaceSet(
+      state.activeSession!.exercises.single.sets.single.copyWith(
+        durationStartedAt: DateTime.now(),
+      ),
+    );
+    return true;
+  }
+
+  @override
+  bool pauseTimedSet(int exerciseIndex, int setIndex) {
+    _replaceSet(
+      state.activeSession!.exercises.single.sets.single.copyWith(
+        actualDurationSeconds: 1,
+        clearDurationStartedAt: true,
+      ),
+    );
+    return true;
+  }
+
+  @override
+  bool completeTimedSet(int exerciseIndex, int setIndex) {
+    _replaceSet(
+      state.activeSession!.exercises.single.sets.single.copyWith(
+        actualDurationSeconds: 31,
+        isCompleted: true,
+        clearDurationStartedAt: true,
+      ),
+    );
+    return true;
+  }
+
+  @override
+  bool reopenTimedSet(int exerciseIndex, int setIndex) {
+    _replaceSet(
+      state.activeSession!.exercises.single.sets.single.copyWith(
+        isCompleted: false,
+        clearDurationStartedAt: true,
+      ),
+    );
+    return true;
+  }
+
+  @override
+  RestStartOutcome startRestAfterSet(int exerciseIndex, {int? setIndex}) {
+    return RestStartOutcome.unavailable;
+  }
+
+  void _replaceSet(ActiveWorkoutSet set) {
+    final session = state.activeSession!;
+    state = state.copyWith(
+      activeSession: session.copyWith(
+        exercises: <ActiveWorkoutExercise>[
+          session.exercises.single.copyWith(sets: <ActiveWorkoutSet>[set]),
+        ],
+      ),
+    );
   }
 }

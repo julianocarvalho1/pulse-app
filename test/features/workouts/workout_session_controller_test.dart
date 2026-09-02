@@ -61,6 +61,22 @@ void main() {
     ],
   );
 
+  final timedRoutine = WorkoutRoutine(
+    id: 'routine-timed',
+    name: 'Core por tempo',
+    focus: 'Core',
+    exercises: const <Exercise>[
+      Exercise(
+        id: 'plank',
+        name: 'Prancha',
+        muscle: 'Abdômen',
+        description: '',
+        reps: '2x 30 seg',
+        rest: '45 seg',
+      ),
+    ],
+  );
+
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'settings_voice_after_rest': false,
@@ -86,6 +102,42 @@ void main() {
 
     expect(controller.startRoutine(routineB, replaceActive: true), isTrue);
     expect(controller.activeRoutineName, routineB.name);
+  });
+
+  test('inicia, pausa, continua e conclui uma série por tempo', () async {
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[timedRoutine],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    expect(controller.startRoutine(timedRoutine), isTrue);
+
+    var timedSet = controller.activeSession!.exercises.single.sets.first;
+    expect(timedSet.targetType, WorkoutSetTargetType.duration);
+    expect(timedSet.plannedDurationSeconds, 30);
+
+    expect(controller.startTimedSet(0, 0), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    expect(controller.pauseTimedSet(0, 0), isTrue);
+
+    timedSet = controller.activeSession!.exercises.single.sets.first;
+    expect(timedSet.durationStartedAt, isNull);
+    expect(timedSet.actualDurationSeconds, greaterThanOrEqualTo(1));
+
+    expect(controller.startTimedSet(0, 0), isTrue);
+    expect(controller.completeTimedSet(0, 0), isTrue);
+    timedSet = controller.activeSession!.exercises.single.sets.first;
+    expect(timedSet.isCompleted, isTrue);
+    expect(timedSet.durationStartedAt, isNull);
+
+    expect(controller.reopenTimedSet(0, 0), isTrue);
+    expect(
+      controller.activeSession!.exercises.single.sets.first.isCompleted,
+      isFalse,
+    );
   });
 
   test('não inicia descanso entre as duas partes do bi-set', () async {

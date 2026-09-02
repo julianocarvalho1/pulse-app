@@ -2,7 +2,37 @@
 
 Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
-## [1.0.0] - não publicado
+## [1.2.0] - em desenvolvimento
+
+### Incluído
+
+- área **Extras** com as sessões Core expresso, Core completo e Core em
+  circuito, sem alterar a próxima ficha do programa ativo;
+- suporte a séries por tempo, com iniciar, pausar, retomar, concluir e descanso
+  após a execução;
+- duração planejada e realizada no histórico, na sessão em andamento e nos
+  backups;
+- Dead Bug, Bird-Dog e Pallof Press na Polia, com imagens oficiais do catálogo
+  gratuito do RepDB e nomes alternativos em português.
+
+### Alterado
+
+- catálogo de exercícios atualizado para a versão 4, preservando os IDs e
+  nomes reconhecidos pela versão anterior;
+- editor de prescrições agora permite escolher entre repetições e tempo por
+  série;
+- banco local atualizado para a versão 10 por migração aditiva.
+
+## [1.1.0] - em desenvolvimento
+
+### Incluído
+
+- anotações por exercício durante a sessão, com restauração e histórico;
+- modos de progressão que respeitam a faixa prescrita e nunca sugerem uma
+  repetição acima do limite;
+- registro opcional de RIR e de carga não comparável.
+
+## [1.0.0] - 2026-08-21
 
 ### Incluído
 

@@ -130,6 +130,9 @@ class PulseBackupService {
       'set_order',
       'reps',
       'weight',
+      'target_type',
+      'planned_duration_seconds',
+      'actual_duration_seconds',
     ],
     'workout_history_cardio': <String>[
       'id',
@@ -197,6 +200,10 @@ class PulseBackupService {
       'technique',
       'prescribed_rest_seconds',
       'prescription_notes',
+      'target_type',
+      'planned_duration_seconds',
+      'actual_duration_seconds',
+      'duration_started_at_ms',
     ],
     'active_session_cardio': <String>[
       'id',

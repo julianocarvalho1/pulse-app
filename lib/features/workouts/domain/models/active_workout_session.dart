@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../models/exercise.dart';
 import 'advanced_workout_prescription.dart';
 import 'cardio_log.dart';
+import 'workout_set.dart';
 
 @immutable
 class ActiveWorkoutSet {
@@ -19,6 +20,10 @@ class ActiveWorkoutSet {
     this.technique = WorkoutTechnique.none,
     this.prescribedRestSeconds,
     this.prescriptionNotes = '',
+    this.targetType = WorkoutSetTargetType.repetitions,
+    this.plannedDurationSeconds = 0,
+    this.actualDurationSeconds = 0,
+    this.durationStartedAt,
   });
 
   final int setNumber;
@@ -31,6 +36,23 @@ class ActiveWorkoutSet {
   final WorkoutTechnique technique;
   final int? prescribedRestSeconds;
   final String prescriptionNotes;
+  final WorkoutSetTargetType targetType;
+  final int plannedDurationSeconds;
+  final int actualDurationSeconds;
+  final DateTime? durationStartedAt;
+
+  bool get isTimed => targetType == WorkoutSetTargetType.duration;
+
+  bool get isDurationRunning =>
+      isTimed && !isCompleted && durationStartedAt != null;
+
+  int elapsedDurationSecondsAt(DateTime now) {
+    if (durationStartedAt == null || isCompleted) {
+      return actualDurationSeconds;
+    }
+    final runningSeconds = now.difference(durationStartedAt!).inSeconds;
+    return actualDurationSeconds + (runningSeconds < 0 ? 0 : runningSeconds);
+  }
 
   ActiveWorkoutSet copyWith({
     int? setNumber,
@@ -45,6 +67,11 @@ class ActiveWorkoutSet {
     int? prescribedRestSeconds,
     bool clearPrescribedRestSeconds = false,
     String? prescriptionNotes,
+    WorkoutSetTargetType? targetType,
+    int? plannedDurationSeconds,
+    int? actualDurationSeconds,
+    DateTime? durationStartedAt,
+    bool clearDurationStartedAt = false,
   }) {
     return ActiveWorkoutSet(
       setNumber: setNumber ?? this.setNumber,
@@ -59,6 +86,14 @@ class ActiveWorkoutSet {
           ? null
           : (prescribedRestSeconds ?? this.prescribedRestSeconds),
       prescriptionNotes: prescriptionNotes ?? this.prescriptionNotes,
+      targetType: targetType ?? this.targetType,
+      plannedDurationSeconds:
+          plannedDurationSeconds ?? this.plannedDurationSeconds,
+      actualDurationSeconds:
+          actualDurationSeconds ?? this.actualDurationSeconds,
+      durationStartedAt: clearDurationStartedAt
+          ? null
+          : (durationStartedAt ?? this.durationStartedAt),
     );
   }
 
@@ -75,6 +110,10 @@ class ActiveWorkoutSet {
       if (prescribedRestSeconds != null)
         'prescribedRestSeconds': prescribedRestSeconds,
       'prescriptionNotes': prescriptionNotes,
+      'targetType': targetType.storageValue,
+      'plannedDurationSeconds': plannedDurationSeconds,
+      'actualDurationSeconds': actualDurationSeconds,
+      'durationStartedAt': durationStartedAt?.toIso8601String(),
     };
   }
 
@@ -90,6 +129,12 @@ class ActiveWorkoutSet {
       technique: WorkoutTechnique.fromStorage(map['technique']),
       prescribedRestSeconds: _readNullableInt(map['prescribedRestSeconds']),
       prescriptionNotes: map['prescriptionNotes']?.toString() ?? '',
+      targetType: WorkoutSetTargetType.fromStorage(map['targetType']),
+      plannedDurationSeconds: _readInt(map['plannedDurationSeconds'], 0),
+      actualDurationSeconds: _readInt(map['actualDurationSeconds'], 0),
+      durationStartedAt: DateTime.tryParse(
+        map['durationStartedAt']?.toString() ?? '',
+      ),
     );
   }
 }

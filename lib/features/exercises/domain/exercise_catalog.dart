@@ -22,7 +22,7 @@ class ExerciseIdentity {
 class ExerciseCatalog {
   const ExerciseCatalog._();
 
-  static const int version = 3;
+  static const int version = 4;
 
   static const Map<String, String> _legacyIdToCanonicalId = {
     'ex_pm_1': 'p12',

@@ -82,7 +82,16 @@ void main() {
           notes: 'Carga mais leve por desconforto no ombro.',
           isLoadComparable: false,
           perceivedRir: 1,
-          sets: const [ExerciseSet(reps: 10, weight: 20)],
+          sets: [
+            ExerciseSet(reps: 10, weight: 20),
+            ExerciseSet(
+              reps: 0,
+              weight: 0,
+              targetType: WorkoutSetTargetType.duration,
+              plannedDurationSeconds: 30,
+              actualDurationSeconds: 34,
+            ),
+          ],
         ),
       ],
     );
@@ -92,7 +101,15 @@ void main() {
     final loadedHistory = await service.loadHistory();
 
     expect(loadedHistory.single.totalVolume, 200);
-    expect(loadedHistory.single.exercises.single.sets.single.reps, 10);
+    expect(loadedHistory.single.exercises.single.sets.first.reps, 10);
+    expect(
+      loadedHistory.single.exercises.single.sets.last.targetType,
+      WorkoutSetTargetType.duration,
+    );
+    expect(
+      loadedHistory.single.exercises.single.sets.last.actualDurationSeconds,
+      34,
+    );
     expect(
       loadedHistory.single.exercises.single.notes,
       'Carga mais leve por desconforto no ombro.',
@@ -114,12 +131,13 @@ void main() {
           sessionNotes: 'Máquina diferente.',
           isLoadComparable: false,
           perceivedRir: 2,
-          sets: const [
+          sets: [
             ActiveWorkoutSet(
               setNumber: 1,
-              weightText: '20',
-              repsText: '10',
-              isCompleted: true,
+              targetType: WorkoutSetTargetType.duration,
+              plannedDurationSeconds: 30,
+              actualDurationSeconds: 12,
+              durationStartedAt: DateTime(2026, 7, 29, 21, 1),
             ),
           ],
         ),
@@ -145,7 +163,18 @@ void main() {
     expect(restoredSession.restSeconds, 42);
     expect(restoredSession.restEndsAt, DateTime(2026, 7, 29, 21, 2));
     expect(restoredSession.isRestPaused, isFalse);
-    expect(restoredSession.exercises.single.sets.single.isCompleted, isTrue);
+    expect(
+      restoredSession.exercises.single.sets.single.targetType,
+      WorkoutSetTargetType.duration,
+    );
+    expect(
+      restoredSession.exercises.single.sets.single.plannedDurationSeconds,
+      30,
+    );
+    expect(
+      restoredSession.exercises.single.sets.single.durationStartedAt,
+      DateTime(2026, 7, 29, 21, 1),
+    );
     expect(restoredSession.exercises.single.sessionNotes, 'Máquina diferente.');
     expect(restoredSession.exercises.single.isLoadComparable, isFalse);
     expect(restoredSession.exercises.single.perceivedRir, 2);

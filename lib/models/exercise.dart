@@ -1155,4 +1155,31 @@ final List<Exercise> exerciseDatabase = [
     reps: '3x 30-45 seg',
     rest: '45 seg',
   ),
+  Exercise(
+    id: 'repdb_dead-bug',
+    name: 'Dead Bug',
+    muscle: 'Abdômen',
+    description:
+        'Estenda braço e perna opostos mantendo a lombar apoiada no chão.',
+    reps: '3x 8-12 por lado',
+    rest: '45 seg',
+  ),
+  Exercise(
+    id: 'repdb_bird-dog',
+    name: 'Bird-Dog',
+    muscle: 'Abdômen',
+    description:
+        'Em quatro apoios, estenda braço e perna opostos sem girar o tronco.',
+    reps: '3x 8-12 por lado',
+    rest: '45 seg',
+  ),
+  Exercise(
+    id: 'repdb_cable-pallof-press',
+    name: 'Pallof Press na Polia',
+    muscle: 'Abdômen',
+    description:
+        'Empurre o cabo à frente e resista à rotação mantendo o tronco firme.',
+    reps: '3x 10-12 por lado',
+    rest: '45 a 60 seg',
+  ),
 ];

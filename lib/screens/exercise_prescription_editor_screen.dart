@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../features/workouts/data/mappers/legacy_workout_mapper.dart';
 import '../features/workouts/domain/models/advanced_workout_prescription.dart';
+import '../features/workouts/domain/models/workout_set.dart';
 import '../models/exercise.dart';
 import '../theme/app_theme.dart';
 
@@ -110,6 +111,8 @@ class _ExercisePrescriptionEditorScreenState
     final cadenceController = TextEditingController(text: existing.cadence);
     final notesController = TextEditingController(text: existing.notes);
     var technique = existing.technique;
+    var targetType = WorkoutSetTarget.fromText(existing.target).type;
+    String? targetError;
 
     final result = await showDialog<WorkoutSetPrescription>(
       context: context,
@@ -121,11 +124,54 @@ class _ExercisePrescriptionEditorScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<WorkoutSetTargetType>(
+                    key: const Key('set-target-type-selector'),
+                    showSelectedIcon: false,
+                    segments: const <ButtonSegment<WorkoutSetTargetType>>[
+                      ButtonSegment<WorkoutSetTargetType>(
+                        value: WorkoutSetTargetType.repetitions,
+                        label: Text('Repetições'),
+                      ),
+                      ButtonSegment<WorkoutSetTargetType>(
+                        value: WorkoutSetTargetType.duration,
+                        label: Text('Tempo'),
+                      ),
+                    ],
+                    selected: <WorkoutSetTargetType>{targetType},
+                    onSelectionChanged: (selection) {
+                      final nextType = selection.first;
+                      setDialogState(() {
+                        targetType = nextType;
+                        targetError = null;
+                        final currentTarget = WorkoutSetTarget.fromText(
+                          targetController.text,
+                        );
+                        if (nextType == WorkoutSetTargetType.duration &&
+                            !currentTarget.isTimed) {
+                          targetController.text = '30 seg';
+                        } else if (nextType ==
+                                WorkoutSetTargetType.repetitions &&
+                            currentTarget.isTimed) {
+                          targetController.text = '8–12 reps';
+                        }
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: targetController,
-                  decoration: const InputDecoration(
+                  keyboardType: targetType == WorkoutSetTargetType.duration
+                      ? TextInputType.number
+                      : TextInputType.text,
+                  decoration: InputDecoration(
                     labelText: 'Alvo da série',
-                    hintText: 'Ex.: 8–12 reps, 30s, máximo',
+                    hintText: targetType == WorkoutSetTargetType.duration
+                        ? 'Ex.: 30 seg ou 1 min'
+                        : 'Ex.: 8–12 reps ou máximo',
+                    errorText: targetError,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -188,6 +234,7 @@ class _ExercisePrescriptionEditorScreenState
                 const SizedBox(height: 12),
                 DropdownButtonFormField<WorkoutTechnique>(
                   initialValue: technique,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Técnica (opcional)',
                   ),
@@ -195,7 +242,11 @@ class _ExercisePrescriptionEditorScreenState
                       .map(
                         (item) => DropdownMenuItem<WorkoutTechnique>(
                           value: item,
-                          child: Text(item.label),
+                          child: Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       )
                       .toList(growable: false),
@@ -225,10 +276,23 @@ class _ExercisePrescriptionEditorScreenState
             FilledButton(
               onPressed: () {
                 final rir = int.tryParse(rirController.text.trim());
+                var target = targetController.text.trim();
+                if (targetType == WorkoutSetTargetType.duration &&
+                    !WorkoutSetTarget.fromText(target).isTimed) {
+                  target = '$target seg';
+                }
+                if (targetType == WorkoutSetTargetType.duration &&
+                    WorkoutSetTarget.fromText(target).plannedDurationSeconds <=
+                        0) {
+                  setDialogState(
+                    () => targetError = 'Informe uma duração maior que zero.',
+                  );
+                  return;
+                }
                 Navigator.pop(
                   dialogContext,
                   existing.copyWith(
-                    target: targetController.text.trim(),
+                    target: target,
                     restSeconds: int.tryParse(restController.text.trim()),
                     clearRestSeconds: restController.text.trim().isEmpty,
                     targetRir: rir?.clamp(0, 10).toInt(),

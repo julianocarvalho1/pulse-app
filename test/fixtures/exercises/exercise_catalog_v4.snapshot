@@ -1,0 +1,110 @@
+catalog_version=4
+exercise_count=104
+identity_hash=79eb4e53
+content_hash=fd2d07cb
+media_hash=131f1175
+---
+p1|Supino Reto com Barra|Peito|bench-press
+p2|Supino Reto com Halteres|Peito|db-bench-press
+p3|Supino Inclinado com Barra|Peito|incline-bench-press
+p4|Supino Inclinado com Halteres|Peito|incline-db-press
+p5|Supino Inclinado no Smith|Peito|smith-machine-incline-bench-press
+p6|Supino Declinado|Peito|decline-bench-press
+p7|Crucifixo Reto com Halteres|Peito|db-fly
+p8|Crucifixo Inclinado|Peito|incline-dumbbell-fly
+p9|Voador Peitoral na Máquina|Peito|pec-deck
+p10|Crossover na Polia Alta|Peito|cable-fly
+p11|Supino em Pé na Polia|Peito|cable-chest-press
+p12|Supino Reto Articulado|Peito|chest-press-machine
+c1|Puxada Frontal Aberta|Costas|lat-pulldown
+c2|Puxada Fechada com Triângulo|Costas|v-bar-lat-pulldown
+c3|Remada Curvada com Barra|Costas|barbell-row
+c4|Remada Cavalinho|Costas|t-bar-row
+c5|Remada Baixa Aberta na Polia|Costas|wide-grip-seated-cable-row
+c6|Remada Curvada no Smith|Costas|smith-machine-bent-over-row
+c7|Remada Unilateral com Halter|Costas|single-arm-db-row
+c8|Barra Fixa|Costas|pull-up
+c9|Puxada com Braços Estendidos na Polia|Costas|straight-arm-pulldown
+c10|Remada para Deltoide Posterior com Barra|Ombros|barbell-rear-delt-row
+o1|Desenvolvimento com Halteres|Ombros|dumbbell-shoulder-press
+o2|Desenvolvimento com Barra|Ombros|ohp
+o3|Desenvolvimento Articulado|Ombros|machine-shoulder-press
+o4|Elevação Lateral com Halteres|Ombros|lateral-raise
+o5|Elevação Lateral na Polia|Ombros|cable-lateral-raise
+o6|Elevação Frontal com Halteres|Ombros|dumbbell-front-raise
+o7|Elevação Frontal com Barra ou Anilha|Ombros|barbell-front-raise
+o8|Crucifixo Inverso com Halteres|Ombros|dumbbell-reverse-fly
+o9|Elevação Frontal na Polia|Ombros|cable-front-raise
+t1|Encolhimento com Halteres|Trapézio|db-shrug
+t2|Encolhimento na Barra Smith|Trapézio|smith-machine-shrug
+b1|Rosca Direta com Barra|Bíceps|barbell-curl
+b2|Rosca Sentada com Halteres|Bíceps|seated-dumbbell-curl
+b3|Rosca Martelo|Bíceps|hammer-curl
+b4|Rosca Scott na Máquina|Bíceps|machine-preacher-curl
+b5|Rosca Concentrada|Bíceps|concentration-curl
+b6|Rosca na Polia Baixa|Bíceps|cable-curl
+b7|Rosca Inversa|Antebraço|reverse-curl
+b8|Flexão de Punho com Halter|Antebraço|dumbbell-wrist-curl
+tr1|Tríceps na Polia com Barra V|Tríceps|v-bar-tricep-pushdown
+tr2|Tríceps na Polia|Tríceps|tricep-pushdown
+tr3|Tríceps Testa com Barra W|Tríceps|skull-crusher
+tr4|Tríceps Testa com Halteres|Tríceps|lying-tricep-extension
+tr5|Tríceps Francês com Halter|Tríceps|overhead-tricep-extension
+tr6|Tríceps Francês com Barra W|Tríceps|ez-bar-overhead-extension
+tr7|Tríceps Coice na Polia|Tríceps|cable-tricep-kickback
+tr8|Mergulho nas Paralelas|Tríceps|dips
+tr9|Supino Fechado|Tríceps|close-grip-bench-press
+pe1|Agachamento Livre|Pernas|squat
+pe2|Agachamento no Smith|Pernas|smith-machine-squat
+pe3|Agachamento Hack|Pernas|hack-squat
+pe4|Leg Press 45°|Pernas|leg-press
+pe5|Leg Press Horizontal|Pernas|horizontal-leg-press
+pe6|Cadeira Extensora|Pernas|leg-extension
+pe7|Mesa Flexora|Pernas|leg-curl
+pe8|Cadeira Flexora|Pernas|seated-leg-curl
+pe9|Mesa Flexora Unilateral|Pernas|single-leg-lying-leg-curl
+pe10|Stiff com Barra|Pernas|stiff-leg-deadlift
+pe11|Levantamento Terra|Pernas|deadlift
+pe12|Elevação Pélvica com Barra|Pernas|hip-thrust
+pe13|Cadeira Abdutora|Pernas|hip-abduction
+pe14|Cadeira Adutora|Pernas|hip-adduction
+pe15|Afundo|Pernas|lunge
+pe16|Elevação Plantar em Pé|Panturrilha|standing-calf-raise
+pe17|Panturrilha Sentada na Máquina|Panturrilha|seated-calf-raise
+pe18|Panturrilha no Hack|Panturrilha|hack-squat-calf-raise
+pe19|Terra Romeno com Halteres|Pernas|dumbbell-romanian-deadlift
+ab1|Abdominal Supra|Abdômen|crunches
+ab2|Abdominal Infra|Abdômen|reverse-crunches
+ab3|Abdominal com Halter na Parede|Abdômen|weighted-wall-crunch
+ab4|Abdominal na Polia|Abdômen|cable-crunch
+ab5|Prancha Isométrica|Abdômen|plank
+ab6|Abdominal Russo|Abdômen|russian-twist
+repdb_push-up|Flexão de Braços|Peito|push-up
+repdb_incline-push-ups|Flexão de Braços Inclinada|Peito|incline-push-ups
+repdb_diamond-push-ups|Flexão Diamante|Tríceps|diamond-push-ups
+repdb_assisted-pull-ups|Barra Fixa Assistida|Costas|assisted-pull-ups
+repdb_chin-ups|Barra Fixa com Pegada Supinada|Costas|chin-ups
+repdb_chest-supported-db-row|Remada com Halteres Apoiada no Banco|Costas|chest-supported-db-row
+repdb_face-pull|Face Pull na Polia|Ombros|face-pull
+repdb_db-pullover|Pullover com Halter|Costas|db-pullover
+repdb_arnold-press|Desenvolvimento Arnold|Ombros|arnold-press
+repdb_upright-row|Remada Alta com Barra|Ombros|upright-row
+repdb_cable-upright-row|Remada Alta na Polia|Ombros|cable-upright-row
+repdb_assisted-dips|Mergulho Assistido na Máquina|Tríceps|assisted-dips
+repdb_front-squat|Agachamento Frontal com Barra|Pernas|front-squat
+repdb_goblet-squat|Agachamento Goblet|Pernas|goblet-squat
+repdb_bulgarian-split-squat|Agachamento Búlgaro com Halteres|Pernas|bulgarian-split-squat
+repdb_walking-lunge|Passada Caminhando|Pernas|walking-lunge
+repdb_romanian-deadlift|Levantamento Terra Romeno com Barra|Pernas|romanian-deadlift
+repdb_sumo-deadlift|Levantamento Terra Sumô|Pernas|sumo-deadlift
+repdb_glute-bridge|Ponte de Glúteos|Pernas|glute-bridge
+repdb_single-leg-romanian-deadlift|Terra Romeno Unilateral com Halteres|Pernas|single-leg-romanian-deadlift
+repdb_good-morning|Good Morning com Barra|Pernas|good-morning
+repdb_dumbbell-calf-raise|Panturrilha em Pé com Halteres|Panturrilha|dumbbell-calf-raise
+repdb_ab-wheel-rollout|Roda Abdominal|Abdômen|ab-wheel-rollout
+repdb_hanging-leg-raise|Elevação de Pernas Suspenso|Abdômen|hanging-leg-raise
+repdb_side-plank|Prancha Lateral|Abdômen|side-plank
+repdb_mountain-climbers|Escalador|Abdômen|mountain-climbers
+repdb_dead-bug|Dead Bug|Abdômen|dead-bug
+repdb_bird-dog|Bird-Dog|Abdômen|bird-dog
+repdb_cable-pallof-press|Pallof Press na Polia|Abdômen|cable-pallof-press

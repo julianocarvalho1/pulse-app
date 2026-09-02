@@ -13,8 +13,13 @@ import 'workout_session_screen.dart';
 
 class RoutineDetailScreen extends ConsumerStatefulWidget {
   final WorkoutRoutine routine;
+  final bool allowEditing;
 
-  const RoutineDetailScreen({super.key, required this.routine});
+  const RoutineDetailScreen({
+    super.key,
+    required this.routine,
+    this.allowEditing = true,
+  });
 
   @override
   ConsumerState<RoutineDetailScreen> createState() =>
@@ -577,14 +582,15 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
               const PulseWorkoutCodec().routineDocument(routine),
             ),
           ),
-          IconButton(
-            tooltip: 'Editar ficha',
-            icon: Icon(
-              Icons.edit_rounded,
-              color: Theme.of(context).colorScheme.primary,
+          if (widget.allowEditing)
+            IconButton(
+              tooltip: 'Editar ficha',
+              icon: Icon(
+                Icons.edit_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              onPressed: () => _openEditor(routine),
             ),
-            onPressed: () => _openEditor(routine),
-          ),
         ],
       ),
       body: SingleChildScrollView(

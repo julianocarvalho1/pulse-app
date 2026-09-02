@@ -14,9 +14,9 @@ import 'package:pulse/models/exercise.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _catalogSnapshotPath =
-    'test/fixtures/exercises/exercise_catalog_v3.snapshot';
+    'test/fixtures/exercises/exercise_catalog_v4.snapshot';
 const _previousCatalogSnapshotPath =
-    'test/fixtures/exercises/exercise_catalog_v2.snapshot';
+    'test/fixtures/exercises/exercise_catalog_v3.snapshot';
 const _legacyStateFixturePath =
     'test/fixtures/exercises/legacy_workout_state_v1.json';
 
@@ -29,14 +29,14 @@ void main() {
     });
   });
 
-  group('contrato do catálogo v3', () {
+  group('contrato do catálogo v4', () {
     late _CatalogSnapshot snapshot;
 
     setUpAll(() {
       snapshot = _CatalogSnapshot.read(_catalogSnapshotPath);
     });
 
-    test('congela as 101 identidades e os nomes de mídia oficiais', () {
+    test('congela as identidades e os nomes de mídia oficiais', () {
       final actualEntries = exerciseDatabase
           .map((exercise) {
             final definition = ExerciseCatalog.definitionFor(exercise);
@@ -102,10 +102,10 @@ void main() {
         );
       }
 
-      expect(ids, hasLength(101));
-      expect(mediaPaths, hasLength(101));
+      expect(ids, hasLength(snapshot.exerciseCount));
+      expect(mediaPaths, hasLength(snapshot.exerciseCount));
       expect(muscleCounts, <String, int>{
-        'Abdômen': 10,
+        'Abdômen': 13,
         'Antebraço': 2,
         'Bíceps': 6,
         'Costas': 13,
@@ -118,7 +118,7 @@ void main() {
       });
     });
 
-    test('mantém todos os IDs e nomes do catálogo v2 resolvíveis', () {
+    test('mantém todos os IDs e nomes do catálogo v3 resolvíveis', () {
       final previousSnapshot = _CatalogSnapshot.read(
         _previousCatalogSnapshotPath,
       );
@@ -126,8 +126,8 @@ void main() {
           .map((exercise) => exercise.id)
           .toSet();
 
-      expect(previousSnapshot.catalogVersion, 2);
-      expect(previousSnapshot.exerciseCount, 75);
+      expect(previousSnapshot.catalogVersion, 3);
+      expect(previousSnapshot.exerciseCount, 101);
 
       for (final entry in previousSnapshot.entries) {
         final fields = entry.split('|');

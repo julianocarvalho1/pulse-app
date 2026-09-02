@@ -1045,32 +1045,59 @@ class _SetHistoryRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              '${set.reps} rep${set.reps == 1 ? '' : 's'}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          if (set.isTimed) ...<Widget>[
+            Expanded(
+              flex: 2,
+              child: Text(
+                _durationLabel(set.actualDurationSeconds),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _weightLabel(set.weight),
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                color: set.weight > 0
-                    ? AppColors.textPrimary
-                    : AppColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              flex: 2,
+              child: Text(
+                'meta ${_durationLabel(set.plannedDurationSeconds)}',
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
+          ] else ...<Widget>[
+            Expanded(
+              flex: 2,
+              child: Text(
+                '${set.reps} rep${set.reps == 1 ? '' : 's'}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                _weightLabel(set.weight),
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  color: set.weight > 0
+                      ? AppColors.textPrimary
+                      : AppColors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1083,6 +1110,13 @@ class _SetHistoryRow extends StatelessWidget {
 
     final hasDecimals = weight != weight.roundToDouble();
     return '${weight.toStringAsFixed(hasDecimals ? 1 : 0)} kg';
+  }
+
+  static String _durationLabel(int totalSeconds) {
+    final safeSeconds = totalSeconds < 0 ? 0 : totalSeconds;
+    final minutes = safeSeconds ~/ 60;
+    final seconds = safeSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

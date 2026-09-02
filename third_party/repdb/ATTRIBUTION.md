@@ -23,7 +23,6 @@ Exercise data by RepDB (repdb.co)
 https://repdb.co
 ```
 
-Keep the attribution visible to users. The full license is in
-`LICENSE-DATA.md`.
-For the complete growing catalog, 1024px classic images, transparent
-backgrounds, SQLite, and animations, see https://repdb.co/pricing.
+Keep the attribution visible to users. The full license is in `LICENSE.md`.
+For 1024px classic images, transparent backgrounds, SQLite, animations, or
+commercial use without attribution, see https://repdb.co/pricing.

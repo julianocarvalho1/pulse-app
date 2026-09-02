@@ -1,6 +1,6 @@
 # Roadmap pós-lançamento do PULSE
 
-Atualizado em 1º de setembro de 2026.
+Atualizado em 2 de setembro de 2026.
 
 Este documento é a referência única para as próximas versões do PULSE. Uma
 funcionalidade só muda de fase quando os critérios de conclusão da fase atual
@@ -87,42 +87,42 @@ suporte real a pranchas, isometrias e circuitos.
 
 ### Atualização controlada do RepDB
 
-- [ ] Baixar um novo snapshot oficial do RepDB Free Tier em diretório
+- [x] Baixar um novo snapshot oficial do RepDB Free Tier em diretório
   temporário.
-- [ ] Comparar a licença atual com a licença arquivada no PULSE.
-- [ ] Confirmar novamente uso comercial, armazenamento offline e atribuição.
-- [ ] Importar somente os exercícios selecionados, sem substituir IDs de
+- [x] Comparar a licença atual com a licença arquivada no PULSE.
+- [x] Confirmar novamente uso comercial, armazenamento offline e atribuição.
+- [x] Importar somente os exercícios selecionados, sem substituir IDs de
   fichas já existentes.
-- [ ] Priorizar **Dead Bug**, **Bird-Dog**, **Cable Pallof Press** e variações
+- [x] Priorizar **Dead Bug**, **Bird-Dog**, **Cable Pallof Press** e variações
   úteis de core disponíveis no catálogo gratuito atual.
-- [ ] Criar nomes e aliases em português brasileiro.
-- [ ] Atualizar manifesto SHA-256, inventário de licenças e testes do catálogo.
-- [ ] Manter a atribuição visível em **Sobre o PULSE**.
+- [x] Criar nomes e aliases em português brasileiro.
+- [x] Atualizar manifesto SHA-256, inventário de licenças e testes do catálogo.
+- [x] Manter a atribuição visível em **Sobre o PULSE**.
 
 ### Sessões extras
 
-- [ ] Criar uma área **Sessões extras** separada da sequência do programa.
-- [ ] Adicionar **Core expresso**, **Core completo** e **Core em circuito**.
-- [ ] Permitir iniciar uma sessão extra sem avançar, concluir ou substituir a
+- [x] Criar uma área **Sessões extras** separada da sequência do programa.
+- [x] Adicionar **Core expresso**, **Core completo** e **Core em circuito**.
+- [x] Permitir iniciar uma sessão extra sem avançar, concluir ou substituir a
   próxima ficha ABCDE.
-- [ ] Registrar a sessão extra normalmente no histórico e no progresso.
-- [ ] Permitir copiar uma sessão pronta para personalização.
+- [x] Registrar a sessão extra normalmente no histórico e no progresso.
+- [x] Permitir copiar uma sessão pronta para personalização.
 
 ### Séries por tempo
 
-- [ ] Permitir escolher repetição ou duração como alvo da série.
-- [ ] Adicionar cronômetro por série com iniciar, pausar, retomar e concluir.
-- [ ] Iniciar o descanso correto após uma série cronometrada.
-- [ ] Preservar cronômetro e estado ao sair temporariamente do aplicativo.
-- [ ] Registrar duração planejada e realizada no histórico.
-- [ ] Tratar **Core em circuito** como circuito cronometrado; usar o nome
+- [x] Permitir escolher repetição ou duração como alvo da série.
+- [x] Adicionar cronômetro por série com iniciar, pausar, retomar e concluir.
+- [x] Iniciar o descanso correto após uma série cronometrada.
+- [x] Preservar cronômetro e estado ao sair temporariamente do aplicativo.
+- [x] Registrar duração planejada e realizada no histórico.
+- [x] Tratar **Core em circuito** como circuito cronometrado; usar o nome
   **Tabata** somente quando o protocolo realmente corresponder a ele.
 
 ### Critérios para concluir a versão 1.2.0
 
-- [ ] Toda mídia nova possui origem, licença e hash documentados.
-- [ ] Nenhum material do RepDB foi enviado a uma ferramenta generativa.
-- [ ] Sessões extras não alteram a próxima ficha do programa ativo.
+- [x] Toda mídia nova possui origem, licença e hash documentados.
+- [x] Nenhum material do RepDB foi enviado a uma ferramenta generativa.
+- [x] Sessões extras não alteram a próxima ficha do programa ativo.
 - [ ] Cronômetros continuam corretos com tela apagada e troca de aplicativo.
 - [ ] Exercícios de core e séries por tempo aprovados em celular físico.
 

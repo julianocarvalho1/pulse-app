@@ -219,6 +219,15 @@ class WorkoutLocalService {
                   (setRow) => ExerciseSet(
                     reps: _readInt(setRow['reps']),
                     weight: _readDouble(setRow['weight']),
+                    targetType: WorkoutSetTargetType.fromStorage(
+                      setRow['target_type'],
+                    ),
+                    plannedDurationSeconds: _readInt(
+                      setRow['planned_duration_seconds'],
+                    ),
+                    actualDurationSeconds: _readInt(
+                      setRow['actual_duration_seconds'],
+                    ),
                   ),
                 )
                 .toList(),
@@ -378,31 +387,56 @@ class WorkoutLocalService {
         orderBy: 'set_order ASC',
       );
 
+      final activeExercise = _exerciseFromRow(exerciseRow);
       activeExercises.add(
         ActiveWorkoutExercise(
-          exercise: _exerciseFromRow(exerciseRow),
+          exercise: activeExercise,
           sessionNotes: exerciseRow['session_notes']?.toString() ?? '',
           isLoadComparable: _readInt(exerciseRow['is_load_comparable']) != 0,
           perceivedRir: _readNullableInt(exerciseRow['perceived_rir']),
-          sets: setRows
-              .map(
-                (setRow) => ActiveWorkoutSet(
-                  setNumber: _readInt(setRow['set_order']) + 1,
-                  weightText: setRow['weight_text']?.toString() ?? '',
-                  repsText: setRow['reps_text']?.toString() ?? '',
-                  isCompleted: _readInt(setRow['is_completed']) == 1,
-                  targetText: setRow['target_text']?.toString() ?? '',
-                  targetRir: _readNullableInt(setRow['target_rir']),
-                  cadence: setRow['cadence']?.toString() ?? '',
-                  technique: WorkoutTechnique.fromStorage(setRow['technique']),
-                  prescribedRestSeconds: _readNullableInt(
-                    setRow['prescribed_rest_seconds'],
-                  ),
-                  prescriptionNotes:
-                      setRow['prescription_notes']?.toString() ?? '',
-                ),
-              )
-              .toList(),
+          sets: setRows.map((setRow) {
+            final targetText = setRow['target_text']?.toString() ?? '';
+            final plannedDurationSeconds = _readInt(
+              setRow['planned_duration_seconds'],
+            );
+            final parsedTarget = WorkoutSetTarget.fromText(
+              targetText.trim().isEmpty ? activeExercise.reps : targetText,
+            );
+            final storedTargetType = WorkoutSetTargetType.fromStorage(
+              setRow['target_type'],
+            );
+            final shouldUseInferredTarget =
+                storedTargetType == WorkoutSetTargetType.repetitions &&
+                plannedDurationSeconds == 0 &&
+                parsedTarget.isTimed;
+
+            return ActiveWorkoutSet(
+              setNumber: _readInt(setRow['set_order']) + 1,
+              weightText: setRow['weight_text']?.toString() ?? '',
+              repsText: setRow['reps_text']?.toString() ?? '',
+              isCompleted: _readInt(setRow['is_completed']) == 1,
+              targetText: targetText,
+              targetRir: _readNullableInt(setRow['target_rir']),
+              cadence: setRow['cadence']?.toString() ?? '',
+              technique: WorkoutTechnique.fromStorage(setRow['technique']),
+              prescribedRestSeconds: _readNullableInt(
+                setRow['prescribed_rest_seconds'],
+              ),
+              prescriptionNotes: setRow['prescription_notes']?.toString() ?? '',
+              targetType: shouldUseInferredTarget
+                  ? parsedTarget.type
+                  : storedTargetType,
+              plannedDurationSeconds: shouldUseInferredTarget
+                  ? parsedTarget.plannedDurationSeconds
+                  : plannedDurationSeconds,
+              actualDurationSeconds: _readInt(
+                setRow['actual_duration_seconds'],
+              ),
+              durationStartedAt: _dateTimeFromNullableMilliseconds(
+                setRow['duration_started_at_ms'],
+              ),
+            );
+          }).toList(),
         ),
       );
     }
@@ -507,6 +541,11 @@ class WorkoutLocalService {
             'technique': set.technique.storageValue,
             'prescribed_rest_seconds': set.prescribedRestSeconds,
             'prescription_notes': set.prescriptionNotes,
+            'target_type': set.targetType.storageValue,
+            'planned_duration_seconds': set.plannedDurationSeconds,
+            'actual_duration_seconds': set.actualDurationSeconds,
+            'duration_started_at_ms':
+                set.durationStartedAt?.millisecondsSinceEpoch,
           });
         }
 
@@ -605,6 +644,9 @@ class WorkoutLocalService {
           'set_order': setIndex,
           'reps': set.reps,
           'weight': set.weight,
+          'target_type': set.targetType.storageValue,
+          'planned_duration_seconds': set.plannedDurationSeconds,
+          'actual_duration_seconds': set.actualDurationSeconds,
         });
       }
 

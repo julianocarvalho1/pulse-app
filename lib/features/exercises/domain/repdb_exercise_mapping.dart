@@ -1,23 +1,29 @@
 enum RepDbMatchStatus { exact, reviewRequired, unavailable }
 
 class RepDbExerciseMatch {
-  const RepDbExerciseMatch.exact(this.repDbId, this.sourceName)
-    : status = RepDbMatchStatus.exact,
-      reviewNote = '';
+  const RepDbExerciseMatch.exact(
+    this.repDbId,
+    this.sourceName, {
+    this.mediaAssetId,
+  }) : status = RepDbMatchStatus.exact,
+       reviewNote = '';
 
   const RepDbExerciseMatch.reviewRequired(
     this.repDbId,
     this.sourceName,
     this.reviewNote,
-  ) : status = RepDbMatchStatus.reviewRequired;
+  ) : mediaAssetId = null,
+      status = RepDbMatchStatus.reviewRequired;
 
   const RepDbExerciseMatch.unavailable(this.reviewNote)
     : repDbId = null,
       sourceName = null,
+      mediaAssetId = null,
       status = RepDbMatchStatus.unavailable;
 
   final String? repDbId;
   final String? sourceName;
+  final String? mediaAssetId;
   final RepDbMatchStatus status;
   final String reviewNote;
 
@@ -70,7 +76,7 @@ class RepDbExerciseMedia {
 class RepDbExerciseMapping {
   const RepDbExerciseMapping._();
 
-  static const int version = 2;
+  static const int version = 3;
   static const String attributionText = 'Exercise data by RepDB (repdb.co)';
   static const String attributionUrl = 'https://repdb.co';
 
@@ -236,6 +242,7 @@ class RepDbExerciseMapping {
     'pe16': RepDbExerciseMatch.exact(
       'standing-calf-raise',
       'Standing Calf Raise',
+      mediaAssetId: 'machine-calf-raise',
     ),
     'pe17': RepDbExerciseMatch.exact('seated-calf-raise', 'Seated Calf Raise'),
     'pe18': RepDbExerciseMatch.exact(
@@ -440,6 +447,27 @@ class RepDbExerciseMapping {
       primaryMuscle: 'Abdômen',
       aliases: <String>['Mountain Climbers', 'Corrida do Alpinista'],
     ),
+    RepDbCatalogAddition(
+      repDbId: 'dead-bug',
+      sourceName: 'Dead Bug',
+      namePtBr: 'Dead Bug',
+      primaryMuscle: 'Abdômen',
+      aliases: <String>['Inseto Morto', 'Dead Bug Alternado'],
+    ),
+    RepDbCatalogAddition(
+      repDbId: 'bird-dog',
+      sourceName: 'Bird-Dog',
+      namePtBr: 'Bird-Dog',
+      primaryMuscle: 'Abdômen',
+      aliases: <String>['Perdigueiro', 'Bird Dog'],
+    ),
+    RepDbCatalogAddition(
+      repDbId: 'cable-pallof-press',
+      sourceName: 'Cable Pallof Press',
+      namePtBr: 'Pallof Press na Polia',
+      primaryMuscle: 'Abdômen',
+      aliases: <String>['Pallof Press', 'Press Pallof na Polia'],
+    ),
   ];
 
   static final Map<String, RepDbCatalogAddition> _additionsByPulseId = {
@@ -483,7 +511,7 @@ class RepDbExerciseMapping {
     }
 
     final sourceId = match.repDbId!;
-    final assetPrefix = 'assets/images/$sourceId';
+    final assetPrefix = 'assets/images/${match.mediaAssetId ?? sourceId}';
 
     if (sourceId == 'plank' || sourceId == 'side-plank') {
       return RepDbExerciseMedia.single(mainAssetPath: '$assetPrefix-main.webp');

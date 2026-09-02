@@ -72,14 +72,24 @@ void main() {
       'notes': '',
       'status': 'completed',
     });
-    await db.insert('workout_history_exercises', <String, Object>{
-      'history_id': 'history-a',
-      'exercise_id': 'supino',
-      'exercise_name': 'Supino',
-      'sort_order': 0,
-      'notes': 'Máquina diferente.',
-      'is_load_comparable': 0,
-      'perceived_rir': 1,
+    final historyExerciseId = await db
+        .insert('workout_history_exercises', <String, Object>{
+          'history_id': 'history-a',
+          'exercise_id': 'supino',
+          'exercise_name': 'Supino',
+          'sort_order': 0,
+          'notes': 'Máquina diferente.',
+          'is_load_comparable': 0,
+          'perceived_rir': 1,
+        });
+    await db.insert('workout_history_sets', <String, Object>{
+      'history_exercise_id': historyExerciseId,
+      'set_order': 0,
+      'reps': 0,
+      'weight': 0,
+      'target_type': 'duration',
+      'planned_duration_seconds': 30,
+      'actual_duration_seconds': 34,
     });
     await db.insert('body_measurements', <String, Object?>{
       'id': 'weight-a',
@@ -116,21 +126,35 @@ void main() {
       'rest_end_at_ms': restEndsAt.millisecondsSinceEpoch,
       'is_rest_paused': 0,
     });
-    await db.insert('active_session_exercises', <String, Object>{
-      'session_id': 'active-a',
-      'exercise_id': 'supino',
-      'sort_order': 0,
-      'name': 'Supino',
-      'muscle': 'Peito',
-      'description': '',
-      'reps': '3x 8-12',
-      'rest': '90 seg',
-      'is_superset': 0,
-      'custom_note': '',
-      'advanced_prescription_json': '',
-      'session_notes': 'Ombro cansado.',
-      'is_load_comparable': 0,
-      'perceived_rir': 2,
+    final activeExerciseId = await db
+        .insert('active_session_exercises', <String, Object>{
+          'session_id': 'active-a',
+          'exercise_id': 'supino',
+          'sort_order': 0,
+          'name': 'Supino',
+          'muscle': 'Peito',
+          'description': '',
+          'reps': '3x 8-12',
+          'rest': '90 seg',
+          'is_superset': 0,
+          'custom_note': '',
+          'advanced_prescription_json': '',
+          'session_notes': 'Ombro cansado.',
+          'is_load_comparable': 0,
+          'perceived_rir': 2,
+        });
+    final durationStartedAt = DateTime(2026, 7, 31, 20, 0, 20);
+    await db.insert('active_session_sets', <String, Object?>{
+      'session_exercise_id': activeExerciseId,
+      'set_order': 0,
+      'weight_text': '',
+      'reps_text': '',
+      'is_completed': 0,
+      'target_text': '30 seg',
+      'target_type': 'duration',
+      'planned_duration_seconds': 30,
+      'actual_duration_seconds': 8,
+      'duration_started_at_ms': durationStartedAt.millisecondsSinceEpoch,
     });
 
     await preferences.setString('user_name', 'Juliano');
@@ -171,6 +195,10 @@ void main() {
     expect(restoredHistoryExercise['notes'], 'Máquina diferente.');
     expect(restoredHistoryExercise['is_load_comparable'], 0);
     expect(restoredHistoryExercise['perceived_rir'], 1);
+    final restoredHistorySet = (await db.query('workout_history_sets')).single;
+    expect(restoredHistorySet['target_type'], 'duration');
+    expect(restoredHistorySet['planned_duration_seconds'], 30);
+    expect(restoredHistorySet['actual_duration_seconds'], 34);
     expect(await db.query('workout_history_cardio'), hasLength(1));
     final restoredActivities = await db.query(
       'workout_history_free_activities',
@@ -192,6 +220,14 @@ void main() {
     expect(restoredActiveExercise['session_notes'], 'Ombro cansado.');
     expect(restoredActiveExercise['is_load_comparable'], 0);
     expect(restoredActiveExercise['perceived_rir'], 2);
+    final restoredActiveSet = (await db.query('active_session_sets')).single;
+    expect(restoredActiveSet['target_type'], 'duration');
+    expect(restoredActiveSet['planned_duration_seconds'], 30);
+    expect(restoredActiveSet['actual_duration_seconds'], 8);
+    expect(
+      restoredActiveSet['duration_started_at_ms'],
+      durationStartedAt.millisecondsSinceEpoch,
+    );
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
     expect(
