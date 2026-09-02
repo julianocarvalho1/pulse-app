@@ -920,7 +920,9 @@ class _ExerciseHistoryCard extends StatelessWidget {
               ],
             ),
           ),
-          if (exercise.notes.trim().isNotEmpty || !exercise.isLoadComparable)
+          if (exercise.notes.trim().isNotEmpty ||
+              !exercise.isLoadComparable ||
+              exercise.perceivedRir != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
               child: Container(
@@ -969,6 +971,17 @@ class _ExerciseHistoryCard extends StatelessWidget {
                       const SizedBox(height: 5),
                       Text(
                         'Carga não usada na comparação de progressão.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                    if (exercise.perceivedRir != null) ...<Widget>[
+                      const SizedBox(height: 5),
+                      Text(
+                        'RIR percebido na última série: ${exercise.perceivedRir}.',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 10,

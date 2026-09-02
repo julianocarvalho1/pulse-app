@@ -39,14 +39,14 @@ exercício sem alterar a ficha original.
   série de maior carga ou maior repetição.
 - [x] Nunca sugerir repetições acima do máximo prescrito.
 - [x] Remover o aumento fixo e arbitrário de `2,5 kg`.
-- [ ] Oferecer os modos **Seguir a ficha**, **Dentro da faixa** e
+- [x] Oferecer os modos **Seguir a ficha**, **Dentro da faixa** e
   **Repetições e depois carga**.
-- [ ] Usar esforço informado/RIR somente como dado auxiliar e opcional.
+- [x] Usar esforço informado/RIR somente como dado auxiliar e opcional.
 - [x] Permitir marcar uma execução como **carga não comparável**, por exemplo
   quando outra máquina foi usada.
-- [ ] Exibir a origem da sugestão: faixa prescrita, desempenho anterior e
+- [x] Exibir a origem da sugestão: faixa prescrita, desempenho anterior e
   motivo da recomendação.
-- [ ] Cobrir faixas, alvos fixos, exercícios sem carga, isometrias e
+- [x] Cobrir faixas, alvos fixos, exercícios sem carga, isometrias e
   prescrições descendentes com testes automatizados.
 
 Referências de produto:
@@ -68,7 +68,7 @@ Referências de produto:
 - [x] Exibir a anotação nos detalhes do histórico.
 - [x] Incluir a anotação em backup, importação e exportação.
 - [x] Não copiar automaticamente a anotação para o treino seguinte.
-- [ ] Oferecer atalhos estruturados como **Máquina diferente** e
+- [x] Oferecer atalhos estruturados como **Máquina diferente** e
   **Carga não comparável**, mantendo o texto livre opcional.
 
 ### Critérios para concluir a versão 1.1.0

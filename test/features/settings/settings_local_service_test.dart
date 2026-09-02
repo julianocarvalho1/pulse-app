@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/settings/data/settings_local_service.dart';
 import 'package:pulse/features/settings/domain/pulse_settings.dart';
+import 'package:pulse/features/workouts/domain/models/workout_progression_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -55,5 +56,33 @@ void main() {
     final restored = await service.load();
 
     expect(restored.profile.photoPath, '/data/user/0/pulse/profile/foto.jpg');
+  });
+
+  test('persiste o modo de progressão e usa opção segura por padrão', () async {
+    final service = SettingsLocalService();
+    final defaults = await service.load();
+    expect(defaults.workoutProgressionMode, WorkoutProgressionMode.withinRange);
+
+    await service.save(
+      defaults.copyWith(
+        workoutProgressionMode: WorkoutProgressionMode.repsThenLoad,
+      ),
+    );
+    final restored = await service.load();
+
+    expect(
+      restored.workoutProgressionMode,
+      WorkoutProgressionMode.repsThenLoad,
+    );
+  });
+
+  test('ignora modo de progressão desconhecido', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'settings_workout_progression_mode': 'inventado',
+    });
+
+    final settings = await SettingsLocalService().load();
+
+    expect(settings.workoutProgressionMode, WorkoutProgressionMode.withinRange);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
+import '../../../settings/domain/pulse_settings.dart';
+import '../../../settings/presentation/providers/settings_controller.dart';
 import '../../domain/models/active_workout_session.dart';
 import '../../domain/models/exercise_progression_suggestion.dart';
 import '../../domain/services/workout_progression_service.dart';
@@ -69,8 +71,14 @@ final nextRoutineToTrainProvider = Provider<WorkoutRoutine?>((ref) {
 final exerciseProgressionProvider =
     Provider.family<ExerciseProgressionSuggestion, Exercise>((ref, exercise) {
       final history = ref.watch(workoutHistoryControllerProvider).items;
+      final settingsAsync = ref.watch(settingsControllerProvider);
+      final progressionMode = switch (settingsAsync) {
+        AsyncData<PulseSettings>(:final value) => value.workoutProgressionMode,
+        _ => PulseSettings.defaults().workoutProgressionMode,
+      };
       return const WorkoutProgressionService().buildSuggestion(
         exercise: exercise,
         history: history,
+        mode: progressionMode,
       );
     });

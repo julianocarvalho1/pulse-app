@@ -101,6 +101,7 @@ class ActiveWorkoutExercise {
     required List<ActiveWorkoutSet> sets,
     this.sessionNotes = '',
     this.isLoadComparable = true,
+    this.perceivedRir,
   }) : sets = UnmodifiableListView<ActiveWorkoutSet>(
          List<ActiveWorkoutSet>.from(sets),
        );
@@ -109,18 +110,24 @@ class ActiveWorkoutExercise {
   final List<ActiveWorkoutSet> sets;
   final String sessionNotes;
   final bool isLoadComparable;
+  final int? perceivedRir;
 
   ActiveWorkoutExercise copyWith({
     Exercise? exercise,
     List<ActiveWorkoutSet>? sets,
     String? sessionNotes,
     bool? isLoadComparable,
+    int? perceivedRir,
+    bool clearPerceivedRir = false,
   }) {
     return ActiveWorkoutExercise(
       exercise: exercise ?? this.exercise,
       sets: sets ?? this.sets,
       sessionNotes: sessionNotes ?? this.sessionNotes,
       isLoadComparable: isLoadComparable ?? this.isLoadComparable,
+      perceivedRir: clearPerceivedRir
+          ? null
+          : (perceivedRir ?? this.perceivedRir),
     );
   }
 
@@ -130,6 +137,7 @@ class ActiveWorkoutExercise {
       'sets': sets.map((set) => set.toMap()).toList(),
       'sessionNotes': sessionNotes,
       'isLoadComparable': isLoadComparable,
+      if (perceivedRir != null) 'perceivedRir': perceivedRir,
     };
   }
 
@@ -162,6 +170,7 @@ class ActiveWorkoutExercise {
           map['isLoadComparable'] == null ||
           map['isLoadComparable'] == true ||
           map['isLoadComparable'] == 1,
+      perceivedRir: _readNullableInt(map['perceivedRir']),
     );
   }
 }

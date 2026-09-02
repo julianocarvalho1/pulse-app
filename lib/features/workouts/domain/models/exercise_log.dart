@@ -12,6 +12,7 @@ class ExerciseLog {
     required List<ExerciseSet> sets,
     this.notes = '',
     this.isLoadComparable = true,
+    this.perceivedRir,
   }) : sets = UnmodifiableListView<ExerciseSet>(List<ExerciseSet>.from(sets));
 
   final String exerciseId;
@@ -19,6 +20,7 @@ class ExerciseLog {
   final List<ExerciseSet> sets;
   final String notes;
   final bool isLoadComparable;
+  final int? perceivedRir;
 
   int get totalReps {
     return sets.fold<int>(0, (total, set) => total + set.reps);
@@ -34,6 +36,8 @@ class ExerciseLog {
     List<ExerciseSet>? sets,
     String? notes,
     bool? isLoadComparable,
+    int? perceivedRir,
+    bool clearPerceivedRir = false,
   }) {
     return ExerciseLog(
       exerciseId: exerciseId ?? this.exerciseId,
@@ -41,6 +45,9 @@ class ExerciseLog {
       sets: sets ?? this.sets,
       notes: notes ?? this.notes,
       isLoadComparable: isLoadComparable ?? this.isLoadComparable,
+      perceivedRir: clearPerceivedRir
+          ? null
+          : (perceivedRir ?? this.perceivedRir),
     );
   }
 
@@ -51,6 +58,7 @@ class ExerciseLog {
       'sets': sets.map((set) => set.toMap()).toList(),
       'notes': notes,
       'isLoadComparable': isLoadComparable,
+      if (perceivedRir != null) 'perceivedRir': perceivedRir,
     };
   }
 
@@ -73,6 +81,20 @@ class ExerciseLog {
           map['isLoadComparable'] == null ||
           map['isLoadComparable'] == true ||
           map['isLoadComparable'] == 1,
+      perceivedRir: _readNullableInt(map['perceivedRir']),
     );
   }
+}
+
+int? _readNullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return int.tryParse(value.toString());
 }

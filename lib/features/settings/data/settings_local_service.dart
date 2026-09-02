@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../workouts/domain/models/workout_progression_mode.dart';
 import '../domain/pulse_settings.dart';
 
 class SettingsLocalService {
@@ -10,6 +11,8 @@ class SettingsLocalService {
       'settings_vibrate_after_rest';
   static const String _inactivityReminderKey = 'settings_inactivity_reminder';
   static const String _measurementSystemKey = 'settings_measurement_system';
+  static const String _workoutProgressionModeKey =
+      'settings_workout_progression_mode';
   static const String _userNameKey = 'user_name';
   static const String _userWeightKey = 'user_weight';
   static const String _userHeightKey = 'user_height_cm';
@@ -45,6 +48,9 @@ class SettingsLocalService {
           preferences.getBool(_inactivityReminderKey) ??
           defaults.inactivityReminder,
       measurementSystem: measurementSystem,
+      workoutProgressionMode: WorkoutProgressionMode.fromStorage(
+        preferences.getString(_workoutProgressionModeKey),
+      ),
       profile: UserProfile(
         name: savedName.isEmpty ? defaults.profile.name : savedName,
         weightKg: _readDouble(preferences, _userWeightKey),
@@ -66,6 +72,10 @@ class SettingsLocalService {
       preferences.setString(
         _measurementSystemKey,
         settings.measurementSystem.name,
+      ),
+      preferences.setString(
+        _workoutProgressionModeKey,
+        settings.workoutProgressionMode.name,
       ),
       preferences.setString(_userNameKey, settings.profile.displayName),
       preferences.setDouble(_userWeightKey, settings.profile.weightKg),

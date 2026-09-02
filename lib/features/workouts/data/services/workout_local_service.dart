@@ -213,6 +213,7 @@ class WorkoutLocalService {
             exerciseName: exerciseRow['exercise_name']?.toString() ?? '',
             notes: exerciseRow['notes']?.toString() ?? '',
             isLoadComparable: _readInt(exerciseRow['is_load_comparable']) != 0,
+            perceivedRir: _readNullableInt(exerciseRow['perceived_rir']),
             sets: setRows
                 .map(
                   (setRow) => ExerciseSet(
@@ -382,6 +383,7 @@ class WorkoutLocalService {
           exercise: _exerciseFromRow(exerciseRow),
           sessionNotes: exerciseRow['session_notes']?.toString() ?? '',
           isLoadComparable: _readInt(exerciseRow['is_load_comparable']) != 0,
+          perceivedRir: _readNullableInt(exerciseRow['perceived_rir']),
           sets: setRows
               .map(
                 (setRow) => ActiveWorkoutSet(
@@ -480,6 +482,7 @@ class WorkoutLocalService {
               'sort_order': exerciseIndex,
               'session_notes': activeExercise.sessionNotes,
               'is_load_comparable': activeExercise.isLoadComparable ? 1 : 0,
+              'perceived_rir': activeExercise.perceivedRir,
               ..._exerciseToRow(activeExercise.exercise, includeId: false),
             });
 
@@ -589,6 +592,7 @@ class WorkoutLocalService {
         'sort_order': exerciseIndex,
         'notes': exercise.notes,
         'is_load_comparable': exercise.isLoadComparable ? 1 : 0,
+        'perceived_rir': exercise.perceivedRir,
       });
 
       final batch = executor.batch();

@@ -24,6 +24,7 @@ void main() {
           exerciseName: 'Supino Reto Articulado',
           notes: 'Usei a máquina do segundo andar.',
           isLoadComparable: false,
+          perceivedRir: 2,
           sets: const [
             ExerciseSet(reps: 8, weight: 0),
             ExerciseSet(reps: 10, weight: 20),
@@ -52,6 +53,7 @@ void main() {
       find.text('Carga não usada na comparação de progressão.'),
       findsOneWidget,
     );
+    expect(find.text('RIR percebido na última série: 2.'), findsOneWidget);
   });
 
   testWidgets('treino incompleto destaca o histórico parcial', (tester) async {

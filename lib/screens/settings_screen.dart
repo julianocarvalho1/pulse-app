@@ -8,6 +8,7 @@ import '../features/onboarding/presentation/providers/onboarding_controller.dart
 import '../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
+import '../features/workouts/domain/models/workout_progression_mode.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
 import 'about_pulse_screen.dart';
@@ -15,6 +16,75 @@ import 'data_backup_screen.dart';
 import 'how_to_use_screen.dart';
 import 'privacy_ai_info_screen.dart';
 import 'personal_data_sheet.dart';
+
+Future<void> _showWorkoutProgressionModePicker(
+  BuildContext context,
+  WidgetRef ref,
+  WorkoutProgressionMode current,
+) async {
+  final selected = await showModalBottomSheet<WorkoutProgressionMode>(
+    context: context,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Modo da progressão',
+                  style: Theme.of(
+                    sheetContext,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'A ficha sempre define os limites. Você pode mudar este modo a qualquer momento.',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          for (final mode in WorkoutProgressionMode.values)
+            ListTile(
+              key: ValueKey<String>('progression-mode-${mode.name}'),
+              leading: Icon(
+                mode == current
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
+                color: mode == current
+                    ? Theme.of(sheetContext).colorScheme.primary
+                    : AppColors.textSecondary,
+              ),
+              title: Text(
+                mode.label,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(mode.description),
+              onTap: () => Navigator.pop(sheetContext, mode),
+            ),
+        ],
+      ),
+    ),
+  );
+
+  if (selected == null || selected == current) {
+    return;
+  }
+  await ref
+      .read(settingsControllerProvider.notifier)
+      .setWorkoutProgressionMode(selected);
+}
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -305,6 +375,21 @@ class _SettingsContent extends ConsumerWidget {
             _sectionCard(
               context,
               children: [
+                ListTile(
+                  leading: const Icon(Icons.trending_up_rounded),
+                  title: const Text(
+                    'Modo da progressão',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(settings.workoutProgressionMode.label),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _showWorkoutProgressionModePicker(
+                    context,
+                    ref,
+                    settings.workoutProgressionMode,
+                  ),
+                ),
+                Divider(color: AppColors.border, height: 1),
                 SwitchListTile(
                   secondary: const Icon(Icons.record_voice_over_outlined),
                   title: const Text(

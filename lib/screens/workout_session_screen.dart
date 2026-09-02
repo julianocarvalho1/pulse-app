@@ -12,6 +12,7 @@ import '../features/workouts/domain/models/advanced_workout_prescription.dart';
 import '../features/workouts/domain/services/exercise_alternative_service.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/domain/models/exercise_log.dart';
+import '../features/workouts/domain/models/exercise_progression_suggestion.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../features/workouts/presentation/state/workout_state.dart';
@@ -51,10 +52,12 @@ class _ExerciseSessionDetails {
   const _ExerciseSessionDetails({
     required this.notes,
     required this.isLoadComparable,
+    required this.perceivedRir,
   });
 
   final String notes;
   final bool isLoadComparable;
+  final int? perceivedRir;
 }
 
 class _ExerciseNotesEditorSheet extends StatefulWidget {
@@ -62,11 +65,13 @@ class _ExerciseNotesEditorSheet extends StatefulWidget {
     required this.exerciseName,
     required this.initialNotes,
     required this.initialIsLoadComparable,
+    required this.initialPerceivedRir,
   });
 
   final String exerciseName;
   final String initialNotes;
   final bool initialIsLoadComparable;
+  final int? initialPerceivedRir;
 
   @override
   State<_ExerciseNotesEditorSheet> createState() =>
@@ -76,12 +81,14 @@ class _ExerciseNotesEditorSheet extends StatefulWidget {
 class _ExerciseNotesEditorSheetState extends State<_ExerciseNotesEditorSheet> {
   late final TextEditingController _notesController;
   late bool _isLoadComparable;
+  int? _perceivedRir;
 
   @override
   void initState() {
     super.initState();
     _notesController = TextEditingController(text: widget.initialNotes);
     _isLoadComparable = widget.initialIsLoadComparable;
+    _perceivedRir = widget.initialPerceivedRir;
   }
 
   @override
@@ -96,13 +103,25 @@ class _ExerciseNotesEditorSheetState extends State<_ExerciseNotesEditorSheet> {
       _ExerciseSessionDetails(
         notes: _notesController.text,
         isLoadComparable: _isLoadComparable,
+        perceivedRir: _perceivedRir,
       ),
     );
   }
 
+  void _applyShortcut(String text) {
+    final current = _notesController.text.trim();
+    if (!current.toLowerCase().contains(text.toLowerCase())) {
+      _notesController.text = current.isEmpty ? text : '$current\n$text';
+      _notesController.selection = TextSelection.collapsed(
+        offset: _notesController.text.length,
+      );
+    }
+    setState(() => _isLoadComparable = false);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
         18,
@@ -137,6 +156,54 @@ class _ExerciseNotesEditorSheetState extends State<_ExerciseNotesEditorSheet> {
               hintText:
                   'Ex.: fiz mais leve; usei outra máquina; senti mais dificuldade.',
               alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Atalhos',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: <Widget>[
+              ActionChip(
+                key: const ValueKey<String>('shortcut-different-machine'),
+                avatar: const Icon(Icons.fitness_center_rounded, size: 16),
+                label: const Text('Máquina diferente'),
+                onPressed: () => _applyShortcut('Usei outra máquina.'),
+              ),
+              ActionChip(
+                key: const ValueKey<String>('shortcut-non-comparable-load'),
+                avatar: const Icon(Icons.compare_arrows_rounded, size: 16),
+                label: const Text('Carga não comparável'),
+                onPressed: () => _applyShortcut(
+                  'Carga não comparável com o treino anterior.',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<int>(
+            key: const ValueKey<String>('perceived-rir-field'),
+            initialValue: _perceivedRir ?? -1,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'RIR percebido na última série (opcional)',
+              helperText:
+                  'Quantas repetições ainda seriam possíveis com boa execução.',
+            ),
+            items: const <DropdownMenuItem<int>>[
+              DropdownMenuItem<int>(value: -1, child: Text('Não informar')),
+              DropdownMenuItem<int>(value: 0, child: Text('RIR 0 — no limite')),
+              DropdownMenuItem<int>(value: 1, child: Text('RIR 1')),
+              DropdownMenuItem<int>(value: 2, child: Text('RIR 2')),
+              DropdownMenuItem<int>(value: 3, child: Text('RIR 3')),
+              DropdownMenuItem<int>(value: 4, child: Text('RIR 4 ou mais')),
+            ],
+            onChanged: (value) => setState(
+              () => _perceivedRir = value == null || value < 0 ? null : value,
             ),
           ),
           const SizedBox(height: 6),
@@ -767,6 +834,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         exerciseName: exercise.name,
         initialNotes: activeExercise?.sessionNotes ?? '',
         initialIsLoadComparable: activeExercise?.isLoadComparable ?? true,
+        initialPerceivedRir: activeExercise?.perceivedRir,
       ),
     );
 
@@ -779,6 +847,113 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       exerciseIndex,
       notes: result.notes,
       isLoadComparable: result.isLoadComparable,
+      perceivedRir: result.perceivedRir,
+    );
+  }
+
+  Future<void> _showProgressionDetails({
+    required Exercise exercise,
+    required ExerciseProgressionSuggestion progression,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Como foi calculado',
+              style: Theme.of(
+                sheetContext,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              exercise.name,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            _progressionDetailRow(
+              sheetContext,
+              icon: Icons.assignment_outlined,
+              title: 'Base utilizada',
+              body: progression.source,
+            ),
+            const SizedBox(height: 12),
+            _progressionDetailRow(
+              sheetContext,
+              icon: Icons.history_rounded,
+              title: 'Último registro',
+              body: progression.lastPerformance,
+            ),
+            const SizedBox(height: 12),
+            _progressionDetailRow(
+              sheetContext,
+              icon: Icons.lightbulb_outline_rounded,
+              title: 'Motivo',
+              body: progression.reason,
+            ),
+            const SizedBox(height: 12),
+            _progressionDetailRow(
+              sheetContext,
+              icon: Icons.trending_up_rounded,
+              title: 'Próximo treino',
+              body: progression.nextTarget,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'A sugestão não altera a ficha e não substitui a orientação do profissional responsável.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _progressionDetailRow(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(icon, size: 19, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                body,
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1272,6 +1447,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
             sets: setsCompleted,
             notes: activeExercise?.sessionNotes ?? '',
             isLoadComparable: activeExercise?.isLoadComparable ?? true,
+            perceivedRir: activeExercise?.perceivedRir,
           ),
         );
       }
@@ -1951,6 +2127,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                             activeExercise?.sessionNotes.trim() ?? '';
                         final isLoadComparable =
                             activeExercise?.isLoadComparable ?? true;
+                        final perceivedRir = activeExercise?.perceivedRir;
 
                         return Container(
                           key: ValueKey<String>(
@@ -2507,6 +2684,56 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                           maxLines: 4,
                                           overflow: TextOverflow.ellipsis,
                                         ),
+                                        const SizedBox(height: 4),
+                                        InkWell(
+                                          key: ValueKey<String>(
+                                            'progression-details-${ex.id}-$index',
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          onTap: () => _showProgressionDetails(
+                                            exercise: ex,
+                                            progression: progression,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 2,
+                                            ),
+                                            child: Row(
+                                              children: <Widget>[
+                                                Icon(
+                                                  Icons.info_outline_rounded,
+                                                  size: 13,
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Base: ${progression.source}',
+                                                    style: TextStyle(
+                                                      color: AppColors
+                                                          .textSecondary,
+                                                      fontSize: 9,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.chevron_right_rounded,
+                                                  size: 14,
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -2633,9 +2860,11 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 ),
                                               ),
                                               Text(
-                                                exerciseSessionNotes.isEmpty
-                                                    ? 'Adicionar uma anotação para este exercício'
-                                                    : exerciseSessionNotes,
+                                                exerciseSessionNotes.isNotEmpty
+                                                    ? exerciseSessionNotes
+                                                    : perceivedRir != null
+                                                    ? 'RIR da última série: $perceivedRir'
+                                                    : 'Adicionar uma anotação para este exercício',
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(

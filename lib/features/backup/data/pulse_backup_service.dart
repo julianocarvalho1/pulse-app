@@ -122,6 +122,7 @@ class PulseBackupService {
       'sort_order',
       'notes',
       'is_load_comparable',
+      'perceived_rir',
     ],
     'workout_history_sets': <String>[
       'id',
@@ -181,6 +182,7 @@ class PulseBackupService {
       'advanced_prescription_json',
       'session_notes',
       'is_load_comparable',
+      'perceived_rir',
     ],
     'active_session_sets': <String>[
       'id',

@@ -19,6 +19,7 @@ void main() {
         ActiveWorkoutExercise(
           sessionNotes: 'Usei a máquina do andar de cima.',
           isLoadComparable: false,
+          perceivedRir: 2,
           exercise: const Exercise(
             id: 'supino',
             name: 'Supino',
@@ -69,6 +70,7 @@ void main() {
       'Usei a máquina do andar de cima.',
     );
     expect(restored.exercises.single.isLoadComparable, isFalse);
+    expect(restored.exercises.single.perceivedRir, 2);
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
     expect(restored.exercises.single.sets.first.targetText, '8–10 reps');
     expect(restored.exercises.single.sets.first.targetRir, 2);

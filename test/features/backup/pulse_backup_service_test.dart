@@ -79,6 +79,7 @@ void main() {
       'sort_order': 0,
       'notes': 'Máquina diferente.',
       'is_load_comparable': 0,
+      'perceived_rir': 1,
     });
     await db.insert('body_measurements', <String, Object?>{
       'id': 'weight-a',
@@ -129,10 +130,15 @@ void main() {
       'advanced_prescription_json': '',
       'session_notes': 'Ombro cansado.',
       'is_load_comparable': 0,
+      'perceived_rir': 2,
     });
 
     await preferences.setString('user_name', 'Juliano');
     await preferences.setString('settings_theme_mode', 'light');
+    await preferences.setString(
+      'settings_workout_progression_mode',
+      'repsThenLoad',
+    );
     await preferences.setBool('app_lock_enabled', true);
 
     final bytes = await service.exportBytes();
@@ -164,6 +170,7 @@ void main() {
     )).single;
     expect(restoredHistoryExercise['notes'], 'Máquina diferente.');
     expect(restoredHistoryExercise['is_load_comparable'], 0);
+    expect(restoredHistoryExercise['perceived_rir'], 1);
     expect(await db.query('workout_history_cardio'), hasLength(1));
     final restoredActivities = await db.query(
       'workout_history_free_activities',
@@ -184,8 +191,13 @@ void main() {
     )).single;
     expect(restoredActiveExercise['session_notes'], 'Ombro cansado.');
     expect(restoredActiveExercise['is_load_comparable'], 0);
+    expect(restoredActiveExercise['perceived_rir'], 2);
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
+    expect(
+      preferences.getString('settings_workout_progression_mode'),
+      'repsThenLoad',
+    );
     expect(preferences.getBool('app_lock_enabled'), isFalse);
   });
 
@@ -251,7 +263,7 @@ void main() {
   });
 
   test(
-    'aceita backup anterior aos campos de anotações por exercício',
+    'aceita backup anterior aos campos de anotações e RIR por exercício',
     () async {
       final db = await database.database;
       await db.insert('workout_history', <String, Object>{
@@ -297,10 +309,12 @@ void main() {
       for (final row in historyRows.cast<Map<String, dynamic>>()) {
         row.remove('notes');
         row.remove('is_load_comparable');
+        row.remove('perceived_rir');
       }
       for (final row in activeRows.cast<Map<String, dynamic>>()) {
         row.remove('session_notes');
         row.remove('is_load_comparable');
+        row.remove('perceived_rir');
       }
 
       await service.importBytes(
@@ -312,11 +326,13 @@ void main() {
       )).single;
       expect(restoredHistory['notes'], '');
       expect(restoredHistory['is_load_comparable'], 1);
+      expect(restoredHistory['perceived_rir'], isNull);
       final restoredActive = (await db.query(
         'active_session_exercises',
       )).single;
       expect(restoredActive['session_notes'], '');
       expect(restoredActive['is_load_comparable'], 1);
+      expect(restoredActive['perceived_rir'], isNull);
     },
   );
 }

@@ -579,6 +579,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     int exerciseIndex, {
     required String notes,
     required bool isLoadComparable,
+    required int? perceivedRir,
   }) {
     final session = activeSession;
     if (session == null ||
@@ -593,6 +594,8 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     updatedExercises[exerciseIndex] = updatedExercises[exerciseIndex].copyWith(
       sessionNotes: notes.trim(),
       isLoadComparable: isLoadComparable,
+      perceivedRir: perceivedRir,
+      clearPerceivedRir: perceivedRir == null,
     );
 
     _activeSessionSnapshot = session.copyWith(
@@ -668,6 +671,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
           sets: activeSets,
           sessionNotes: restoredExercise?.sessionNotes ?? '',
           isLoadComparable: restoredExercise?.isLoadComparable ?? true,
+          perceivedRir: restoredExercise?.perceivedRir,
         ),
       );
     }

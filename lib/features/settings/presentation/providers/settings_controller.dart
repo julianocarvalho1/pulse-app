@@ -4,6 +4,7 @@ import '../../../auth/presentation/providers/auth_controller.dart';
 import '../../data/profile_photo_service.dart';
 import '../../data/settings_local_service.dart';
 import '../../domain/pulse_settings.dart';
+import '../../../workouts/domain/models/workout_progression_mode.dart';
 
 final settingsLocalServiceProvider = Provider<SettingsLocalService>(
   (ref) => SettingsLocalService(),
@@ -69,6 +70,15 @@ class SettingsController extends AsyncNotifier<PulseSettings> {
     }
 
     await _persist(current.copyWith(measurementSystem: measurementSystem));
+  }
+
+  Future<void> setWorkoutProgressionMode(WorkoutProgressionMode mode) async {
+    final current = _currentValue;
+    if (current == null || current.workoutProgressionMode == mode) {
+      return;
+    }
+
+    await _persist(current.copyWith(workoutProgressionMode: mode));
   }
 
   Future<void> applyOnboarding({

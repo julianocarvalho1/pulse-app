@@ -63,6 +63,16 @@ void main() {
 
     final timerText = tester.widget<Text>(timerFinder);
     expect(timerText.style?.fontSize, 14);
+
+    final progressionDetails = find.byKey(
+      const Key('progression-details-p1-0'),
+    );
+    await tester.ensureVisible(progressionDetails);
+    await tester.tap(progressionDetails);
+    await tester.pumpAndSettle();
+    expect(find.text('Como foi calculado'), findsOneWidget);
+    expect(find.text('Base utilizada'), findsOneWidget);
+    expect(find.text('Motivo'), findsOneWidget);
   });
 
   testWidgets('descanso oferece pausar, continuar e pular', (tester) async {
@@ -207,6 +217,65 @@ void main() {
     expect(SessionStateCache.weights[0]!.first, isEmpty);
     expect(SessionStateCache.setsStatus[0]!.first, isTrue);
   });
+
+  testWidgets('atalho de anotação marca carga e salva RIR opcional', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    _NotesWorkoutController.resetCapturedValues();
+
+    final palette = pulsePalettes[1];
+    AppColors.configure(Brightness.light, primaryColor: palette.lightPrimary);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          workoutControllerProvider.overrideWith(_NotesWorkoutController.new),
+          workoutDurationProvider.overrideWith(_FixedDurationController.new),
+          workoutSessionProgressProvider.overrideWithValue(
+            const WorkoutSessionProgress(
+              completedSets: 0,
+              totalSets: 3,
+              completedExercises: 0,
+              totalExercises: 1,
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          theme: buildPulseLightTheme(palette.lightPrimary),
+          home: const WorkoutSessionScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('exercise-notes-p1-0')));
+    await tester.pumpAndSettle();
+    final shortcut = find.byKey(const Key('shortcut-different-machine'));
+    await tester.ensureVisible(shortcut);
+    await tester.tap(shortcut);
+    await tester.pump();
+
+    final rirField = find.byKey(const Key('perceived-rir-field'));
+    await tester.ensureVisible(rirField);
+    await tester.tap(rirField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('RIR 2').last);
+    await tester.pumpAndSettle();
+
+    final save = find.text('Salvar');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(_NotesWorkoutController.savedNotes, 'Usei outra máquina.');
+    expect(_NotesWorkoutController.savedIsLoadComparable, isFalse);
+    expect(_NotesWorkoutController.savedPerceivedRir, 2);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _FixedDurationController extends WorkoutDurationController {
@@ -281,5 +350,55 @@ class _RestingWorkoutController extends _FakeWorkoutController {
       isRestPaused: false,
       restSeconds: 0,
     );
+  }
+}
+
+class _NotesWorkoutController extends _FakeWorkoutController {
+  static String? savedNotes;
+  static bool? savedIsLoadComparable;
+  static int? savedPerceivedRir;
+
+  static void resetCapturedValues() {
+    savedNotes = null;
+    savedIsLoadComparable = null;
+    savedPerceivedRir = null;
+  }
+
+  @override
+  WorkoutState build() {
+    final base = super.build();
+    return base.copyWith(
+      activeSession: ActiveWorkoutSession(
+        id: 'active-notes',
+        routineName: 'Treino A',
+        startedAt: DateTime(2026, 9, 1),
+        elapsedSeconds: 0,
+        exercises: <ActiveWorkoutExercise>[
+          ActiveWorkoutExercise(
+            exercise: _FakeWorkoutController._exercise,
+            sets: const <ActiveWorkoutSet>[
+              ActiveWorkoutSet(setNumber: 1),
+              ActiveWorkoutSet(setNumber: 2),
+              ActiveWorkoutSet(setNumber: 3),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  ActiveWorkoutSession? get activeSession => state.activeSession;
+
+  @override
+  void updateExerciseSessionDetails(
+    int exerciseIndex, {
+    required String notes,
+    required bool isLoadComparable,
+    required int? perceivedRir,
+  }) {
+    savedNotes = notes;
+    savedIsLoadComparable = isLoadComparable;
+    savedPerceivedRir = perceivedRir;
   }
 }

@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 8;
+  static const int databaseVersion = 9;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -143,6 +143,7 @@ class PulseDatabase {
         sort_order INTEGER NOT NULL,
         notes TEXT NOT NULL DEFAULT '',
         is_load_comparable INTEGER NOT NULL DEFAULT 1,
+        perceived_rir INTEGER,
         FOREIGN KEY (history_id)
           REFERENCES workout_history (id)
           ON DELETE CASCADE
@@ -201,6 +202,7 @@ class PulseDatabase {
         advanced_prescription_json TEXT NOT NULL DEFAULT '',
         session_notes TEXT NOT NULL DEFAULT '',
         is_load_comparable INTEGER NOT NULL DEFAULT 1,
+        perceived_rir INTEGER,
         FOREIGN KEY (session_id)
           REFERENCES active_session (id)
           ON DELETE CASCADE
@@ -277,6 +279,25 @@ class PulseDatabase {
     if (oldVersion < 8) {
       await _addExerciseSessionNoteColumns(db);
     }
+
+    if (oldVersion < 9) {
+      await _addExercisePerceivedRirColumns(db);
+    }
+  }
+
+  Future<void> _addExercisePerceivedRirColumns(DatabaseExecutor db) async {
+    await _addColumnIfMissing(
+      db,
+      table: 'active_session_exercises',
+      column: 'perceived_rir',
+      definition: 'INTEGER',
+    );
+    await _addColumnIfMissing(
+      db,
+      table: 'workout_history_exercises',
+      column: 'perceived_rir',
+      definition: 'INTEGER',
+    );
   }
 
   Future<void> _addExerciseSessionNoteColumns(DatabaseExecutor db) async {

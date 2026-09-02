@@ -277,6 +277,7 @@ class WorkoutController extends Notifier<WorkoutState> {
     int exerciseIndex, {
     required String notes,
     required bool isLoadComparable,
+    required int? perceivedRir,
   }) {
     ref
         .read(workoutSessionControllerProvider.notifier)
@@ -284,6 +285,7 @@ class WorkoutController extends Notifier<WorkoutState> {
           exerciseIndex,
           notes: notes,
           isLoadComparable: isLoadComparable,
+          perceivedRir: perceivedRir,
         );
   }
 

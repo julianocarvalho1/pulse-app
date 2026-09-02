@@ -379,6 +379,7 @@ void main() {
       0,
       notes: 'Usei outra máquina hoje.',
       isLoadComparable: false,
+      perceivedRir: 2,
     );
     controller.saveActiveSessionProgress(
       setsStatus: <int, List<bool>>{
@@ -396,6 +397,7 @@ void main() {
     final activeExercise = controller.activeSession!.exercises.single;
     expect(activeExercise.sessionNotes, 'Usei outra máquina hoje.');
     expect(activeExercise.isLoadComparable, isFalse);
+    expect(activeExercise.perceivedRir, 2);
     expect(activeExercise.sets.first.isCompleted, isTrue);
   });
 

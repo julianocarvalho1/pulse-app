@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../workouts/domain/models/workout_progression_mode.dart';
+
 enum MeasurementSystem { metric, imperial }
 
 enum PulseThemeMode { system, light, dark }
@@ -51,6 +53,7 @@ class PulseSettings {
     required this.voiceAfterRest,
     required this.inactivityReminder,
     required this.measurementSystem,
+    required this.workoutProgressionMode,
     required this.profile,
   });
 
@@ -59,6 +62,7 @@ class PulseSettings {
   final bool voiceAfterRest;
   final bool inactivityReminder;
   final MeasurementSystem measurementSystem;
+  final WorkoutProgressionMode workoutProgressionMode;
   final UserProfile profile;
 
   factory PulseSettings.defaults() {
@@ -68,6 +72,7 @@ class PulseSettings {
       voiceAfterRest: true,
       inactivityReminder: true,
       measurementSystem: MeasurementSystem.metric,
+      workoutProgressionMode: WorkoutProgressionMode.withinRange,
       profile: UserProfile(name: 'Atleta', weightKg: 0, heightCm: 0, age: 0),
     );
   }
@@ -78,6 +83,7 @@ class PulseSettings {
     bool? voiceAfterRest,
     bool? inactivityReminder,
     MeasurementSystem? measurementSystem,
+    WorkoutProgressionMode? workoutProgressionMode,
     UserProfile? profile,
   }) {
     return PulseSettings(
@@ -86,6 +92,8 @@ class PulseSettings {
       voiceAfterRest: voiceAfterRest ?? this.voiceAfterRest,
       inactivityReminder: inactivityReminder ?? this.inactivityReminder,
       measurementSystem: measurementSystem ?? this.measurementSystem,
+      workoutProgressionMode:
+          workoutProgressionMode ?? this.workoutProgressionMode,
       profile: profile ?? this.profile,
     );
   }
