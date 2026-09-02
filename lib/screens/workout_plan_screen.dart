@@ -1637,7 +1637,7 @@ class WorkoutPlanScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${cardio.plannedDurationMinutes} min${cardio.notes.isEmpty ? '' : ' • ${cardio.notes}'}',
+                            '${cardio.plan.purpose.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min${cardio.notes.isEmpty ? '' : ' • ${cardio.notes}'}',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,

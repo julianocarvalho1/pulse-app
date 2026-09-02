@@ -5,6 +5,7 @@ import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../models/exercise.dart';
 import '../theme/app_theme.dart';
+import '../widgets/routine_cardio_editor_sheet.dart';
 import 'exercise_prescription_editor_screen.dart';
 import '../widgets/routine_type_selector.dart';
 
@@ -156,15 +157,12 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
   }
 
   Future<void> _editCardio({RoutineCardio? existing}) async {
-    final result = await showModalBottomSheet<RoutineCardio>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => _RoutineCardioEditorSheet(existing: existing),
+    final result = await showRoutineCardioEditorSheet(
+      context,
+      existing: existing,
+      initialPurpose: _type == RoutineType.cardio
+          ? CardioPurpose.standalone
+          : CardioPurpose.postWorkout,
     );
 
     if (result == null || !mounted) {
@@ -398,7 +396,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         subtitle: Text(
-                          '${cardio.plannedDurationMinutes} min planejados',
+                          '${cardio.plan.purpose.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min',
                         ),
                         trailing: IconButton(
                           tooltip: 'Remover',
@@ -574,168 +572,6 @@ class _ExercisePickerSheetState extends State<_ExercisePickerSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _RoutineCardioEditorSheet extends StatefulWidget {
-  const _RoutineCardioEditorSheet({this.existing});
-
-  final RoutineCardio? existing;
-
-  @override
-  State<_RoutineCardioEditorSheet> createState() =>
-      _RoutineCardioEditorSheetState();
-}
-
-class _RoutineCardioEditorSheetState extends State<_RoutineCardioEditorSheet> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late final TextEditingController _durationController;
-  late final TextEditingController _notesController;
-  late CardioModality _modality;
-
-  @override
-  void initState() {
-    super.initState();
-    _modality = widget.existing?.modality ?? CardioModality.treadmill;
-    _durationController = TextEditingController(
-      text: widget.existing?.plannedDurationMinutes.toString() ?? '20',
-    );
-    _notesController = TextEditingController(
-      text: widget.existing?.notes ?? '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _durationController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    Navigator.pop(
-      context,
-      RoutineCardio(
-        id:
-            widget.existing?.id ??
-            'routine_cardio_${DateTime.now().microsecondsSinceEpoch}',
-        modality: _modality,
-        plannedDurationMinutes: int.parse(_durationController.text.trim()),
-        notes: _notesController.text.trim(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        MediaQuery.viewInsetsOf(context).bottom +
-            MediaQuery.paddingOf(context).bottom +
-            20,
-      ),
-      child: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      widget.existing == null
-                          ? 'Adicionar cardio'
-                          : 'Editar cardio',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<CardioModality>(
-                initialValue: _modality,
-                decoration: const InputDecoration(
-                  labelText: 'Modalidade',
-                  prefixIcon: Icon(Icons.directions_run_rounded),
-                ),
-                items: CardioModality.values
-                    .map(
-                      (item) => DropdownMenuItem<CardioModality>(
-                        value: item,
-                        child: Text(item.label),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _modality = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Duração planejada',
-                  suffixText: 'min',
-                  prefixIcon: Icon(Icons.timer_outlined),
-                ),
-                validator: (value) {
-                  final minutes = int.tryParse(value?.trim() ?? '');
-                  if (minutes == null || minutes <= 0) {
-                    return 'Informe uma duração maior que zero.';
-                  }
-                  if (minutes > 600) {
-                    return 'Use uma duração de até 600 minutos.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _notesController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Orientação opcional',
-                  hintText: 'Ex.: ritmo moderado após a musculação',
-                  prefixIcon: Icon(Icons.sticky_note_2_outlined),
-                  alignLabelWithHint: true,
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _save,
-                  icon: const Icon(Icons.check_rounded),
-                  label: const Text('SALVAR CARDIO'),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

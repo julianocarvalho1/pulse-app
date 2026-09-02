@@ -133,7 +133,29 @@ class PulseWorkoutQrCodec {
     return <String, dynamic>{
       'm': cardio.modality.index,
       'd': cardio.plannedDurationMinutes,
+      'p': _cardioPlanToCompactMap(cardio.plan),
       if (cardio.notes.trim().isNotEmpty) 'n': cardio.notes,
+    };
+  }
+
+  Map<String, dynamic> _cardioPlanToCompactMap(CardioPlan plan) {
+    final intervals = plan.intervals;
+    return <String, dynamic>{
+      'u': plan.purpose.index,
+      'f': plan.format.index,
+      'i': plan.intensity.index,
+      if (plan.plannedDistanceKm != null) 'd': plan.plannedDistanceKm,
+      if (plan.plannedSpeedKmh != null) 's': plan.plannedSpeedKmh,
+      if (plan.plannedInclinePercent != null) 'n': plan.plannedInclinePercent,
+      if (plan.plannedResistanceLevel != null) 'r': plan.plannedResistanceLevel,
+      if (intervals != null)
+        'x': <int>[
+          intervals.warmUpMinutes,
+          intervals.effortSeconds,
+          intervals.recoverySeconds,
+          intervals.cycles,
+          intervals.coolDownMinutes,
+        ],
     };
   }
 
@@ -290,7 +312,58 @@ class PulseWorkoutQrCodec {
       id: 'qr_cardio_${routineIndex}_$cardioIndex',
       modality: modality,
       plannedDurationMinutes: _readInt(map['d']) ?? 0,
+      plan: map['p'] is Map
+          ? _cardioPlanFromCompactMap(
+              Map<String, dynamic>.from(map['p'] as Map),
+            )
+          : const CardioPlan(),
       notes: map['n']?.toString() ?? '',
+    );
+  }
+
+  CardioPlan _cardioPlanFromCompactMap(Map<String, dynamic> map) {
+    final purposeIndex = _readInt(map['u']);
+    final formatIndex = _readInt(map['f']);
+    final intensityIndex = _readInt(map['i']);
+    final rawIntervals = map['x'];
+    final intervalValues = rawIntervals is List
+        ? rawIntervals.map(_readInt).toList(growable: false)
+        : const <int?>[];
+
+    return CardioPlan(
+      purpose:
+          purposeIndex != null &&
+              purposeIndex >= 0 &&
+              purposeIndex < CardioPurpose.values.length
+          ? CardioPurpose.values[purposeIndex]
+          : CardioPurpose.postWorkout,
+      format:
+          formatIndex != null &&
+              formatIndex >= 0 &&
+              formatIndex < CardioFormat.values.length
+          ? CardioFormat.values[formatIndex]
+          : CardioFormat.continuous,
+      intensity:
+          intensityIndex != null &&
+              intensityIndex >= 0 &&
+              intensityIndex < CardioIntensity.values.length
+          ? CardioIntensity.values[intensityIndex]
+          : CardioIntensity.selfSelected,
+      plannedDistanceKm: _readDouble(map['d']),
+      plannedSpeedKmh: _readDouble(map['s']),
+      plannedInclinePercent: _readDouble(map['n']),
+      plannedResistanceLevel: _readDouble(map['r']),
+      intervals:
+          intervalValues.length == 5 &&
+              intervalValues.every((value) => value != null)
+          ? CardioIntervalPlan(
+              warmUpMinutes: intervalValues[0]!,
+              effortSeconds: intervalValues[1]!,
+              recoverySeconds: intervalValues[2]!,
+              cycles: intervalValues[3]!,
+              coolDownMinutes: intervalValues[4]!,
+            )
+          : null,
     );
   }
 
@@ -346,5 +419,12 @@ class PulseWorkoutQrCodec {
       return value.toInt();
     }
     return int.tryParse(value?.toString() ?? '');
+  }
+
+  double? _readDouble(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '');
   }
 }

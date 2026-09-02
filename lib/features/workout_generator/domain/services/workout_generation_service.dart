@@ -73,6 +73,14 @@ class WorkoutGenerationService {
             id: 'generated_cardio_${index + 1}',
             modality: request.cardioModality,
             plannedDurationMinutes: _cardioMinutes(request),
+            plan: CardioPlan(
+              purpose: request.planType == GeneratedPlanType.cardio
+                  ? CardioPurpose.standalone
+                  : CardioPurpose.postWorkout,
+              intensity: request.level == TrainingLevel.beginner
+                  ? CardioIntensity.light
+                  : CardioIntensity.moderate,
+            ),
             notes: _cardioNote(request),
           ),
         );

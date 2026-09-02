@@ -44,6 +44,11 @@ void main() {
           id: 'cardio_1',
           modality: CardioModality.treadmill,
           plannedDurationMinutes: 20,
+          plan: CardioPlan(
+            purpose: CardioPurpose.postWorkout,
+            intensity: CardioIntensity.moderate,
+            plannedInclinePercent: 2,
+          ),
           notes: 'Após a musculação',
         ),
       ],
@@ -60,6 +65,11 @@ void main() {
     expect(decoded.routine?.exercises.single.reps, '4x 8-10');
     expect(decoded.routine?.exercises.single.customNote, 'Controlar a descida');
     expect(decoded.routine?.cardio.single.plannedDurationMinutes, 20);
+    expect(
+      decoded.routine?.cardio.single.plan.intensity,
+      CardioIntensity.moderate,
+    );
+    expect(decoded.routine?.cardio.single.plan.plannedInclinePercent, 2);
   });
 
   test('exporta e lê programa com várias fichas', () {

@@ -311,7 +311,7 @@ class _RoutineDetailScreenState extends ConsumerState<RoutineDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${cardio.plannedDurationMinutes} min planejados',
+                  '${cardio.plan.purpose.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

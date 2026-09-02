@@ -5,6 +5,7 @@ import '../features/exercises/domain/exercise_catalog.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../features/workouts/presentation/providers/workout_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/routine_cardio_editor_sheet.dart';
 import '../widgets/routine_type_selector.dart';
 
 // ============================================================
@@ -753,147 +754,14 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
     int routineIndex, {
     RoutineCardio? existing,
   }) async {
-    var modality = existing?.modality ?? CardioModality.treadmill;
-    final durationController = TextEditingController(
-      text: existing?.plannedDurationMinutes.toString() ?? '20',
+    final routine = _draftRoutines[routineIndex];
+    final result = await showRoutineCardioEditorSheet(
+      context,
+      existing: existing,
+      initialPurpose: routine.type == RoutineType.cardio
+          ? CardioPurpose.standalone
+          : CardioPurpose.postWorkout,
     );
-    final notesController = TextEditingController(text: existing?.notes ?? '');
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showModalBottomSheet<RoutineCardio>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            18,
-            20,
-            MediaQuery.viewInsetsOf(context).bottom +
-                MediaQuery.paddingOf(context).bottom +
-                20,
-          ),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          existing == null
-                              ? 'Adicionar cardio'
-                              : 'Editar cardio',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(sheetContext),
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<CardioModality>(
-                    initialValue: modality,
-                    decoration: const InputDecoration(
-                      labelText: 'Modalidade',
-                      prefixIcon: Icon(Icons.directions_run_rounded),
-                    ),
-                    items: CardioModality.values
-                        .map(
-                          (item) => DropdownMenuItem<CardioModality>(
-                            value: item,
-                            child: Text(item.label),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setSheetState(() => modality = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: durationController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Duração planejada',
-                      suffixText: 'min',
-                      prefixIcon: Icon(Icons.timer_outlined),
-                    ),
-                    validator: (value) {
-                      final minutes = int.tryParse(value?.trim() ?? '');
-                      if (minutes == null || minutes <= 0) {
-                        return 'Informe uma duração maior que zero.';
-                      }
-                      if (minutes > 600) {
-                        return 'Use uma duração de até 600 minutos.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: notesController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Orientação opcional',
-                      hintText: 'Ex.: ritmo moderado após a musculação',
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (!(formKey.currentState?.validate() ?? false)) {
-                          return;
-                        }
-                        Navigator.pop(
-                          sheetContext,
-                          RoutineCardio(
-                            id:
-                                existing?.id ??
-                                'routine_cardio_${DateTime.now().microsecondsSinceEpoch}',
-                            modality: modality,
-                            plannedDurationMinutes: int.parse(
-                              durationController.text.trim(),
-                            ),
-                            notes: notesController.text.trim(),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.check_rounded),
-                      label: const Text('SALVAR CARDIO'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    durationController.dispose();
-    notesController.dispose();
 
     if (result == null || !mounted) {
       return;
@@ -1320,7 +1188,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              '${cardio.plannedDurationMinutes} min planejados',
+                              '${cardio.plan.purpose.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min',
                             ),
                             trailing: IconButton(
                               tooltip: 'Remover cardio',

@@ -101,6 +101,7 @@ class WorkoutLocalService {
                   plannedDurationMinutes: _readInt(
                     row['planned_duration_minutes'],
                   ),
+                  plan: CardioPlan.fromJson(row['plan_json']),
                   notes: row['notes']?.toString() ?? '',
                 ),
               )
@@ -167,6 +168,7 @@ class WorkoutLocalService {
               'sort_order': cardioIndex,
               'modality': entry.modality.storageValue,
               'planned_duration_minutes': entry.plannedDurationMinutes,
+              'plan_json': entry.plan.toJson(),
               'notes': entry.notes,
             });
           }
@@ -247,6 +249,7 @@ class WorkoutLocalService {
             (row) => CardioLog(
               modality: CardioModality.fromStorage(row['modality']),
               plannedDurationMinutes: _readInt(row['planned_duration_minutes']),
+              plan: CardioPlan.fromJson(row['plan_json']),
               actualDurationMinutes: _readInt(row['actual_duration_minutes']),
               distanceKm: _readNullableDouble(row['distance_km']),
               averageSpeedKmh: _readNullableDouble(row['average_speed_kmh']),
@@ -462,6 +465,7 @@ class WorkoutLocalService {
               id: row['cardio_id']?.toString() ?? '',
               modality: CardioModality.fromStorage(row['modality']),
               plannedDurationMinutes: _readInt(row['planned_duration_minutes']),
+              plan: CardioPlan.fromJson(row['plan_json']),
               actualDurationMinutes: _readInt(row['actual_duration_minutes']),
               distanceKm: _readNullableDouble(row['distance_km']),
               averageSpeedKmh: _readNullableDouble(row['average_speed_kmh']),
@@ -566,6 +570,7 @@ class WorkoutLocalService {
             'sort_order': cardioIndex,
             'modality': entry.modality.storageValue,
             'planned_duration_minutes': entry.plannedDurationMinutes,
+            'plan_json': entry.plan.toJson(),
             'actual_duration_minutes': entry.actualDurationMinutes,
             'distance_km': entry.distanceKm,
             'average_speed_kmh': entry.averageSpeedKmh,
@@ -666,6 +671,7 @@ class WorkoutLocalService {
           'sort_order': cardioIndex,
           'modality': entry.modality.storageValue,
           'planned_duration_minutes': entry.plannedDurationMinutes,
+          'plan_json': entry.plan.toJson(),
           'actual_duration_minutes': entry.actualDurationMinutes,
           'distance_km': entry.distanceKm,
           'average_speed_kmh': entry.averageSpeedKmh,

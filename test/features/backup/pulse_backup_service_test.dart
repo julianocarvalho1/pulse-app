@@ -33,6 +33,18 @@ void main() {
   test('exporta, resume e restaura banco e preferências', () async {
     final db = await database.database;
     final preferences = await SharedPreferences.getInstance();
+    final structuredPlanJson = jsonEncode(<String, Object>{
+      'purpose': 'postWorkout',
+      'format': 'intervals',
+      'intensity': 'moderate',
+      'intervals': <String, Object>{
+        'warmUpMinutes': 5,
+        'effortSeconds': 30,
+        'recoverySeconds': 60,
+        'cycles': 6,
+        'coolDownMinutes': 5,
+      },
+    });
 
     await db.insert('routines', <String, Object>{
       'id': 'routine-a',
@@ -40,6 +52,15 @@ void main() {
       'focus': 'Peito',
       'group_name': 'Hipertrofia',
       'sort_order': 0,
+    });
+    await db.insert('routine_cardio', <String, Object>{
+      'routine_id': 'routine-a',
+      'cardio_id': 'cardio-a',
+      'sort_order': 0,
+      'modality': 'treadmill',
+      'planned_duration_minutes': 19,
+      'plan_json': structuredPlanJson,
+      'notes': '',
     });
     await db.insert('custom_exercises', <String, Object>{
       'id': 'custom-advanced',
@@ -101,6 +122,7 @@ void main() {
       'sort_order': 0,
       'modality': 'treadmill',
       'planned_duration_minutes': 30,
+      'plan_json': structuredPlanJson,
       'actual_duration_minutes': 28,
       'distance_km': 4.2,
       'notes': '',
@@ -125,6 +147,16 @@ void main() {
       'rest_seconds': 42,
       'rest_end_at_ms': restEndsAt.millisecondsSinceEpoch,
       'is_rest_paused': 0,
+    });
+    await db.insert('active_session_cardio', <String, Object?>{
+      'session_id': 'active-a',
+      'cardio_id': 'cardio-a',
+      'sort_order': 0,
+      'modality': 'treadmill',
+      'planned_duration_minutes': 19,
+      'plan_json': structuredPlanJson,
+      'actual_duration_minutes': 0,
+      'is_completed': 0,
     });
     final activeExerciseId = await db
         .insert('active_session_exercises', <String, Object>{
@@ -199,7 +231,12 @@ void main() {
     expect(restoredHistorySet['target_type'], 'duration');
     expect(restoredHistorySet['planned_duration_seconds'], 30);
     expect(restoredHistorySet['actual_duration_seconds'], 34);
-    expect(await db.query('workout_history_cardio'), hasLength(1));
+    final restoredRoutineCardio = (await db.query('routine_cardio')).single;
+    expect(restoredRoutineCardio['plan_json'], structuredPlanJson);
+    final restoredHistoryCardio = (await db.query(
+      'workout_history_cardio',
+    )).single;
+    expect(restoredHistoryCardio['plan_json'], structuredPlanJson);
     final restoredActivities = await db.query(
       'workout_history_free_activities',
     );
@@ -228,6 +265,10 @@ void main() {
       restoredActiveSet['duration_started_at_ms'],
       durationStartedAt.millisecondsSinceEpoch,
     );
+    final restoredActiveCardio = (await db.query(
+      'active_session_cardio',
+    )).single;
+    expect(restoredActiveCardio['plan_json'], structuredPlanJson);
     expect(preferences.getString('user_name'), 'Juliano');
     expect(preferences.getString('settings_theme_mode'), 'light');
     expect(

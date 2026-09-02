@@ -37,6 +37,7 @@ class ActiveCardioSessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final statusColor = entry.isCompleted ? primary : AppColors.warning;
+    final plannedGoals = _plannedGoalLabels(entry.plan);
 
     return Material(
       color: Theme.of(context).colorScheme.surface,
@@ -115,6 +116,37 @@ class ActiveCardioSessionCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 9),
+              Text(
+                '${entry.plan.purpose.label} • ${entry.plan.format.label} • ${entry.plan.intensity.label}',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (plannedGoals.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  'Metas: ${plannedGoals.join(' • ')}',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+              if (entry.plan.intervals case final intervals?) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  '${intervals.warmUpMinutes} min aquecimento • ${intervals.cycles}x ${intervals.effortSeconds}s esforço / ${intervals.recoverySeconds}s recuperação • ${intervals.coolDownMinutes} min desaceleração',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ],
               if (entry.notes.trim().isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Text(
@@ -256,6 +288,7 @@ class _ActiveCardioEditorSheetState extends State<_ActiveCardioEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final entry = widget.entry;
+    final plannedGoals = _plannedGoalLabels(entry.plan);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -321,6 +354,56 @@ class _ActiveCardioEditorSheetState extends State<_ActiveCardioEditorSheet> {
                 ],
               ),
               const SizedBox(height: 18),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      '${entry.plan.purpose.label} • ${entry.plan.format.label} • ${entry.plan.intensity.label}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Teste da fala: ${entry.plan.intensity.talkTestDescription}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                    if (entry.plan.intervals case final intervals?) ...<Widget>[
+                      const SizedBox(height: 5),
+                      Text(
+                        '${intervals.warmUpMinutes} min aquecimento • ${intervals.cycles}x ${intervals.effortSeconds}s esforço / ${intervals.recoverySeconds}s recuperação • ${intervals.coolDownMinutes} min desaceleração',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    if (plannedGoals.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 5),
+                      Text(
+                        'Metas: ${plannedGoals.join(' • ')}',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
               TextFormField(
                 controller: _durationController,
                 keyboardType: TextInputType.number,
@@ -510,4 +593,17 @@ double? _readDouble(String value) {
     return null;
   }
   return double.tryParse(normalized);
+}
+
+List<String> _plannedGoalLabels(CardioPlan plan) {
+  return <String>[
+    if (plan.plannedDistanceKm != null)
+      '${_formatNumber(plan.plannedDistanceKm!)} km',
+    if (plan.plannedSpeedKmh != null)
+      '${_formatNumber(plan.plannedSpeedKmh!)} km/h',
+    if (plan.plannedInclinePercent != null)
+      '${_formatNumber(plan.plannedInclinePercent!)}% inclinação',
+    if (plan.plannedResistanceLevel != null)
+      'resistência ${_formatNumber(plan.plannedResistanceLevel!)}',
+  ];
 }

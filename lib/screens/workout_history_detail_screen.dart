@@ -690,6 +690,19 @@ class _CardioHistoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final metrics = <Widget>[
       _CardioMetricChip(
+        icon: Icons.place_outlined,
+        label: entry.plan.purpose.label,
+      ),
+      _CardioMetricChip(
+        icon: Icons.view_timeline_outlined,
+        label: entry.plan.format.label,
+      ),
+      if (entry.plan.intensity != CardioIntensity.selfSelected)
+        _CardioMetricChip(
+          icon: Icons.speed_outlined,
+          label: 'Intensidade ${entry.plan.intensity.label.toLowerCase()}',
+        ),
+      _CardioMetricChip(
         icon: Icons.timer_outlined,
         label: '${entry.actualDurationMinutes} min realizados',
       ),
@@ -697,6 +710,28 @@ class _CardioHistoryCard extends StatelessWidget {
         _CardioMetricChip(
           icon: Icons.flag_outlined,
           label: '${entry.plannedDurationMinutes} min planejados',
+        ),
+      if (entry.plan.plannedDistanceKm != null)
+        _CardioMetricChip(
+          icon: Icons.flag_outlined,
+          label: 'Meta ${_formatDecimal(entry.plan.plannedDistanceKm!)} km',
+        ),
+      if (entry.plan.plannedSpeedKmh != null)
+        _CardioMetricChip(
+          icon: Icons.flag_outlined,
+          label: 'Meta ${_formatDecimal(entry.plan.plannedSpeedKmh!)} km/h',
+        ),
+      if (entry.plan.plannedInclinePercent != null)
+        _CardioMetricChip(
+          icon: Icons.flag_outlined,
+          label:
+              'Meta ${_formatDecimal(entry.plan.plannedInclinePercent!)}% inclinação',
+        ),
+      if (entry.plan.plannedResistanceLevel != null)
+        _CardioMetricChip(
+          icon: Icons.flag_outlined,
+          label:
+              'Meta resistência ${_formatDecimal(entry.plan.plannedResistanceLevel!)}',
         ),
       if (entry.distanceKm != null && entry.distanceKm! > 0)
         _CardioMetricChip(
@@ -783,6 +818,17 @@ class _CardioHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Wrap(spacing: 7, runSpacing: 7, children: metrics),
+          if (entry.plan.intervals case final intervals?) ...<Widget>[
+            const SizedBox(height: 11),
+            Text(
+              '${intervals.warmUpMinutes} min aquecimento • ${intervals.cycles}x ${intervals.effortSeconds}s esforço / ${intervals.recoverySeconds}s recuperação • ${intervals.coolDownMinutes} min desaceleração',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                height: 1.35,
+              ),
+            ),
+          ],
           if (entry.notes.trim().isNotEmpty) ...<Widget>[
             const SizedBox(height: 13),
             Container(

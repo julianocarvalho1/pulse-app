@@ -103,6 +103,7 @@ void main() {
         CardioLog(
           modality: CardioModality.stationaryBike,
           plannedDurationMinutes: 45,
+          plan: CardioPlan(plannedDistanceKm: 18, plannedResistanceLevel: 7),
           actualDurationMinutes: 42,
           distanceKm: 16.4,
           averageSpeedKmh: 23.4,
@@ -123,6 +124,8 @@ void main() {
     expect(find.text('CARDIO'), findsOneWidget);
     expect(find.text('Bicicleta'), findsOneWidget);
     expect(find.text('42 min realizados'), findsOneWidget);
+    expect(find.text('Meta 18 km'), findsOneWidget);
+    expect(find.text('Meta resistência 7'), findsOneWidget);
     expect(find.text('16,4 km'), findsWidgets);
     expect(find.text('Esforço 8/10'), findsOneWidget);
     expect(find.textContaining('calorias'), findsNothing);

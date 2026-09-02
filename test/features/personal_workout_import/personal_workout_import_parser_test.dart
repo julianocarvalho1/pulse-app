@@ -499,13 +499,42 @@ Bicicleta 25 min em sessão separada
 
       expect(draft.routines, hasLength(3));
       expect(draft.routines[0].cardio.single.notes, contains('antes'));
+      expect(
+        draft.routines[0].cardio.single.plan.purpose,
+        CardioPurpose.warmUp,
+      );
       expect(draft.routines[1].cardio.single.notes, contains('após'));
+      expect(
+        draft.routines[1].cardio.single.plan.purpose,
+        CardioPurpose.postWorkout,
+      );
       expect(draft.routines[1].cardio.single.notes, contains('140–160 bpm'));
       expect(draft.routines[2].isOptional, isTrue);
       expect(
         draft.routines[2].cardio.single.notes,
         contains('sessão separada'),
       );
+      expect(
+        draft.routines[2].cardio.single.plan.purpose,
+        CardioPurpose.standalone,
+      );
+    });
+
+    test('preserva cardio intervalado sem inventar blocos ausentes', () {
+      final draft = parser.parseText(
+        text: '''
+Dia 3 - Cardio intervalado
+Esteira 20 min intervalado em intensidade vigorosa, em sessão separada
+''',
+      );
+
+      final cardio = draft.routines.single.cardio.single;
+      expect(cardio.plannedDurationMinutes, 20);
+      expect(cardio.plan.purpose, CardioPurpose.standalone);
+      expect(cardio.plan.format, CardioFormat.intervals);
+      expect(cardio.plan.intensity, CardioIntensity.vigorous);
+      expect(cardio.plan.intervals, isNull);
+      expect(cardio.notes, contains('Cardio intervalado'));
     });
 
     test('converte linha de cardio em tabela para etapa de cardio', () {

@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 10;
+  static const int databaseVersion = 11;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -294,6 +294,27 @@ class PulseDatabase {
     if (oldVersion < 10) {
       await _addTimedSetColumns(db);
     }
+
+    if (oldVersion < 11) {
+      await _addStructuredCardioColumns(db);
+    }
+  }
+
+  Future<void> _addStructuredCardioColumns(DatabaseExecutor db) async {
+    for (final table in <String>[
+      'routine_cardio',
+      'active_session_cardio',
+      'workout_history_cardio',
+    ]) {
+      if (await _tableExists(db, table)) {
+        await _addColumnIfMissing(
+          db,
+          table: table,
+          column: 'plan_json',
+          definition: "TEXT NOT NULL DEFAULT ''",
+        );
+      }
+    }
   }
 
   Future<void> _addTimedSetColumns(DatabaseExecutor db) async {
@@ -499,6 +520,7 @@ class PulseDatabase {
         sort_order INTEGER NOT NULL,
         modality TEXT NOT NULL,
         planned_duration_minutes INTEGER NOT NULL,
+        plan_json TEXT NOT NULL DEFAULT '',
         notes TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (routine_id)
           REFERENCES routines (id)
@@ -521,6 +543,7 @@ class PulseDatabase {
         sort_order INTEGER NOT NULL,
         modality TEXT NOT NULL,
         planned_duration_minutes INTEGER NOT NULL,
+        plan_json TEXT NOT NULL DEFAULT '',
         actual_duration_minutes INTEGER NOT NULL DEFAULT 0,
         distance_km REAL,
         average_speed_kmh REAL,
@@ -550,6 +573,7 @@ class PulseDatabase {
         sort_order INTEGER NOT NULL,
         modality TEXT NOT NULL,
         planned_duration_minutes INTEGER NOT NULL DEFAULT 0,
+        plan_json TEXT NOT NULL DEFAULT '',
         actual_duration_minutes INTEGER NOT NULL,
         distance_km REAL,
         average_speed_kmh REAL,

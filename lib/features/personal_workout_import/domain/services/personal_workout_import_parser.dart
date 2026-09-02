@@ -2044,10 +2044,44 @@ class PersonalWorkoutImportParser {
       );
     }
 
+    final purpose =
+        normalized.contains('antes') || normalized.contains('aquecimento')
+        ? CardioPurpose.warmUp
+        : normalized.contains('dia off') ||
+              normalized.contains('sessao separada')
+        ? CardioPurpose.standalone
+        : CardioPurpose.postWorkout;
+    final intensity =
+        normalized.contains('vigorosa') || normalized.contains('intensa')
+        ? CardioIntensity.vigorous
+        : normalized.contains('moderada') &&
+              !normalized.contains('leve a moderada')
+        ? CardioIntensity.moderate
+        : normalized.contains('leve') && !normalized.contains('leve a moderada')
+        ? CardioIntensity.light
+        : CardioIntensity.selfSelected;
+
     return RoutineCardio(
       id: id,
       modality: modality,
       plannedDurationMinutes: duration,
+      plan: CardioPlan(
+        purpose: purpose,
+        format: isIntervalStructure
+            ? CardioFormat.intervals
+            : CardioFormat.continuous,
+        intensity: intensity,
+        plannedSpeedKmh: speed == null
+            ? null
+            : double.tryParse((speed.group(1) ?? '').replaceAll(',', '.')),
+        plannedInclinePercent: incline == null
+            ? null
+            : double.tryParse(
+                (incline.group(1) ?? '')
+                    .replaceAll('%', '')
+                    .replaceAll(',', '.'),
+              ),
+      ),
       notes: notes.join(' ').trim(),
     );
   }

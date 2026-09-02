@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/exercise.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/routine_cardio_editor_sheet.dart';
 import '../../../exercises/domain/exercise_catalog.dart';
 import '../../../workouts/domain/models/cardio_log.dart';
 import '../../../workouts/presentation/providers/workout_library_controller.dart';
@@ -102,13 +103,9 @@ class _PersonalWorkoutImportReviewScreenState
 
   Future<void> _editRoutineCardio(int routineIndex, int cardioIndex) async {
     final current = _draft.routines[routineIndex].cardio[cardioIndex];
-    final updated = await showModalBottomSheet<RoutineCardio>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppColors.surface,
-      builder: (_) => _GeneralCardioEditorSheet(cardio: current),
+    final updated = await showRoutineCardioEditorSheet(
+      context,
+      existing: current,
     );
 
     if (updated == null || !mounted) {
@@ -137,13 +134,9 @@ class _PersonalWorkoutImportReviewScreenState
           modality: CardioModality.other,
           plannedDurationMinutes: 30,
         );
-    final updated = await showModalBottomSheet<RoutineCardio>(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppColors.surface,
-      builder: (_) => _GeneralCardioEditorSheet(cardio: current),
+    final updated = await showRoutineCardioEditorSheet(
+      context,
+      existing: current,
     );
 
     if (updated == null || !mounted) {
@@ -1043,7 +1036,7 @@ class _GeneralCardioCard extends StatelessWidget {
                 Text(
                   cardio == null
                       ? 'Adicione cardio a todas as fichas importadas.'
-                      : '${cardio!.modality.label} • ${cardio!.plannedDurationMinutes} min${cardio!.notes.isEmpty ? '' : '\n${cardio!.notes}'}',
+                      : '${cardio!.modality.label} • ${cardio!.plan.format.label} • ${cardio!.plannedDurationMinutes} min${cardio!.notes.isEmpty ? '' : '\n${cardio!.notes}'}',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -1257,7 +1250,7 @@ class _ImportedRoutineCardioRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${cardio.modality.label} • ${cardio.plannedDurationMinutes} min',
+                  '${cardio.modality.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 11,
@@ -1730,124 +1723,6 @@ class _ExerciseChoiceTile extends StatelessWidget {
       ),
       title: Text(title),
       subtitle: Text(subtitle),
-    );
-  }
-}
-
-class _GeneralCardioEditorSheet extends StatefulWidget {
-  const _GeneralCardioEditorSheet({required this.cardio});
-
-  final RoutineCardio cardio;
-
-  @override
-  State<_GeneralCardioEditorSheet> createState() =>
-      _GeneralCardioEditorSheetState();
-}
-
-class _GeneralCardioEditorSheetState extends State<_GeneralCardioEditorSheet> {
-  late CardioModality _modality;
-  late final TextEditingController _durationController;
-  late final TextEditingController _notesController;
-
-  @override
-  void initState() {
-    super.initState();
-    _modality = widget.cardio.modality;
-    _durationController = TextEditingController(
-      text: '${widget.cardio.plannedDurationMinutes}',
-    );
-    _notesController = TextEditingController(text: widget.cardio.notes);
-  }
-
-  @override
-  void dispose() {
-    _durationController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final duration = int.tryParse(_durationController.text.trim()) ?? 0;
-    Navigator.pop(
-      context,
-      widget.cardio.copyWith(
-        modality: _modality,
-        plannedDurationMinutes: duration.clamp(1, 600).toInt(),
-        notes: _notesController.text.trim(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        4,
-        20,
-        MediaQuery.viewInsetsOf(context).bottom +
-            MediaQuery.viewPaddingOf(context).bottom +
-            18,
-      ),
-      child: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Cardio aplicado às fichas',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<CardioModality>(
-              initialValue: _modality,
-              decoration: const InputDecoration(labelText: 'Modalidade'),
-              items: CardioModality.values
-                  .map((modality) {
-                    return DropdownMenuItem<CardioModality>(
-                      value: modality,
-                      child: Text(modality.label),
-                    );
-                  })
-                  .toList(growable: false),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _modality = value);
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _durationController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Duração planejada em minutos',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notesController,
-              minLines: 2,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Orientação',
-                hintText: 'Ex.: intensidade leve a moderada, após o treino',
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.check),
-                label: const Text('Aplicar cardio'),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

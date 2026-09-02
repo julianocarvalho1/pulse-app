@@ -420,7 +420,7 @@ class _CardioPreviewRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${cardio.plannedDurationMinutes} min',
+            '${cardio.plan.purpose.label} • ${cardio.plan.intensity.label} • ${cardio.plannedDurationMinutes} min',
             style: TextStyle(
               color: Theme.of(context).colorScheme.primary,
               fontSize: 12,

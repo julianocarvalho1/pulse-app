@@ -47,6 +47,12 @@ void main() {
           id: 'cardio_1',
           modality: CardioModality.treadmill,
           plannedDurationMinutes: 20,
+          plan: CardioPlan(
+            purpose: CardioPurpose.postWorkout,
+            format: CardioFormat.intervals,
+            intensity: CardioIntensity.moderate,
+            intervals: CardioIntervalPlan(cycles: 6),
+          ),
           notes: 'Após a musculação',
         ),
       ],
@@ -69,6 +75,8 @@ void main() {
     expect(decoded.routine?.exercises.single.reps, '4x 8-10');
     expect(decoded.routine?.exercises.single.customNote, 'Controlar a descida');
     expect(decoded.routine?.cardio.single.plannedDurationMinutes, 20);
+    expect(decoded.routine?.cardio.single.plan.format, CardioFormat.intervals);
+    expect(decoded.routine?.cardio.single.plan.intervals?.cycles, 6);
   });
 
   test('gera e lê QR de programa com várias fichas', () {

@@ -95,5 +95,19 @@ void main() {
       ),
       isTrue,
     );
+    expect(
+      plan.program.routines.every(
+        (routine) =>
+            routine.cardio.single.plan.purpose == CardioPurpose.standalone,
+      ),
+      isTrue,
+    );
+    expect(
+      plan.program.routines.every(
+        (routine) =>
+            routine.cardio.single.plan.intensity == CardioIntensity.light,
+      ),
+      isTrue,
+    );
   });
 }

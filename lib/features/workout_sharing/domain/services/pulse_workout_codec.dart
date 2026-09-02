@@ -312,7 +312,7 @@ class PulseWorkoutCodec {
         .join('||');
     final cardio = routine.cardio
         .map((entry) {
-          return '${entry.modality.storageValue}|${entry.plannedDurationMinutes}|${_normalize(entry.notes)}';
+          return '${entry.modality.storageValue}|${entry.plannedDurationMinutes}|${jsonEncode(entry.plan.toMap())}|${_normalize(entry.notes)}';
         })
         .join('||');
 

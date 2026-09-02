@@ -2,6 +2,27 @@
 
 Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
+## [1.3.0] - em desenvolvimento
+
+### Incluído
+
+- planejamento de cardio com finalidade, formato e intensidade relativa;
+- orientação simples pelo teste da fala e registro de esforço percebido;
+- campos opcionais para distância, velocidade, inclinação e resistência;
+- blocos editáveis de aquecimento, esforço, recuperação, ciclos e
+  desaceleração para sessões intervaladas;
+- modelos editáveis de cardio livre, contínuo leve, contínuo moderado e
+  intervalado.
+
+### Alterado
+
+- os editores duplicados de cardio foram reunidos em um único componente;
+- gerador, programas prontos e importador de fichas agora produzem planos de
+  cardio estruturados sem modificar a orientação original do profissional;
+- plano de cardio incluído em sessão ativa, histórico, backup, arquivo PULSE e
+  QR Code, com leitura compatível de dados anteriores;
+- banco local atualizado para a versão 11 por migração aditiva.
+
 ## [1.2.0] - em desenvolvimento
 
 ### Incluído

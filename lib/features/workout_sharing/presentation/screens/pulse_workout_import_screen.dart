@@ -484,7 +484,7 @@ class _PulseWorkoutImportScreenState
                   const SizedBox(width: 9),
                   Expanded(
                     child: Text(
-                      '${cardio.modality.label} • ${cardio.plannedDurationMinutes} min',
+                      '${cardio.modality.label} • ${cardio.plan.format.label} • ${cardio.plannedDurationMinutes} min',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),

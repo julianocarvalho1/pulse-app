@@ -104,6 +104,7 @@ class PulseBackupService {
       'sort_order',
       'modality',
       'planned_duration_minutes',
+      'plan_json',
       'notes',
     ],
     'workout_history': <String>[
@@ -140,6 +141,7 @@ class PulseBackupService {
       'sort_order',
       'modality',
       'planned_duration_minutes',
+      'plan_json',
       'actual_duration_minutes',
       'distance_km',
       'average_speed_kmh',
@@ -212,6 +214,7 @@ class PulseBackupService {
       'sort_order',
       'modality',
       'planned_duration_minutes',
+      'plan_json',
       'actual_duration_minutes',
       'distance_km',
       'average_speed_kmh',

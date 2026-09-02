@@ -226,6 +226,7 @@ class ActiveCardioEntry {
     required this.id,
     required this.modality,
     required this.plannedDurationMinutes,
+    this.plan = const CardioPlan(),
     this.actualDurationMinutes = 0,
     this.distanceKm,
     this.averageSpeedKmh,
@@ -242,6 +243,7 @@ class ActiveCardioEntry {
       id: cardio.id,
       modality: cardio.modality,
       plannedDurationMinutes: cardio.plannedDurationMinutes,
+      plan: cardio.plan,
       notes: cardio.notes,
     );
   }
@@ -249,6 +251,7 @@ class ActiveCardioEntry {
   final String id;
   final CardioModality modality;
   final int plannedDurationMinutes;
+  final CardioPlan plan;
   final int actualDurationMinutes;
   final double? distanceKm;
   final double? averageSpeedKmh;
@@ -263,6 +266,7 @@ class ActiveCardioEntry {
     return CardioLog(
       modality: modality,
       plannedDurationMinutes: plannedDurationMinutes,
+      plan: plan,
       actualDurationMinutes: actualDurationMinutes,
       distanceKm: distanceKm,
       averageSpeedKmh: averageSpeedKmh,
@@ -278,6 +282,7 @@ class ActiveCardioEntry {
     String? id,
     CardioModality? modality,
     int? plannedDurationMinutes,
+    CardioPlan? plan,
     int? actualDurationMinutes,
     double? distanceKm,
     bool clearDistance = false,
@@ -299,6 +304,7 @@ class ActiveCardioEntry {
       modality: modality ?? this.modality,
       plannedDurationMinutes:
           plannedDurationMinutes ?? this.plannedDurationMinutes,
+      plan: plan ?? this.plan,
       actualDurationMinutes:
           actualDurationMinutes ?? this.actualDurationMinutes,
       distanceKm: clearDistance ? null : distanceKm ?? this.distanceKm,
@@ -327,6 +333,7 @@ class ActiveCardioEntry {
       'id': id,
       'modality': modality.storageValue,
       'plannedDurationMinutes': plannedDurationMinutes,
+      'plan': plan.toMap(),
       'actualDurationMinutes': actualDurationMinutes,
       'distanceKm': distanceKm,
       'averageSpeedKmh': averageSpeedKmh,
@@ -344,6 +351,9 @@ class ActiveCardioEntry {
       id: map['id']?.toString() ?? '',
       modality: CardioModality.fromStorage(map['modality']),
       plannedDurationMinutes: _readInt(map['plannedDurationMinutes'], 0),
+      plan: map['plan'] is Map
+          ? CardioPlan.fromMap(Map<String, dynamic>.from(map['plan'] as Map))
+          : const CardioPlan(),
       actualDurationMinutes: _readInt(map['actualDurationMinutes'], 0),
       distanceKm: _readNullableDouble(map['distanceKm']),
       averageSpeedKmh: _readNullableDouble(map['averageSpeedKmh']),

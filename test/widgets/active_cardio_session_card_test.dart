@@ -18,6 +18,7 @@ void main() {
                 id: 'cardio-1',
                 modality: CardioModality.treadmill,
                 plannedDurationMinutes: 20,
+                plan: CardioPlan(plannedSpeedKmh: 6, plannedInclinePercent: 3),
               ),
               index: 0,
               onChanged: (_) {},
@@ -25,6 +26,8 @@ void main() {
           ),
         ),
       );
+
+      expect(find.text('Metas: 6 km/h • 3% inclinação'), findsOneWidget);
 
       await tester.tap(find.text('Esteira'));
       await tester.pumpAndSettle();

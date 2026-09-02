@@ -131,19 +131,22 @@ suporte real a pranchas, isometrias e circuitos.
 Objetivo: substituir a orientação genérica de cardio por planejamento
 estruturado e editável.
 
-- [ ] Consolidar os formulários duplicados de cardio em um único componente.
-- [ ] Adicionar finalidade: aquecimento, pós-treino ou sessão separada.
-- [ ] Adicionar formato contínuo ou intervalado.
-- [ ] Adicionar intensidade, esforço percebido e teste da fala em linguagem
+- [x] Consolidar os formulários duplicados de cardio em um único componente.
+- [x] Adicionar finalidade: aquecimento, pós-treino ou sessão separada.
+- [x] Adicionar formato contínuo ou intervalado.
+- [x] Adicionar intensidade, esforço percebido e teste da fala em linguagem
   simples.
-- [ ] Permitir velocidade, inclinação, resistência e distância quando
+- [x] Permitir velocidade, inclinação, resistência e distância quando
   aplicáveis à modalidade.
-- [ ] Para intervalados, permitir aquecimento, esforço, recuperação, ciclos e
+- [x] Para intervalados, permitir aquecimento, esforço, recuperação, ciclos e
   desaceleração.
-- [ ] Criar modelos editáveis: livre, contínuo leve, contínuo moderado e
+- [x] Criar modelos editáveis: livre, contínuo leve, contínuo moderado e
   intervalado.
-- [ ] Manter compatibilidade com fichas, backups e QR Codes anteriores.
+- [x] Manter compatibilidade com fichas, backups e QR Codes anteriores.
 - [ ] Testar execução offline, retomada e histórico de cada modalidade.
+  - [x] Persistência, migração, backup, QR Code e histórico cobertos por testes
+    automatizados.
+  - [ ] Execução offline e retomada confirmadas no celular físico.
 
 ## Versão 1.4.0 — Refinamentos de treino e feedback
 
@@ -151,6 +154,9 @@ estruturado e editável.
 - [ ] Permitir descanso próprio para aquecimento.
 - [ ] Avaliar registro separado de lado direito e esquerdo em exercícios
   unilaterais.
+- [ ] Migrar o projeto Android e os plugins para **Built-in Kotlin** antes de
+  atualizar para uma versão do Flutter que deixe de aceitar o plugin Gradle
+  legado do Kotlin.
 - [ ] Implementar avaliação nativa do Google Play após uso suficiente, sem
   pedir nota específica ou oferecer recompensa.
 - [ ] Criar uma tela curta de **Novidades da versão**.

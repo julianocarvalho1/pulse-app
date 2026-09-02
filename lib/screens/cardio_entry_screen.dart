@@ -136,6 +136,7 @@ class _CardioEntryScreenState extends ConsumerState<CardioEntryScreen> {
 
     final log = CardioLog(
       modality: _modality,
+      plan: const CardioPlan(purpose: CardioPurpose.standalone),
       plannedDurationMinutes: _parseInt(_plannedDurationController.text) ?? 0,
       actualDurationMinutes: _parseInt(_actualDurationController.text)!,
       distanceKm: _parseDouble(_distanceController.text),

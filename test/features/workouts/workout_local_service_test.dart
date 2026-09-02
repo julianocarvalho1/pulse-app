@@ -52,6 +52,11 @@ void main() {
           id: 'routine-cardio-1',
           modality: CardioModality.treadmill,
           plannedDurationMinutes: 20,
+          plan: CardioPlan(
+            purpose: CardioPurpose.postWorkout,
+            intensity: CardioIntensity.moderate,
+            plannedInclinePercent: 2,
+          ),
           notes: 'Após a musculação.',
         ),
       ],
@@ -69,6 +74,11 @@ void main() {
       CardioModality.treadmill,
     );
     expect(loadedRoutines.single.cardio.single.plannedDurationMinutes, 20);
+    expect(
+      loadedRoutines.single.cardio.single.plan.intensity,
+      CardioIntensity.moderate,
+    );
+    expect(loadedRoutines.single.cardio.single.plan.plannedInclinePercent, 2);
 
     final historyItem = WorkoutHistoryItem(
       id: 'history-1',
@@ -147,6 +157,10 @@ void main() {
           id: 'routine-cardio-1',
           modality: CardioModality.treadmill,
           plannedDurationMinutes: 20,
+          plan: CardioPlan(
+            format: CardioFormat.intervals,
+            intervals: CardioIntervalPlan(cycles: 8),
+          ),
           actualDurationMinutes: 18,
           distanceKm: 2.5,
           isCompleted: true,
@@ -180,6 +194,8 @@ void main() {
     expect(restoredSession.exercises.single.perceivedRir, 2);
     expect(restoredSession.cardio, hasLength(1));
     expect(restoredSession.cardio.single.actualDurationMinutes, 18);
+    expect(restoredSession.cardio.single.plan.format, CardioFormat.intervals);
+    expect(restoredSession.cardio.single.plan.intervals?.cycles, 8);
     expect(restoredSession.cardio.single.distanceKm, 2.5);
     expect(restoredSession.cardio.single.isCompleted, isTrue);
   });
@@ -247,6 +263,10 @@ void main() {
         CardioLog(
           modality: CardioModality.treadmill,
           plannedDurationMinutes: 40,
+          plan: CardioPlan(
+            purpose: CardioPurpose.standalone,
+            intensity: CardioIntensity.moderate,
+          ),
           actualDurationMinutes: 35,
           distanceKm: 4.8,
           averageSpeedKmh: 8.2,
@@ -268,6 +288,8 @@ void main() {
     expect(loaded.totalCardioDistanceKm, 4.8);
     expect(loaded.cardio.single.modality, CardioModality.treadmill);
     expect(loaded.cardio.single.averageHeartRateBpm, 145);
+    expect(loaded.cardio.single.plan.purpose, CardioPurpose.standalone);
+    expect(loaded.cardio.single.plan.intensity, CardioIntensity.moderate);
     expect(loaded.cardio.single.notes, 'Ritmo moderado.');
   });
 

@@ -49,6 +49,32 @@ void main() {
               prescription_notes TEXT NOT NULL DEFAULT ''
             )
           ''');
+          await db.execute('''
+            CREATE TABLE routine_cardio (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              cardio_id TEXT NOT NULL,
+              modality TEXT NOT NULL,
+              planned_duration_minutes INTEGER NOT NULL,
+              notes TEXT NOT NULL DEFAULT ''
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE active_session_cardio (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              cardio_id TEXT NOT NULL,
+              modality TEXT NOT NULL,
+              planned_duration_minutes INTEGER NOT NULL,
+              actual_duration_minutes INTEGER NOT NULL DEFAULT 0
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE workout_history_cardio (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              modality TEXT NOT NULL,
+              planned_duration_minutes INTEGER NOT NULL DEFAULT 0,
+              actual_duration_minutes INTEGER NOT NULL
+            )
+          ''');
         },
       ),
     );
@@ -68,6 +94,23 @@ void main() {
       'cadence': '',
       'technique': 'none',
       'prescription_notes': '',
+    });
+    await legacyDatabase.insert('routine_cardio', <String, Object>{
+      'cardio_id': 'routine-cardio',
+      'modality': 'treadmill',
+      'planned_duration_minutes': 20,
+      'notes': '',
+    });
+    await legacyDatabase.insert('active_session_cardio', <String, Object>{
+      'cardio_id': 'active-cardio',
+      'modality': 'treadmill',
+      'planned_duration_minutes': 20,
+      'actual_duration_minutes': 0,
+    });
+    await legacyDatabase.insert('workout_history_cardio', <String, Object>{
+      'modality': 'treadmill',
+      'planned_duration_minutes': 20,
+      'actual_duration_minutes': 18,
     });
     await legacyDatabase.close();
 
@@ -92,5 +135,14 @@ void main() {
     expect(activeRow['planned_duration_seconds'], 0);
     expect(activeRow['actual_duration_seconds'], 0);
     expect(activeRow['duration_started_at_ms'], isNull);
+
+    for (final table in <String>[
+      'routine_cardio',
+      'active_session_cardio',
+      'workout_history_cardio',
+    ]) {
+      final cardioRow = (await migrated.query(table)).single;
+      expect(cardioRow['plan_json'], '', reason: table);
+    }
   });
 }
