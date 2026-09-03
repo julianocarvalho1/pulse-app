@@ -42,4 +42,12 @@ void main() {
     expect(set.volume, 0);
     expect(ExerciseSet.fromMap(set.toMap()).actualDurationSeconds, 34);
   });
+
+  test('aquecimento é preservado mas não entra no volume de trabalho', () {
+    const set = ExerciseSet(reps: 12, weight: 20, kind: WorkoutSetKind.warmUp);
+
+    expect(set.isWarmUp, isTrue);
+    expect(set.volume, 0);
+    expect(ExerciseSet.fromMap(set.toMap()).kind, WorkoutSetKind.warmUp);
+  });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
+import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 import 'package:pulse/models/exercise.dart';
 
 void main() {
@@ -12,6 +13,7 @@ void main() {
         sets: <WorkoutSetPrescription>[
           WorkoutSetPrescription(
             setNumber: 1,
+            kind: WorkoutSetKind.warmUp,
             target: '10–12 reps',
             restSeconds: 60,
             targetRir: 2,
@@ -61,6 +63,10 @@ void main() {
       WorkoutTechnique.restPause,
     );
     expect(restored.alternatives.single.exerciseId, 'p2');
+    expect(
+      restored.primaryPrescription?.sets.single.kind,
+      WorkoutSetKind.warmUp,
+    );
   });
 
   test('Exercise antigo continua válido sem prescrição avançada', () {

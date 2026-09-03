@@ -1,5 +1,24 @@
 import 'package:flutter/foundation.dart';
 
+enum WorkoutSetKind {
+  warmUp,
+  working;
+
+  String get storageValue => name;
+
+  String get label => switch (this) {
+    WorkoutSetKind.warmUp => 'Aquecimento',
+    WorkoutSetKind.working => 'Trabalho',
+  };
+
+  static WorkoutSetKind fromStorage(Object? value) {
+    return WorkoutSetKind.values.firstWhere(
+      (item) => item.storageValue == value?.toString(),
+      orElse: () => WorkoutSetKind.working,
+    );
+  }
+}
+
 enum WorkoutSetTargetType {
   repetitions,
   duration;
@@ -66,6 +85,7 @@ class ExerciseSet {
   const ExerciseSet({
     required this.reps,
     required this.weight,
+    this.kind = WorkoutSetKind.working,
     this.targetType = WorkoutSetTargetType.repetitions,
     this.plannedDurationSeconds = 0,
     this.actualDurationSeconds = 0,
@@ -73,17 +93,21 @@ class ExerciseSet {
 
   final int reps;
   final double weight;
+  final WorkoutSetKind kind;
   final WorkoutSetTargetType targetType;
   final int plannedDurationSeconds;
   final int actualDurationSeconds;
 
   bool get isTimed => targetType == WorkoutSetTargetType.duration;
 
-  double get volume => isTimed ? 0 : reps * weight;
+  bool get isWarmUp => kind == WorkoutSetKind.warmUp;
+
+  double get volume => isTimed || isWarmUp ? 0 : reps * weight;
 
   ExerciseSet copyWith({
     int? reps,
     double? weight,
+    WorkoutSetKind? kind,
     WorkoutSetTargetType? targetType,
     int? plannedDurationSeconds,
     int? actualDurationSeconds,
@@ -91,6 +115,7 @@ class ExerciseSet {
     return ExerciseSet(
       reps: reps ?? this.reps,
       weight: weight ?? this.weight,
+      kind: kind ?? this.kind,
       targetType: targetType ?? this.targetType,
       plannedDurationSeconds:
           plannedDurationSeconds ?? this.plannedDurationSeconds,
@@ -103,6 +128,7 @@ class ExerciseSet {
     return {
       'reps': reps,
       'weight': weight,
+      if (kind != WorkoutSetKind.working) 'kind': kind.storageValue,
       'targetType': targetType.storageValue,
       'plannedDurationSeconds': plannedDurationSeconds,
       'actualDurationSeconds': actualDurationSeconds,
@@ -113,6 +139,7 @@ class ExerciseSet {
     return ExerciseSet(
       reps: _readInt(map['reps']),
       weight: _readDouble(map['weight']),
+      kind: WorkoutSetKind.fromStorage(map['kind']),
       targetType: WorkoutSetTargetType.fromStorage(map['targetType']),
       plannedDurationSeconds: _readInt(map['plannedDurationSeconds']),
       actualDurationSeconds: _readInt(map['actualDurationSeconds']),

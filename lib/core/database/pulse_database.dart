@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 11;
+  static const int databaseVersion = 12;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -162,6 +162,7 @@ class PulseDatabase {
         set_order INTEGER NOT NULL,
         reps INTEGER NOT NULL,
         weight REAL NOT NULL,
+        set_kind TEXT NOT NULL DEFAULT 'working',
         target_type TEXT NOT NULL DEFAULT 'repetitions',
         planned_duration_seconds INTEGER NOT NULL DEFAULT 0,
         actual_duration_seconds INTEGER NOT NULL DEFAULT 0,
@@ -225,6 +226,7 @@ class PulseDatabase {
         weight_text TEXT NOT NULL DEFAULT '',
         reps_text TEXT NOT NULL DEFAULT '',
         is_completed INTEGER NOT NULL DEFAULT 0,
+        set_kind TEXT NOT NULL DEFAULT 'working',
         target_text TEXT NOT NULL DEFAULT '',
         target_rir INTEGER,
         cadence TEXT NOT NULL DEFAULT '',
@@ -297,6 +299,24 @@ class PulseDatabase {
 
     if (oldVersion < 11) {
       await _addStructuredCardioColumns(db);
+    }
+
+    if (oldVersion < 12) {
+      await _addSetKindColumns(db);
+    }
+  }
+
+  Future<void> _addSetKindColumns(DatabaseExecutor db) async {
+    for (final table in <String>[
+      'active_session_sets',
+      'workout_history_sets',
+    ]) {
+      await _addColumnIfMissing(
+        db,
+        table: table,
+        column: 'set_kind',
+        definition: "TEXT NOT NULL DEFAULT 'working'",
+      );
     }
   }
 

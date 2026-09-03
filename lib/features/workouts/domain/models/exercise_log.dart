@@ -22,12 +22,18 @@ class ExerciseLog {
   final bool isLoadComparable;
   final int? perceivedRir;
 
+  Iterable<ExerciseSet> get workingSets =>
+      sets.where((set) => set.kind == WorkoutSetKind.working);
+
+  Iterable<ExerciseSet> get warmUpSets =>
+      sets.where((set) => set.kind == WorkoutSetKind.warmUp);
+
   int get totalReps {
-    return sets.fold<int>(0, (total, set) => total + set.reps);
+    return workingSets.fold<int>(0, (total, set) => total + set.reps);
   }
 
   double get totalVolume {
-    return sets.fold<double>(0, (total, set) => total + set.volume);
+    return workingSets.fold<double>(0, (total, set) => total + set.volume);
   }
 
   ExerciseLog copyWith({

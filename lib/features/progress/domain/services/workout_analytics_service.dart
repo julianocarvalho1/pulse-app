@@ -2,6 +2,7 @@ import '../models/progress_period.dart';
 import '../models/workout_progress_summary.dart';
 import '../../../workouts/domain/models/workout_history_item.dart';
 import '../../../workouts/domain/models/workout_session_status.dart';
+import '../../../workouts/domain/models/workout_set.dart';
 
 class WorkoutAnalyticsService {
   const WorkoutAnalyticsService();
@@ -197,9 +198,7 @@ class WorkoutAnalyticsService {
       }
 
       for (final exercise in item.exercises) {
-        for (final set in exercise.sets) {
-          totalReps += set.reps;
-        }
+        totalReps += exercise.totalReps;
       }
     }
 
@@ -296,7 +295,7 @@ class WorkoutAnalyticsService {
         final key = _exerciseKey(exercise.exerciseId, exercise.exerciseName);
 
         for (final set in exercise.sets) {
-          if (set.weight <= 0) {
+          if (set.kind == WorkoutSetKind.warmUp || set.weight <= 0) {
             continue;
           }
 
@@ -343,7 +342,7 @@ class WorkoutAnalyticsService {
     for (final workout in chronological) {
       for (final exercise in workout.exercises) {
         final key = _exerciseKey(exercise.exerciseId, exercise.exerciseName);
-        final maxWeight = exercise.sets.fold<double>(
+        final maxWeight = exercise.workingSets.fold<double>(
           0,
           (value, set) => set.weight > value ? set.weight : value,
         );

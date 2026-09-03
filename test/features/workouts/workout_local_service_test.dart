@@ -97,6 +97,7 @@ void main() {
             ExerciseSet(
               reps: 0,
               weight: 0,
+              kind: WorkoutSetKind.warmUp,
               targetType: WorkoutSetTargetType.duration,
               plannedDurationSeconds: 30,
               actualDurationSeconds: 34,
@@ -119,6 +120,10 @@ void main() {
     expect(
       loadedHistory.single.exercises.single.sets.last.actualDurationSeconds,
       34,
+    );
+    expect(
+      loadedHistory.single.exercises.single.sets.last.kind,
+      WorkoutSetKind.warmUp,
     );
     expect(
       loadedHistory.single.exercises.single.notes,
@@ -144,6 +149,7 @@ void main() {
           sets: [
             ActiveWorkoutSet(
               setNumber: 1,
+              kind: WorkoutSetKind.warmUp,
               targetType: WorkoutSetTargetType.duration,
               plannedDurationSeconds: 30,
               actualDurationSeconds: 12,
@@ -180,6 +186,10 @@ void main() {
     expect(
       restoredSession.exercises.single.sets.single.targetType,
       WorkoutSetTargetType.duration,
+    );
+    expect(
+      restoredSession.exercises.single.sets.single.kind,
+      WorkoutSetKind.warmUp,
     );
     expect(
       restoredSession.exercises.single.sets.single.plannedDurationSeconds,
@@ -308,6 +318,7 @@ void main() {
           sets: <WorkoutSetPrescription>[
             WorkoutSetPrescription(
               setNumber: 1,
+              kind: WorkoutSetKind.warmUp,
               target: '6–8 reps',
               restSeconds: 120,
               targetRir: 1,
@@ -338,6 +349,17 @@ void main() {
     final restoredRoutine = (await service.loadRoutines()).single;
 
     expect(restoredRoutine.exercises.single.advancedPrescription.activeWeek, 2);
+    expect(
+      restoredRoutine
+          .exercises
+          .single
+          .advancedPrescription
+          .activePrescription
+          ?.sets
+          .single
+          .kind,
+      WorkoutSetKind.warmUp,
+    );
     expect(
       restoredRoutine
           .exercises

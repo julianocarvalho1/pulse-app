@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/onboarding/presentation/onboarding_gate.dart';
+import 'features/release_notes/data/release_notes_local_service.dart';
+import 'features/release_notes/presentation/screens/whats_new_screen.dart';
 import 'features/settings/domain/pulse_settings.dart';
 import 'features/settings/presentation/providers/settings_controller.dart';
 import 'screens/home_screen.dart';
@@ -127,6 +129,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _index = 0;
   bool _isExitDialogOpen = false;
+  bool _isCheckingReleaseNotes = false;
   late final List<Widget> _screens;
 
   @override
@@ -145,6 +148,28 @@ class _MainNavigationState extends State<MainNavigation> {
         onOpenProgress: () => _selectTab(2),
       ),
     ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_showReleaseNotesIfNeeded());
+    });
+  }
+
+  Future<void> _showReleaseNotesIfNeeded() async {
+    if (_isCheckingReleaseNotes) {
+      return;
+    }
+    _isCheckingReleaseNotes = true;
+    final service = ReleaseNotesLocalService();
+    final shouldShow = await service.shouldShowCurrentRelease();
+    if (!mounted || !shouldShow) {
+      return;
+    }
+    await service.markCurrentReleaseAsSeen();
+    if (!mounted) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const WhatsNewScreen()),
+    );
   }
 
   void _selectTab(int index) {

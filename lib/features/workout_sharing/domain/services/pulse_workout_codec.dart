@@ -363,6 +363,7 @@ class PulseWorkoutCodec {
               .map((set) {
                 return <String>[
                   '${set.setNumber}',
+                  set.kind.storageValue,
                   _normalize(set.target),
                   '${set.restSeconds ?? ''}',
                   '${set.targetRir ?? ''}',

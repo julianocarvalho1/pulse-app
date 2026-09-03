@@ -26,7 +26,7 @@ void main() {
           isLoadComparable: false,
           perceivedRir: 2,
           sets: const [
-            ExerciseSet(reps: 8, weight: 0),
+            ExerciseSet(reps: 8, weight: 0, kind: WorkoutSetKind.warmUp),
             ExerciseSet(reps: 10, weight: 20),
           ],
         ),
@@ -43,7 +43,10 @@ void main() {
     expect(find.text('Detalhes do treino'), findsOneWidget);
     expect(find.text('Treino A'), findsOneWidget);
     expect(find.text('Supino Reto Articulado'), findsOneWidget);
-    expect(find.textContaining('2 séries'), findsOneWidget);
+    expect(find.textContaining('1 série de trabalho'), findsOneWidget);
+    expect(find.textContaining('1 aquecimento'), findsOneWidget);
+    expect(find.text('Aquecimento 1'), findsOneWidget);
+    expect(find.text('Série 1'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
     expect(find.text('0.0 kg'), findsNothing);
     expect(find.text('20 kg'), findsOneWidget);

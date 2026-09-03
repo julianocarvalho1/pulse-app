@@ -945,6 +945,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
         for (var index = 0; index < advancedWeek.sets.length; index++)
           _activeSetFromPrescription(
             setNumber: index + 1,
+            kind: advancedWeek.sets[index].kind,
             targetText: advancedWeek.sets[index].target,
             targetRir: advancedWeek.sets[index].targetRir,
             cadence: advancedWeek.sets[index].cadence,
@@ -970,6 +971,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
   ActiveWorkoutSet _activeSetFromPrescription({
     required int setNumber,
     required String targetText,
+    WorkoutSetKind kind = WorkoutSetKind.working,
     int? targetRir,
     String cadence = '',
     WorkoutTechnique technique = WorkoutTechnique.none,
@@ -979,6 +981,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     final target = WorkoutSetTarget.fromText(targetText);
     return ActiveWorkoutSet(
       setNumber: setNumber,
+      kind: kind,
       targetText: targetText,
       targetRir: targetRir,
       cadence: cadence,

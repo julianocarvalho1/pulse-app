@@ -390,7 +390,7 @@ class _WorkoutSummaryCard extends StatelessWidget {
                           value: workout.cardio.isEmpty
                               ? '${workout.totalSets}'
                               : '${workout.totalCardioMinutes} min',
-                          label: workout.cardio.isEmpty ? 'Séries' : 'Cardio',
+                          label: workout.cardio.isEmpty ? 'Trabalho' : 'Cardio',
                         ),
                       ),
                     ],
@@ -901,7 +901,8 @@ class _ExerciseHistoryCard extends StatelessWidget {
       exerciseName: exercise.exerciseName,
     );
     final muscle = definition?.primaryMuscle.trim() ?? '';
-    final setCount = exercise.sets.length;
+    final setCount = exercise.workingSets.length;
+    final warmUpCount = exercise.warmUpSets.length;
     final totalReps = exercise.totalReps;
 
     return Container(
@@ -952,7 +953,9 @@ class _ExerciseHistoryCard extends StatelessWidget {
                       Text(
                         [
                           if (muscle.isNotEmpty) muscle,
-                          '$setCount série${setCount == 1 ? '' : 's'}',
+                          '$setCount série${setCount == 1 ? '' : 's'} de trabalho',
+                          if (warmUpCount > 0)
+                            '$warmUpCount aquecimento${warmUpCount == 1 ? '' : 's'}',
                           '$totalReps rep${totalReps == 1 ? '' : 's'}',
                         ].join(' • '),
                         style: TextStyle(
@@ -1042,19 +1045,23 @@ class _ExerciseHistoryCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Column(
-              children: exercise.sets
-                  .asMap()
-                  .entries
-                  .map((entry) {
-                    return Padding(
-                      padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 7),
-                      child: _SetHistoryRow(
-                        setNumber: entry.key + 1,
-                        set: entry.value,
-                      ),
-                    );
-                  })
-                  .toList(growable: false),
+              children: () {
+                var warmUpNumber = 0;
+                var workingNumber = 0;
+                return exercise.sets
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                      final label = entry.value.kind == WorkoutSetKind.warmUp
+                          ? 'Aquecimento ${++warmUpNumber}'
+                          : 'Série ${++workingNumber}';
+                      return Padding(
+                        padding: EdgeInsets.only(top: entry.key == 0 ? 0 : 7),
+                        child: _SetHistoryRow(label: label, set: entry.value),
+                      );
+                    })
+                    .toList(growable: false);
+              }(),
             ),
           ),
         ],
@@ -1064,9 +1071,9 @@ class _ExerciseHistoryCard extends StatelessWidget {
 }
 
 class _SetHistoryRow extends StatelessWidget {
-  const _SetHistoryRow({required this.setNumber, required this.set});
+  const _SetHistoryRow({required this.label, required this.set});
 
-  final int setNumber;
+  final String label;
   final ExerciseSet set;
 
   @override
@@ -1083,9 +1090,11 @@ class _SetHistoryRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Text(
-              'Série $setNumber',
+              label,
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: set.kind == WorkoutSetKind.warmUp
+                    ? AppColors.warning
+                    : AppColors.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),

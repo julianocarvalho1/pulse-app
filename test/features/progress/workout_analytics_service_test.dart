@@ -148,6 +148,32 @@ void main() {
     expect(summary.personalRecords.single.date, DateTime(2026, 5, 1));
   });
 
+  test('mantém aquecimento no histórico sem inflar métricas e recordes', () {
+    final history = <WorkoutHistoryItem>[
+      _workout(
+        id: 'warm-up',
+        date: DateTime(2026, 7, 29),
+        sets: const <ExerciseSet>[
+          ExerciseSet(reps: 20, weight: 100, kind: WorkoutSetKind.warmUp),
+          ExerciseSet(reps: 8, weight: 40),
+        ],
+      ),
+    ];
+
+    final summary = service.buildSummary(
+      history: history,
+      period: ProgressPeriod.fourWeeks,
+      now: DateTime(2026, 7, 30),
+    );
+
+    expect(history.single.totalWarmUpSets, 1);
+    expect(summary.current.totalSets, 1);
+    expect(summary.current.totalReps, 8);
+    expect(summary.current.totalVolume, 320);
+    expect(summary.personalRecords.single.weight, 40);
+    expect(summary.exerciseProgress.single.latestWeight, 40);
+  });
+
   test('interpreta durações HH:MM:SS e MM:SS', () {
     expect(service.parseDurationSeconds('01:02:03'), 3723);
     expect(service.parseDurationSeconds('42:15'), 2535);

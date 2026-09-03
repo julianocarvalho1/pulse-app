@@ -1,6 +1,6 @@
 # Roadmap pós-lançamento do PULSE
 
-Atualizado em 2 de setembro de 2026.
+Atualizado em 3 de setembro de 2026.
 
 Este documento é a referência única para as próximas versões do PULSE. Uma
 funcionalidade só muda de fase quando os critérios de conclusão da fase atual
@@ -150,17 +150,33 @@ estruturado e editável.
 
 ## Versão 1.4.0 — Refinamentos de treino e feedback
 
-- [ ] Diferenciar séries de aquecimento e séries de trabalho.
-- [ ] Permitir descanso próprio para aquecimento.
-- [ ] Avaliar registro separado de lado direito e esquerdo em exercícios
+- [x] Diferenciar séries de aquecimento e séries de trabalho.
+- [x] Permitir descanso próprio para aquecimento.
+- [x] Avaliar registro separado de lado direito e esquerdo em exercícios
   unilaterais.
 - [ ] Migrar o projeto Android e os plugins para **Built-in Kotlin** antes de
   atualizar para uma versão do Flutter que deixe de aceitar o plugin Gradle
   legado do Kotlin.
-- [ ] Implementar avaliação nativa do Google Play após uso suficiente, sem
+- [x] Implementar avaliação nativa do Google Play após uso suficiente, sem
   pedir nota específica ou oferecer recompensa.
-- [ ] Criar uma tela curta de **Novidades da versão**.
+- [x] Criar uma tela curta de **Novidades da versão**.
 - [ ] Revisar aquecimento, mobilidade e alongamento para uma fase posterior.
+
+Decisão sobre exercícios unilaterais: nesta versão, um único registro continua
+representando a carga e as repetições realizadas **em cada lado** quando a
+prescrição contém “por lado”. Campos separados para direita e esquerda foram
+adiados até existir feedback real que justifique dobrar a quantidade de entradas
+e tornar o histórico e a progressão mais complexos.
+
+### Critérios para concluir a versão 1.4.0
+
+- [x] Migração do banco e backups anteriores cobertos por testes automatizados.
+- [x] Aquecimento excluído de volume, recordes e progressão por testes.
+- [x] Avaliação nativa e tela de novidades cobertas por testes automatizados.
+- [x] `flutter analyze`, testes automatizados e APK de depuração concluídos.
+- [ ] Atualização instalada por cima da versão pública sem perda de dados.
+- [ ] Fluxos novos aprovados no celular físico.
+- [ ] Avaliação nativa validada em build distribuído pelo Google Play.
 
 ## Experimento separado — animações próprias com IA
 
@@ -212,9 +228,9 @@ as funções principais estarem estáveis.
 
 ## Portão obrigatório de cada publicação
 
-- [ ] Atualizar este roadmap e o `CHANGELOG.md`.
-- [ ] Revisar mudanças de banco e compatibilidade com backups antigos.
-- [ ] Executar formatação, análise estática e testes automatizados.
+- [x] Atualizar este roadmap e o `CHANGELOG.md`.
+- [x] Revisar mudanças de banco e compatibilidade com backups antigos.
+- [x] Executar formatação, análise estática e testes automatizados.
 - [ ] Instalar por cima da versão pública em celular físico.
 - [ ] Confirmar que ficha, histórico, sessão ativa e configurações permanecem.
 - [ ] Executar os testes manuais da funcionalidade alterada.

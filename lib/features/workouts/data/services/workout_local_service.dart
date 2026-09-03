@@ -221,6 +221,7 @@ class WorkoutLocalService {
                   (setRow) => ExerciseSet(
                     reps: _readInt(setRow['reps']),
                     weight: _readDouble(setRow['weight']),
+                    kind: WorkoutSetKind.fromStorage(setRow['set_kind']),
                     targetType: WorkoutSetTargetType.fromStorage(
                       setRow['target_type'],
                     ),
@@ -415,6 +416,7 @@ class WorkoutLocalService {
 
             return ActiveWorkoutSet(
               setNumber: _readInt(setRow['set_order']) + 1,
+              kind: WorkoutSetKind.fromStorage(setRow['set_kind']),
               weightText: setRow['weight_text']?.toString() ?? '',
               repsText: setRow['reps_text']?.toString() ?? '',
               isCompleted: _readInt(setRow['is_completed']) == 1,
@@ -539,6 +541,7 @@ class WorkoutLocalService {
             'weight_text': set.weightText,
             'reps_text': set.repsText,
             'is_completed': set.isCompleted ? 1 : 0,
+            'set_kind': set.kind.storageValue,
             'target_text': set.targetText,
             'target_rir': set.targetRir,
             'cadence': set.cadence,
@@ -649,6 +652,7 @@ class WorkoutLocalService {
           'set_order': setIndex,
           'reps': set.reps,
           'weight': set.weight,
+          'set_kind': set.kind.storageValue,
           'target_type': set.targetType.storageValue,
           'planned_duration_seconds': set.plannedDurationSeconds,
           'actual_duration_seconds': set.actualDurationSeconds,

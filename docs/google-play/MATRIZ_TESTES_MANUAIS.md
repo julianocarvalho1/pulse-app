@@ -22,6 +22,15 @@ distribuído pelo teste interno da Google Play.
 | Treino | Minimizar e voltar | Sessão e tempo não são perdidos ou duplicados | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Descartar sessão | Exige confirmação e não cria item no histórico | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Treino | Finalizar sessão com atividade | Exige confirmação e cria o histórico correto | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
+| Treino 1.1 | Salvar anotações e RIR de um exercício | Fecha sem tela vermelha, restaura ao reabrir e aparece no histórico | [ ] validar a atualização 1.4 no celular físico |
+| Progressão 1.1 | Concluir uma ficha com faixa 8–12 | A sugestão seguinte respeita 8–12, explica o motivo e nunca propõe 13 repetições | [ ] validar a atualização 1.4 no celular físico |
+| Core 1.2 | Executar série cronometrada, apagar a tela e voltar | Cronômetro, estado da série e descanso permanecem corretos | [ ] validar a atualização 1.4 no celular físico |
+| Extras 1.2 | Concluir uma sessão de core | Registra no histórico sem avançar a próxima ficha do programa | [ ] validar a atualização 1.4 no celular físico |
+| Cardio 1.3 | Executar contínuo e intervalado offline | Plano, blocos, retomada e histórico preservam os valores escolhidos | [ ] validar a atualização 1.4 no celular físico |
+| Aquecimento 1.4 | Criar aquecimento e trabalho no mesmo exercício | Mostra A1/A2 antes das séries 1/2 e usa o descanso próprio de cada uma | [ ] validar a atualização 1.4 no celular físico |
+| Métricas 1.4 | Concluir aquecimento com carga maior que o trabalho | Aquecimento aparece no histórico, mas não altera volume, recorde nem progressão | [ ] validar a atualização 1.4 no celular físico |
+| Novidades 1.4 | Abrir o app duas vezes após atualizar | Tela de novidades aparece na primeira abertura e não se repete na segunda | [ ] validar a atualização 1.4 no celular físico |
+| Avaliação 1.4 | Atingir a quinta conclusão em build distribuído pela Play | Solicitação usa a interface nativa quando o Google Play permitir; se a cota não exibir, o treino termina normalmente | [ ] validar em teste interno da Google Play |
 | Histórico | Excluir item | Exige confirmação e recalcula as métricas sem inconsistência | [x] 09/08/2026 — Xiaomi M2012K11AG, Android 13 |
 | Histórico | Editar item | Permite corrigir dados registrados sem recriar o treino | [ ] melhoria pós-lançamento |
 | Progresso | Períodos e gráficos | Valores batem com o histórico inserido | [x] 09/08/2026 — períodos, totais e gráficos conferidos no Xiaomi M2012K11AG, Android 13 |

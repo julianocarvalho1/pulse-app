@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../features/pulse_ai/domain/models/pulse_ai_models.dart';
 import '../features/pulse_ai/presentation/screens/pulse_ai_context_screen.dart';
+import '../features/reviews/data/pulse_review_service.dart';
 import '../features/settings/domain/pulse_settings.dart';
 import '../features/settings/presentation/providers/settings_controller.dart';
 import '../core/utils/weight_unit_converter.dart';
@@ -1536,13 +1537,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                     provider.activeSession!.exercises[exerciseIndex].sets.length
             ? provider.activeSession!.exercises[exerciseIndex].sets[setIndex]
             : null;
-        if (activeSet?.isTimed ?? false) {
+        if (activeSet != null && activeSet.isTimed) {
           setsCompleted.add(
             ExerciseSet(
               reps: 0,
               weight: 0,
+              kind: activeSet.kind,
               targetType: WorkoutSetTargetType.duration,
-              plannedDurationSeconds: activeSet!.plannedDurationSeconds,
+              plannedDurationSeconds: activeSet.plannedDurationSeconds,
               actualDurationSeconds: activeSet.actualDurationSeconds,
             ),
           );
@@ -1567,7 +1569,13 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
           reps = match == null ? 0 : int.parse(match.group(0)!);
         }
 
-        setsCompleted.add(ExerciseSet(reps: reps, weight: weight));
+        setsCompleted.add(
+          ExerciseSet(
+            reps: reps,
+            weight: weight,
+            kind: activeSet?.kind ?? WorkoutSetKind.working,
+          ),
+        );
       }
 
       if (setsCompleted.isNotEmpty) {
@@ -1745,6 +1753,14 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
         backgroundColor: isIncomplete ? Colors.orange : successColor,
       ),
     );
+    if (!isIncomplete) {
+      unawaited(_requestReviewAfterCompletedWorkout());
+    }
+  }
+
+  Future<void> _requestReviewAfterCompletedWorkout() async {
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await PulseReviewService().recordCompletedWorkoutAndMaybeRequest();
   }
 
   Future<void> _confirmFinish(WorkoutController provider) async {
@@ -3233,6 +3249,29 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                       }
                                       final isTimedSet =
                                           prescribedSet?.isTimed ?? false;
+                                      final setKind =
+                                          prescribedSet?.kind ??
+                                          WorkoutSetKind.working;
+                                      final sameKindNumber =
+                                          prescribedSet == null
+                                          ? setIndex + 1
+                                          : workoutState
+                                                .activeSession!
+                                                .exercises[index]
+                                                .sets
+                                                .take(setIndex + 1)
+                                                .where(
+                                                  (set) => set.kind == setKind,
+                                                )
+                                                .length;
+                                      final setLabel =
+                                          setKind == WorkoutSetKind.warmUp
+                                          ? 'A$sameKindNumber'
+                                          : '$sameKindNumber';
+                                      if (setKind == WorkoutSetKind.warmUp) {
+                                        smartTarget =
+                                            'Aquecimento • $smartTarget';
+                                      }
 
                                       return Padding(
                                         padding: EdgeInsets.only(
@@ -3245,16 +3284,30 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                             SizedBox(
                                               width: 38,
                                               child: Center(
-                                                child: Text(
-                                                  '${setIndex + 1}',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w800,
-                                                    color: isCompleted
-                                                        ? Theme.of(
-                                                            context,
-                                                          ).colorScheme.primary
-                                                        : AppColors.textPrimary,
-                                                    fontSize: 14,
+                                                child: Tooltip(
+                                                  message:
+                                                      setKind ==
+                                                          WorkoutSetKind.warmUp
+                                                      ? 'Série de aquecimento'
+                                                      : 'Série de trabalho',
+                                                  child: Text(
+                                                    setLabel,
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color:
+                                                          setKind ==
+                                                              WorkoutSetKind
+                                                                  .warmUp
+                                                          ? AppColors.warning
+                                                          : isCompleted
+                                                          ? Theme.of(context)
+                                                                .colorScheme
+                                                                .primary
+                                                          : AppColors
+                                                                .textPrimary,
+                                                      fontSize: 14,
+                                                    ),
                                                   ),
                                                 ),
                                               ),

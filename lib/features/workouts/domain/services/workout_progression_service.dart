@@ -16,7 +16,7 @@ class WorkoutProgressionService {
     final previousLog = _findLatestComparableLog(exercise.id, history);
     final previousSets =
         previousLog?.sets
-            .where((set) => set.reps > 0)
+            .where((set) => set.kind == WorkoutSetKind.working && set.reps > 0)
             .toList(growable: false) ??
         const <ExerciseSet>[];
     final source = _buildSource(

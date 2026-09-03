@@ -11,6 +11,7 @@ import 'workout_set.dart';
 class ActiveWorkoutSet {
   const ActiveWorkoutSet({
     required this.setNumber,
+    this.kind = WorkoutSetKind.working,
     this.weightText = '',
     this.repsText = '',
     this.isCompleted = false,
@@ -27,6 +28,7 @@ class ActiveWorkoutSet {
   });
 
   final int setNumber;
+  final WorkoutSetKind kind;
   final String weightText;
   final String repsText;
   final bool isCompleted;
@@ -43,6 +45,8 @@ class ActiveWorkoutSet {
 
   bool get isTimed => targetType == WorkoutSetTargetType.duration;
 
+  bool get isWarmUp => kind == WorkoutSetKind.warmUp;
+
   bool get isDurationRunning =>
       isTimed && !isCompleted && durationStartedAt != null;
 
@@ -56,6 +60,7 @@ class ActiveWorkoutSet {
 
   ActiveWorkoutSet copyWith({
     int? setNumber,
+    WorkoutSetKind? kind,
     String? weightText,
     String? repsText,
     bool? isCompleted,
@@ -75,6 +80,7 @@ class ActiveWorkoutSet {
   }) {
     return ActiveWorkoutSet(
       setNumber: setNumber ?? this.setNumber,
+      kind: kind ?? this.kind,
       weightText: weightText ?? this.weightText,
       repsText: repsText ?? this.repsText,
       isCompleted: isCompleted ?? this.isCompleted,
@@ -100,6 +106,7 @@ class ActiveWorkoutSet {
   Map<String, dynamic> toMap() {
     return {
       'setNumber': setNumber,
+      if (kind != WorkoutSetKind.working) 'kind': kind.storageValue,
       'weightText': weightText,
       'repsText': repsText,
       'isCompleted': isCompleted,
@@ -120,6 +127,7 @@ class ActiveWorkoutSet {
   factory ActiveWorkoutSet.fromMap(Map<String, dynamic> map) {
     return ActiveWorkoutSet(
       setNumber: _readInt(map['setNumber'], 1),
+      kind: WorkoutSetKind.fromStorage(map['kind']),
       weightText: map['weightText']?.toString() ?? '',
       repsText: map['repsText']?.toString() ?? '',
       isCompleted: map['isCompleted'] == true || map['isCompleted'] == 1,

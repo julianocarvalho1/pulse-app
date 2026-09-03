@@ -2,7 +2,31 @@
 
 Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
-## [1.3.0] - em desenvolvimento
+## [1.4.0] - em desenvolvimento
+
+### Incluído
+
+- séries de aquecimento separadas das séries de trabalho, com identificação
+  visual e descanso próprio;
+- tela curta de novidades exibida uma vez por versão;
+- solicitação nativa e discreta de avaliação pelo Google Play somente após uso
+  suficiente do aplicativo.
+
+### Alterado
+
+- aquecimentos continuam salvos no histórico, mas não inflam volume, recordes
+  pessoais nem sugestões de progressão;
+- banco local atualizado para a versão 12 por migração aditiva;
+- versão Android atualizada para `1.4.0` (`versionCode 6`).
+
+### Decisão de produto
+
+- o registro separado dos lados direito e esquerdo foi adiado: por enquanto,
+  quando a ficha informa **por lado**, carga e repetições representam o valor
+  realizado em cada lado. A separação só será adicionada se o uso real mostrar
+  benefício suficiente para compensar o dobro de campos durante a sessão.
+
+## [1.3.0] - não publicada separadamente
 
 ### Incluído
 
@@ -23,7 +47,7 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
   QR Code, com leitura compatível de dados anteriores;
 - banco local atualizado para a versão 11 por migração aditiva.
 
-## [1.2.0] - em desenvolvimento
+## [1.2.0] - não publicada separadamente
 
 ### Incluído
 
@@ -44,7 +68,7 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
   série;
 - banco local atualizado para a versão 10 por migração aditiva.
 
-## [1.1.0] - em desenvolvimento
+## [1.1.0] - não publicada separadamente
 
 ### Incluído
 

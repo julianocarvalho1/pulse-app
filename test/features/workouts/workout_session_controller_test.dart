@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pulse/features/workouts/data/services/workout_feedback_service.dart';
 import 'package:pulse/features/workouts/domain/models/active_workout_session.dart';
+import 'package:pulse/features/workouts/domain/models/advanced_workout_prescription.dart';
 import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 import 'package:pulse/features/workouts/domain/models/exercise_log.dart';
 import 'package:pulse/features/workouts/domain/models/workout_history_item.dart';
@@ -77,6 +78,42 @@ void main() {
     ],
   );
 
+  final routineWithWarmUp = WorkoutRoutine(
+    id: 'routine-warm-up',
+    name: 'Treino com aquecimento',
+    focus: 'Peito',
+    exercises: const <Exercise>[
+      Exercise(
+        id: 'supino-warm-up',
+        name: 'Supino',
+        muscle: 'Peito',
+        description: '',
+        reps: '2x 8-10',
+        rest: '60 seg',
+        advancedPrescription: AdvancedExercisePrescription(
+          weeks: <WorkoutWeekPrescription>[
+            WorkoutWeekPrescription(
+              weekNumber: 1,
+              sets: <WorkoutSetPrescription>[
+                WorkoutSetPrescription(
+                  setNumber: 1,
+                  kind: WorkoutSetKind.warmUp,
+                  target: '12 reps',
+                  restSeconds: 30,
+                ),
+                WorkoutSetPrescription(
+                  setNumber: 2,
+                  target: '8-10 reps',
+                  restSeconds: 90,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'settings_voice_after_rest': false,
@@ -138,6 +175,35 @@ void main() {
       controller.activeSession!.exercises.single.sets.first.isCompleted,
       isFalse,
     );
+  });
+
+  test('preserva aquecimento e usa o descanso próprio de cada série', () async {
+    final repository = _SessionFakeRepository(
+      routines: <WorkoutRoutine>[routineWithWarmUp],
+    );
+    final container = _buildContainer(repository);
+    addTearDown(container.dispose);
+
+    final controller = container.read(workoutControllerProvider.notifier);
+    await controller.initialization;
+    expect(controller.startRoutine(routineWithWarmUp), isTrue);
+
+    final sets = controller.activeSession!.exercises.single.sets;
+    expect(sets.first.kind, WorkoutSetKind.warmUp);
+    expect(sets.last.kind, WorkoutSetKind.working);
+
+    expect(
+      controller.startRestAfterSet(0, setIndex: 0),
+      RestStartOutcome.started,
+    );
+    expect(container.read(workoutControllerProvider).restSeconds, 30);
+    controller.stopRestTimer();
+
+    expect(
+      controller.startRestAfterSet(0, setIndex: 1),
+      RestStartOutcome.started,
+    );
+    expect(container.read(workoutControllerProvider).restSeconds, 90);
   });
 
   test('não inicia descanso entre as duas partes do bi-set', () async {

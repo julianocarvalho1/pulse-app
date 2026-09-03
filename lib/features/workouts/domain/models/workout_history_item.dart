@@ -82,7 +82,14 @@ class WorkoutHistoryItem {
   int get totalSets {
     return exercises.fold<int>(
       0,
-      (total, exercise) => total + exercise.sets.length,
+      (total, exercise) => total + exercise.workingSets.length,
+    );
+  }
+
+  int get totalWarmUpSets {
+    return exercises.fold<int>(
+      0,
+      (total, exercise) => total + exercise.warmUpSets.length,
     );
   }
 

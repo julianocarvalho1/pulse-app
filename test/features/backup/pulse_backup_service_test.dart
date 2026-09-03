@@ -108,6 +108,7 @@ void main() {
       'set_order': 0,
       'reps': 0,
       'weight': 0,
+      'set_kind': 'warmUp',
       'target_type': 'duration',
       'planned_duration_seconds': 30,
       'actual_duration_seconds': 34,
@@ -182,6 +183,7 @@ void main() {
       'weight_text': '',
       'reps_text': '',
       'is_completed': 0,
+      'set_kind': 'warmUp',
       'target_text': '30 seg',
       'target_type': 'duration',
       'planned_duration_seconds': 30,
@@ -228,6 +230,7 @@ void main() {
     expect(restoredHistoryExercise['is_load_comparable'], 0);
     expect(restoredHistoryExercise['perceived_rir'], 1);
     final restoredHistorySet = (await db.query('workout_history_sets')).single;
+    expect(restoredHistorySet['set_kind'], 'warmUp');
     expect(restoredHistorySet['target_type'], 'duration');
     expect(restoredHistorySet['planned_duration_seconds'], 30);
     expect(restoredHistorySet['actual_duration_seconds'], 34);
@@ -258,6 +261,7 @@ void main() {
     expect(restoredActiveExercise['is_load_comparable'], 0);
     expect(restoredActiveExercise['perceived_rir'], 2);
     final restoredActiveSet = (await db.query('active_session_sets')).single;
+    expect(restoredActiveSet['set_kind'], 'warmUp');
     expect(restoredActiveSet['target_type'], 'duration');
     expect(restoredActiveSet['planned_duration_seconds'], 30);
     expect(restoredActiveSet['actual_duration_seconds'], 8);

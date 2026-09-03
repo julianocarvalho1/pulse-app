@@ -124,6 +124,7 @@ void main() {
     final historyRow = (await migrated.query('workout_history_sets')).single;
     expect(historyRow['reps'], 12);
     expect(historyRow['weight'], 20.0);
+    expect(historyRow['set_kind'], 'working');
     expect(historyRow['target_type'], 'repetitions');
     expect(historyRow['planned_duration_seconds'], 0);
     expect(historyRow['actual_duration_seconds'], 0);
@@ -131,6 +132,7 @@ void main() {
     final activeRow = (await migrated.query('active_session_sets')).single;
     expect(activeRow['reps_text'], '10');
     expect(activeRow['is_completed'], 1);
+    expect(activeRow['set_kind'], 'working');
     expect(activeRow['target_type'], 'repetitions');
     expect(activeRow['planned_duration_seconds'], 0);
     expect(activeRow['actual_duration_seconds'], 0);

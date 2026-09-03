@@ -110,6 +110,7 @@ class _ExercisePrescriptionEditorScreenState
     );
     final cadenceController = TextEditingController(text: existing.cadence);
     final notesController = TextEditingController(text: existing.notes);
+    var kind = existing.kind;
     var technique = existing.technique;
     var targetType = WorkoutSetTarget.fromText(existing.target).type;
     String? targetError;
@@ -124,6 +125,30 @@ class _ExercisePrescriptionEditorScreenState
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<WorkoutSetKind>(
+                    key: const Key('set-kind-selector'),
+                    showSelectedIcon: false,
+                    segments: const <ButtonSegment<WorkoutSetKind>>[
+                      ButtonSegment<WorkoutSetKind>(
+                        value: WorkoutSetKind.warmUp,
+                        icon: Icon(Icons.local_fire_department_outlined),
+                        label: Text('Aquecimento'),
+                      ),
+                      ButtonSegment<WorkoutSetKind>(
+                        value: WorkoutSetKind.working,
+                        icon: Icon(Icons.fitness_center_rounded),
+                        label: Text('Trabalho'),
+                      ),
+                    ],
+                    selected: <WorkoutSetKind>{kind},
+                    onSelectionChanged: (selection) {
+                      setDialogState(() => kind = selection.first);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: SegmentedButton<WorkoutSetTargetType>(
@@ -292,6 +317,7 @@ class _ExercisePrescriptionEditorScreenState
                 Navigator.pop(
                   dialogContext,
                   existing.copyWith(
+                    kind: kind,
                     target: target,
                     restSeconds: int.tryParse(restController.text.trim()),
                     clearRestSeconds: restController.text.trim().isEmpty,
@@ -318,16 +344,29 @@ class _ExercisePrescriptionEditorScreenState
     return result;
   }
 
-  void _addSet() {
+  void _addSet(WorkoutSetKind kind) {
     final week = _currentWeek;
-    final template = week.sets.isEmpty
+    final matching = week.sets.where((set) => set.kind == kind);
+    final template = matching.isNotEmpty
+        ? matching.last
+        : week.sets.isEmpty
         ? const WorkoutSetPrescription(setNumber: 1, target: '8–12 reps')
         : week.sets.last;
+    final updated = <WorkoutSetPrescription>[...week.sets];
+    final added = template.copyWith(setNumber: updated.length + 1, kind: kind);
+    if (kind == WorkoutSetKind.warmUp) {
+      final firstWorking = updated.indexWhere(
+        (set) => set.kind == WorkoutSetKind.working,
+      );
+      updated.insert(firstWorking < 0 ? updated.length : firstWorking, added);
+    } else {
+      updated.add(added);
+    }
     _replaceCurrentWeek(
       week.copyWith(
         sets: <WorkoutSetPrescription>[
-          ...week.sets,
-          template.copyWith(setNumber: week.sets.length + 1),
+          for (var index = 0; index < updated.length; index++)
+            updated[index].copyWith(setNumber: index + 1),
         ],
       ),
     );
@@ -677,10 +716,38 @@ class _ExercisePrescriptionEditorScreenState
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                 ),
               ),
-              TextButton.icon(
-                onPressed: _addSet,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Adicionar'),
+              PopupMenuButton<WorkoutSetKind>(
+                tooltip: 'Adicionar série',
+                onSelected: _addSet,
+                itemBuilder: (_) => const <PopupMenuEntry<WorkoutSetKind>>[
+                  PopupMenuItem<WorkoutSetKind>(
+                    value: WorkoutSetKind.warmUp,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.local_fire_department_outlined),
+                      title: Text('Série de aquecimento'),
+                    ),
+                  ),
+                  PopupMenuItem<WorkoutSetKind>(
+                    value: WorkoutSetKind.working,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.fitness_center_rounded),
+                      title: Text('Série de trabalho'),
+                    ),
+                  ),
+                ],
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.add_rounded),
+                      SizedBox(width: 6),
+                      Text('Adicionar'),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -688,6 +755,9 @@ class _ExercisePrescriptionEditorScreenState
           ...week.sets.asMap().entries.map((entry) {
             final index = entry.key;
             final set = entry.value;
+            final setColor = set.kind == WorkoutSetKind.warmUp
+                ? AppColors.warning
+                : primary;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
@@ -700,11 +770,13 @@ class _ExercisePrescriptionEditorScreenState
                   ),
                   onTap: () => _editSet(index),
                   leading: CircleAvatar(
-                    backgroundColor: primary.withValues(alpha: 0.12),
+                    backgroundColor: setColor.withValues(alpha: 0.12),
                     child: Text(
-                      '${index + 1}',
+                      set.kind == WorkoutSetKind.warmUp
+                          ? 'A${week.sets.take(index + 1).where((item) => item.kind == WorkoutSetKind.warmUp).length}'
+                          : '${week.sets.take(index + 1).where((item) => item.kind == WorkoutSetKind.working).length}',
                       style: TextStyle(
-                        color: primary,
+                        color: setColor,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

@@ -32,6 +32,7 @@ void main() {
           sets: [
             ActiveWorkoutSet(
               setNumber: 1,
+              kind: WorkoutSetKind.warmUp,
               weightText: '20',
               repsText: '10',
               isCompleted: true,
@@ -80,6 +81,7 @@ void main() {
     expect(restored.exercises.single.isLoadComparable, isFalse);
     expect(restored.exercises.single.perceivedRir, 2);
     expect(restored.exercises.single.sets.first.isCompleted, isTrue);
+    expect(restored.exercises.single.sets.first.kind, WorkoutSetKind.warmUp);
     expect(restored.exercises.single.sets.first.targetText, '8–10 reps');
     expect(restored.exercises.single.sets.first.targetRir, 2);
     expect(

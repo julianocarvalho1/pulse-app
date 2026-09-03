@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'workout_set.dart';
+
 enum WorkoutTechnique {
   none,
   dropSet,
@@ -38,6 +40,7 @@ enum WorkoutTechnique {
 class WorkoutSetPrescription {
   const WorkoutSetPrescription({
     required this.setNumber,
+    this.kind = WorkoutSetKind.working,
     this.target = '',
     this.restSeconds,
     this.targetRir,
@@ -47,6 +50,7 @@ class WorkoutSetPrescription {
   });
 
   final int setNumber;
+  final WorkoutSetKind kind;
   final String target;
   final int? restSeconds;
   final int? targetRir;
@@ -63,7 +67,7 @@ class WorkoutSetPrescription {
       notes.trim().isNotEmpty;
 
   String get summary {
-    final parts = <String>[];
+    final parts = <String>[kind.label];
     if (target.trim().isNotEmpty) {
       parts.add(target.trim());
     }
@@ -84,6 +88,7 @@ class WorkoutSetPrescription {
 
   WorkoutSetPrescription copyWith({
     int? setNumber,
+    WorkoutSetKind? kind,
     String? target,
     int? restSeconds,
     bool clearRestSeconds = false,
@@ -95,6 +100,7 @@ class WorkoutSetPrescription {
   }) {
     return WorkoutSetPrescription(
       setNumber: setNumber ?? this.setNumber,
+      kind: kind ?? this.kind,
       target: target ?? this.target,
       restSeconds: clearRestSeconds ? null : (restSeconds ?? this.restSeconds),
       targetRir: clearTargetRir ? null : (targetRir ?? this.targetRir),
@@ -107,6 +113,7 @@ class WorkoutSetPrescription {
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'setNumber': setNumber,
+      if (kind != WorkoutSetKind.working) 'kind': kind.storageValue,
       'target': target,
       if (restSeconds != null) 'restSeconds': restSeconds,
       if (targetRir != null) 'targetRir': targetRir,
@@ -119,6 +126,7 @@ class WorkoutSetPrescription {
   factory WorkoutSetPrescription.fromMap(Map<String, dynamic> map) {
     return WorkoutSetPrescription(
       setNumber: _readInt(map['setNumber'], 1).clamp(1, 30).toInt(),
+      kind: WorkoutSetKind.fromStorage(map['kind']),
       target: map['target']?.toString() ?? '',
       restSeconds: _readNullableInt(map['restSeconds']),
       targetRir: _readNullableInt(map['targetRir']),

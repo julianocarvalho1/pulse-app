@@ -51,6 +51,37 @@ void main() {
     expect(suggestion.nextTarget, contains('sem passar de 10'));
   });
 
+  test('ignora séries de aquecimento ao calcular a próxima progressão', () {
+    final history = <WorkoutHistoryItem>[
+      WorkoutHistoryItem(
+        id: 'history-warm-up',
+        routineName: 'Treino A',
+        date: DateTime(2026, 7, 29),
+        duration: '30:00',
+        exercises: <ExerciseLog>[
+          ExerciseLog(
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            sets: const <ExerciseSet>[
+              ExerciseSet(reps: 20, weight: 20, kind: WorkoutSetKind.warmUp),
+              ExerciseSet(reps: 8, weight: 40),
+              ExerciseSet(reps: 9, weight: 40),
+            ],
+          ),
+        ],
+      ),
+    ];
+
+    final suggestion = service.buildSuggestion(
+      exercise: exercise,
+      history: history,
+      mode: WorkoutProgressionMode.repsThenLoad,
+    );
+
+    expect(suggestion.lastPerformance, '40 kg: 8 / 9 reps');
+    expect(suggestion.lastPerformance, isNot(contains('20')));
+  });
+
   test('não inventa carga quando todas as séries atingem o topo', () {
     final history = <WorkoutHistoryItem>[
       WorkoutHistoryItem(

@@ -38,6 +38,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('set-target-type-selector')), findsOneWidget);
+    expect(find.byKey(const Key('set-kind-selector')), findsOneWidget);
+    await tester.tap(find.text('Aquecimento'));
+    await tester.pump();
     await tester.tap(find.text('Tempo'));
     await tester.pump();
     expect(find.text('30 seg'), findsOneWidget);
@@ -45,5 +48,6 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
     await tester.pumpAndSettle();
     expect(find.text('30 seg'), findsWidgets);
+    expect(find.textContaining('Aquecimento'), findsWidgets);
   });
 }
