@@ -49,65 +49,18 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
     }
 
     if (nextType == RoutineType.cardio && _exercises.isNotEmpty) {
-      final confirmed = await _confirmRemoval(
-        title: 'Remover musculação?',
-        message:
-            'Ao transformar esta ficha em cardio, os exercícios de musculação serão removidos.',
-        confirmLabel: 'REMOVER EXERCÍCIOS',
-      );
-      if (!confirmed || !mounted) {
-        return;
-      }
-      setState(() {
-        _type = nextType;
-        _exercises = <Exercise>[];
-      });
+      setState(() => _type = RoutineType.mixed);
+      _showMessage('Musculação mantida. Adicione o cardio abaixo.');
       return;
     }
 
     if (nextType == RoutineType.strength && _cardio.isNotEmpty) {
-      final confirmed = await _confirmRemoval(
-        title: 'Remover cardio?',
-        message:
-            'Ao transformar esta ficha em musculação, as etapas de cardio serão removidas.',
-        confirmLabel: 'REMOVER CARDIO',
-      );
-      if (!confirmed || !mounted) {
-        return;
-      }
-      setState(() {
-        _type = nextType;
-        _cardio = <RoutineCardio>[];
-      });
+      setState(() => _type = RoutineType.mixed);
+      _showMessage('Cardio mantido. Adicione os exercícios abaixo.');
       return;
     }
 
     setState(() => _type = nextType);
-  }
-
-  Future<bool> _confirmRemoval({
-    required String title,
-    required String message,
-    required String confirmLabel,
-  }) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: Text(title),
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('CANCELAR'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: Text(confirmLabel),
-              ),
-            ],
-          ),
-        ) ??
-        false;
   }
 
   Future<void> _pickExercise() async {
@@ -176,6 +129,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
       } else {
         _cardio.add(result);
       }
+      _type = _exercises.isNotEmpty ? RoutineType.mixed : RoutineType.cardio;
     });
   }
 
@@ -357,7 +311,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                 label: const Text('ADICIONAR EXERCÍCIO'),
               ),
             ],
-            if (_type.includesCardio) ...<Widget>[
+            ...<Widget>[
               const SizedBox(height: 24),
               _SectionHeader(
                 title: 'CARDIO',

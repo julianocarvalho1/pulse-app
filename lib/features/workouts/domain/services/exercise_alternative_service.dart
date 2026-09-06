@@ -1,14 +1,32 @@
 import '../../../../models/exercise.dart';
+import '../../../exercises/domain/exercise_catalog.dart';
 import '../models/advanced_workout_prescription.dart';
 
 class ExerciseAlternativeService {
   const ExerciseAlternativeService();
+
+  bool isAllowed(
+    Exercise current,
+    ExerciseAlternative candidate,
+    List<Exercise> catalog,
+  ) {
+    final resolved = _findCatalogExercise(candidate, catalog);
+    final muscle = resolved?.muscle ?? candidate.muscle;
+    final target = ExerciseCatalog.standardizedMuscle(muscle);
+    return target != 'Outros' &&
+        target == ExerciseCatalog.standardizedMuscle(current.muscle);
+  }
 
   Exercise buildReplacement({
     required Exercise current,
     required ExerciseAlternative selected,
     required List<Exercise> catalog,
   }) {
+    if (!isAllowed(current, selected, catalog)) {
+      throw ArgumentError(
+        'A alternativa deve trabalhar o mesmo grupo muscular.',
+      );
+    }
     final catalogExercise = _findCatalogExercise(selected, catalog);
     final base =
         catalogExercise ??

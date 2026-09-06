@@ -1080,7 +1080,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     required int exerciseIndex,
     required Exercise current,
   }) async {
-    final alternatives = current.advancedPrescription.alternatives;
+    final alternatives = current.advancedPrescription.alternatives
+        .where(
+          (item) => const ExerciseAlternativeService().isAllowed(
+            current,
+            item,
+            provider.allExercises,
+          ),
+        )
+        .toList(growable: false);
     if (alternatives.isEmpty || _isAlternativeFlowOpen) {
       return;
     }

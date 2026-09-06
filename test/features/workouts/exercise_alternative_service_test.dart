@@ -58,6 +58,31 @@ void main() {
   });
 
   test(
+    'recusa alternativa de outro músculo inclusive com metadado incorreto',
+    () {
+      final leg = current.copyWith(
+        id: 'leg',
+        name: 'Agachamento',
+        muscle: 'Pernas',
+      );
+      const selected = ExerciseAlternative(
+        exerciseId: 'leg',
+        name: 'Agachamento',
+        muscle: 'Peito',
+      );
+      expect(service.isAllowed(current, selected, [leg]), isFalse);
+      expect(
+        () => service.buildReplacement(
+          current: current,
+          selected: selected,
+          catalog: [leg],
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
+
+  test(
     'cria exercício temporário quando alternativa não existe no catálogo',
     () {
       const unknown = ExerciseAlternative(

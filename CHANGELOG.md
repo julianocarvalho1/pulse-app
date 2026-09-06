@@ -6,6 +6,12 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ### Corrigido
 
+- adicionar cardio na edição da ficha preserva os exercícios de musculação e
+  transforma a ficha em mista; a ação está disponível sem trocar o tipo antes;
+- seleção de alternativas limitada ao mesmo grupo muscular, com verificação
+  também ao substituir durante a sessão;
+- fechamento da busca de alternativas com campo ativo não descarta o controle
+  antes de concluir a animação, e a seleção permanece durante reconstruções.
 - tela vermelha ao salvar ou cancelar a edição de uma série com um campo
   ativo, incluindo RIR; os controles agora permanecem válidos até o diálogo
   terminar de fechar.

@@ -5,6 +5,7 @@ import '../features/workouts/domain/models/advanced_workout_prescription.dart';
 import '../features/workouts/domain/models/workout_set.dart';
 import '../models/exercise.dart';
 import '../theme/app_theme.dart';
+import '../features/exercises/domain/exercise_catalog.dart';
 
 class ExercisePrescriptionEditorScreen extends StatefulWidget {
   const ExercisePrescriptionEditorScreen({
@@ -400,17 +401,22 @@ class _ExercisePrescriptionEditorScreenState
         .map((alternative) => alternative.exerciseId)
         .toSet();
     final candidates = widget.availableExercises
-        .where((exercise) => exercise.id != widget.exercise.id)
+        .where(
+          (exercise) =>
+              exercise.id != widget.exercise.id &&
+              ExerciseCatalog.standardizedMuscle(exercise.muscle) != 'Outros' &&
+              ExerciseCatalog.standardizedMuscle(exercise.muscle) ==
+                  ExerciseCatalog.standardizedMuscle(widget.exercise.muscle),
+        )
         .toList(growable: false);
     final searchController = TextEditingController();
     var query = '';
 
-    final result = await showModalBottomSheet<List<ExerciseAlternative>>(
-      context: context,
+    final selection = Set<String>.from(selectedIds);
+    final route = ModalBottomSheetRoute<List<ExerciseAlternative>>(
       isScrollControlled: true,
       useSafeArea: true,
       builder: (sheetContext) {
-        final selection = Set<String>.from(selectedIds);
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final normalizedQuery = query.trim().toLowerCase();
@@ -447,7 +453,7 @@ class _ExercisePrescriptionEditorScreenState
                               ),
                               SizedBox(height: 2),
                               Text(
-                                'Escolha exercícios que podem substituir o atual.',
+                                'Escolha uma alternativa do mesmo grupo muscular. Revise a execução e a carga com seu profissional.',
                                 style: TextStyle(fontSize: 12),
                               ),
                             ],
@@ -520,7 +526,7 @@ class _ExercisePrescriptionEditorScreenState
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Tente outro nome ou grupo muscular.',
+                                    'Busque outro nome dentro do mesmo grupo muscular.',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: AppColors.textSecondary,
@@ -596,6 +602,8 @@ class _ExercisePrescriptionEditorScreenState
         );
       },
     );
+    final result = await Navigator.of(context).push(route);
+    await route.completed;
     searchController.dispose();
     if (result != null && mounted) {
       setState(() => _alternatives = result);
