@@ -4,6 +4,12 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ## [1.4.0] - em desenvolvimento
 
+### Corrigido
+
+- tela vermelha ao salvar ou cancelar a edição de uma série com um campo
+  ativo, incluindo RIR; os controles agora permanecem válidos até o diálogo
+  terminar de fechar.
+
 ### Incluído
 
 - séries de aquecimento separadas das séries de trabalho, com identificação

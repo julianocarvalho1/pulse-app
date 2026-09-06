@@ -115,7 +115,7 @@ class _ExercisePrescriptionEditorScreenState
     var targetType = WorkoutSetTarget.fromText(existing.target).type;
     String? targetError;
 
-    final result = await showDialog<WorkoutSetPrescription>(
+    final route = DialogRoute<WorkoutSetPrescription>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -336,6 +336,9 @@ class _ExercisePrescriptionEditorScreenState
       ),
     );
 
+    final result = await Navigator.of(context, rootNavigator: true).push(route);
+    // Os campos ainda usam seus controles durante a animação de saída.
+    await route.completed;
     targetController.dispose();
     restController.dispose();
     rirController.dispose();

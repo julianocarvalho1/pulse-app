@@ -45,9 +45,41 @@ void main() {
     await tester.pump();
     expect(find.text('30 seg'), findsOneWidget);
 
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Alvo da série'),
+      '40 seg',
+    );
+    await tester.pump();
+
     await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
     await tester.pumpAndSettle();
-    expect(find.text('30 seg'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    expect(find.text('40 seg'), findsWidgets);
     expect(find.textContaining('Aquecimento'), findsWidgets);
+
+    await tester.tap(find.text('40 seg').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Alvo da série'),
+      '99 seg',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('40 seg'), findsWidgets);
+    expect(find.text('99 seg'), findsNothing);
+
+    await tester.tap(find.text('40 seg').first);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Esforço (RIR)'),
+      '2',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('RIR 2'), findsWidgets);
   });
 }
