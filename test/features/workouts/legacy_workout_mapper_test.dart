@@ -5,6 +5,12 @@ import 'package:pulse/features/workouts/domain/models/workout_session_status.dar
 import 'package:pulse/features/workouts/domain/models/workout_set.dart';
 
 void main() {
+  test('alvo por série remove multiplicador sem perder faixa ou duração', () {
+    expect(LegacyWorkoutMapper.targetForSet('3x 10-12', 0), '10-12');
+    expect(LegacyWorkoutMapper.targetForSet('2× 8–10', 1), '8–10');
+    expect(LegacyWorkoutMapper.targetForSet('3x 30 s', 0), '30 s');
+    expect(LegacyWorkoutMapper.targetForSet('3x 12-10-8', 1), '10');
+  });
   group('LegacyWorkoutMapper', () {
     test('converte séries e faixa de repetições', () {
       final config = LegacyWorkoutMapper.parseExerciseConfig(

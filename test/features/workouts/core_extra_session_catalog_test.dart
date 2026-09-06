@@ -66,14 +66,14 @@ void main() {
     test('um extra no histórico não altera a próxima ficha do ABC', () {
       final routineA = WorkoutRoutine(
         id: 'a',
-        name: 'Treino A',
+        name: 'Superior',
         focus: 'Peito',
         groupName: 'ABC',
         exercises: const <Exercise>[],
       );
       final routineB = WorkoutRoutine(
         id: 'b',
-        name: 'Treino B',
+        name: 'Inferior',
         focus: 'Costas',
         groupName: 'ABC',
         exercises: const <Exercise>[],

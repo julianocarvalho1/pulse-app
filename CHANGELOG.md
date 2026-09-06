@@ -6,6 +6,15 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ### Corrigido
 
+- alvos de repetições por série não repetem o multiplicador da prescrição;
+- progressão exclui aquecimentos também dos alvos e do RIR prescrito;
+- sequência das fichas segue a ordem do programa e ignora sessões incompletas;
+- botões superiores abrem inclusão de conteúdo sem apagar musculação/cardio;
+- criação só de cardio vai diretamente aos blocos, sem divisão ABC;
+- resumo da sessão mais compacto, com critérios completos acessíveis por toque;
+- explicação local de cardio com cálculo de duração e interpretação dos blocos,
+  sem consumir a cota de IA.
+
 - botão **Salvar cardio** agora reserva a área da barra de navegação do Android
   e permanece totalmente visível na parte inferior da tela;
 - adicionar cardio na edição da ficha preserva os exercícios de musculação e

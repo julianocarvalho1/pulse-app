@@ -19,6 +19,13 @@ class RemotePulseAiRepository implements PulseAiRepository {
   Future<PulseAiResponse> analyze(PulseAiRequest request) async {
     final structuredResponse = await localAnalyzer.analyze(request);
 
+    if (request.routine?.exercises.isEmpty == true &&
+        request.routine!.cardio.isNotEmpty &&
+        (request.mode == PulseAiAssistantMode.explainWorkout ||
+            request.mode == PulseAiAssistantMode.reviewRoutine)) {
+      return structuredResponse;
+    }
+
     if (request.mode == PulseAiAssistantMode.analyzeProgress) {
       return structuredResponse.copyWith(
         generatedLocally: true,

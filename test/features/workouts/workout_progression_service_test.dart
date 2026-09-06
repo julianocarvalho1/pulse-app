@@ -19,6 +19,64 @@ void main() {
 
   const service = WorkoutProgressionService();
 
+  test(
+    'prescrição avançada cobra apenas séries de trabalho, não aquecimento',
+    () {
+      final prescribed = exercise.copyWith(
+        advancedPrescription: const AdvancedExercisePrescription(
+          weeks: [
+            WorkoutWeekPrescription(
+              weekNumber: 1,
+              sets: [
+                WorkoutSetPrescription(
+                  setNumber: 1,
+                  target: '30 s',
+                  kind: WorkoutSetKind.warmUp,
+                ),
+                WorkoutSetPrescription(setNumber: 2, target: '8-10'),
+                WorkoutSetPrescription(setNumber: 3, target: '8-10'),
+                WorkoutSetPrescription(setNumber: 4, target: '8-10'),
+                WorkoutSetPrescription(
+                  setNumber: 5,
+                  target: '20',
+                  kind: WorkoutSetKind.warmUp,
+                  targetRir: 5,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      final suggestion = service.buildSuggestion(
+        exercise: prescribed,
+        history: [
+          WorkoutHistoryItem(
+            id: 'complete',
+            routineName: 'A',
+            date: DateTime(2026, 9, 6),
+            duration: '30:00',
+            exercises: [
+              ExerciseLog(
+                exerciseId: exercise.id,
+                exerciseName: exercise.name,
+                perceivedRir: 2,
+                sets: const [
+                  ExerciseSet(reps: 10, weight: 40),
+                  ExerciseSet(reps: 10, weight: 40),
+                  ExerciseSet(reps: 10, weight: 40),
+                ],
+              ),
+            ],
+          ),
+        ],
+        mode: WorkoutProgressionMode.repsThenLoad,
+      );
+      expect(suggestion.nextTarget, isNot(contains('Complete as')));
+      expect(suggestion.nextTarget, isNot(contains('duração')));
+      expect(suggestion.nextTarget, isNot(contains('não aumente')));
+    },
+  );
+
   test('avança as séries mais baixas sem ultrapassar a faixa', () {
     final history = <WorkoutHistoryItem>[
       WorkoutHistoryItem(

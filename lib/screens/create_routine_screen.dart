@@ -72,7 +72,9 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         builder: (_) => ProgramBuilderScreen(
           programName: programName,
           programFocus: programFocus,
-          splitType: _selectedSplit,
+          splitType: _selectedRoutineType == RoutineType.cardio
+              ? 'Full Body'
+              : _selectedSplit,
           defaultRoutineType: _selectedRoutineType,
         ),
       ),
@@ -193,56 +195,64 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             const SizedBox(height: 32),
 
             // DIVISÃO DO TREINO
-            Text(
-              'PASSO 3: DIVISÃO DO TREINO',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.0,
+            if (_selectedRoutineType == RoutineType.cardio)
+              const Text(
+                'Na próxima tela, escolha cardio contínuo ou intervalado e configure os blocos da sua sessão.',
+              )
+            else ...[
+              Text(
+                'PASSO 3: DIVISÃO DO TREINO',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Como você quer organizar seus dias na academia?',
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _splits.map((split) {
-                final isSelected = _selectedSplit == split;
-                return ChoiceChip(
-                  label: Text(
-                    split,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? AppColors.onPrimary
-                          : AppColors.textPrimary,
+              const SizedBox(height: 8),
+              Text(
+                'Como você quer organizar seus dias na academia?',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _splits.map((split) {
+                  final isSelected = _selectedSplit == split;
+                  return ChoiceChip(
+                    label: Text(
+                      split == 'Full Body'
+                          ? '1 ficha · Corpo inteiro'
+                          : '${split.length} fichas · $split',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? AppColors.onPrimary
+                            : AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: Theme.of(context).colorScheme.primary,
-                  backgroundColor: AppColors.surface,
-                  side: BorderSide(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : AppColors.border,
-                  ),
-                  showCheckmark: false,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedSplit = split;
-                      });
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
+                    selected: isSelected,
+                    selectedColor: Theme.of(context).colorScheme.primary,
+                    backgroundColor: AppColors.surface,
+                    side: BorderSide(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : AppColors.border,
+                    ),
+                    showCheckmark: false,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedSplit = split;
+                        });
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+            ],
           ],
         ),
       ),

@@ -319,7 +319,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   }
 
   String _getSmartTarget(String repsString, int setIndex) {
-    String target = repsString.toLowerCase();
+    String target = repsString.toLowerCase().replaceAll('×', 'x');
     if (target.contains('x')) {
       target = target.split('x').last.trim();
     }
@@ -327,7 +327,9 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     if (target.contains('-')) {
       List<String> parts = target.split('-');
       int setsCount = _getSetsCount(repsString);
-      if (parts.length == setsCount && setIndex < parts.length) {
+      if (parts.length >= 3 &&
+          parts.length == setsCount &&
+          setIndex < parts.length) {
         return parts[setIndex].trim();
       }
     }
@@ -2916,7 +2918,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
-                                          maxLines: 4,
+                                          maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         const SizedBox(height: 4),
@@ -2946,7 +2948,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 const SizedBox(width: 4),
                                                 Expanded(
                                                   child: Text(
-                                                    'Base: ${progression.source}',
+                                                    'Ver progressão e critérios',
                                                     style: TextStyle(
                                                       color: AppColors
                                                           .textSecondary,
@@ -3243,7 +3245,15 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
                                                 .sets[setIndex]
                                           : null;
                                       var smartTarget =
-                                          prescribedSet?.targetText.trim() ??
+                                          prescribedSet?.targetText
+                                              .trim()
+                                              .replaceFirst(
+                                                RegExp(
+                                                  r'^\d+\s*[x×]\s*',
+                                                  caseSensitive: false,
+                                                ),
+                                                '',
+                                              ) ??
                                           '';
                                       if (smartTarget.isEmpty) {
                                         smartTarget = _getSmartTarget(

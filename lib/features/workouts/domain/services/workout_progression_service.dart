@@ -46,6 +46,16 @@ class WorkoutProgressionService {
     final targets = _targetsFor(exercise, previousSets.length);
     final lastPerformance = _formatPerformance(previousSets);
 
+    if (targets.isEmpty) {
+      return ExerciseProgressionSuggestion(
+        lastPerformance: lastPerformance,
+        nextTarget: 'Esta prescrição não tem séries de trabalho para avaliar.',
+        hasHistory: true,
+        source: source,
+        reason: 'Aquecimentos não entram na avaliação de progressão.',
+      );
+    }
+
     if (mode == WorkoutProgressionMode.followPlan) {
       return ExerciseProgressionSuggestion(
         lastPerformance: lastPerformance,
@@ -220,7 +230,7 @@ class WorkoutProgressionService {
       return null;
     }
     for (final set in sets.reversed) {
-      if (set.targetRir != null) {
+      if (set.kind == WorkoutSetKind.working && set.targetRir != null) {
         return set.targetRir;
       }
     }
@@ -231,8 +241,10 @@ class WorkoutProgressionService {
     final advancedSets =
         exercise.advancedPrescription.primaryPrescription?.sets ?? const [];
     final targets = <String>[
-      exercise.reps,
-      ...advancedSets.map((set) => set.target),
+      if (advancedSets.isEmpty) exercise.reps,
+      ...advancedSets
+          .where((set) => set.kind == WorkoutSetKind.working)
+          .map((set) => set.target),
     ].join(' ');
     return RegExp(
       r'\b\d+\s*(?:s|seg|segs|segundo|segundos|min|minuto|minutos)\b',
@@ -257,11 +269,12 @@ class WorkoutProgressionService {
     if (advancedSets.isNotEmpty) {
       final fallback = _parseRepRange(exercise.reps);
       return advancedSets
+          .where((set) => set.kind == WorkoutSetKind.working)
           .map((set) => _tryParseRepRange(set.target) ?? fallback)
           .toList(growable: false);
     }
 
-    final raw = exercise.reps.trim().toLowerCase();
+    final raw = exercise.reps.trim().toLowerCase().replaceAll('×', 'x');
     final values = _numbers(raw);
     if (!raw.contains('x') &&
         values.length >= 3 &&
@@ -287,6 +300,7 @@ class WorkoutProgressionService {
   }
 
   _RepRange? _tryParseRepRange(String raw) {
+    raw = raw.replaceAll('×', 'x');
     final target = raw.toLowerCase().contains('x')
         ? raw.toLowerCase().split('x').last
         : raw.toLowerCase();

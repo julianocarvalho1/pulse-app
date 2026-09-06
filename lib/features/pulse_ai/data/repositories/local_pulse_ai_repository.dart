@@ -26,6 +26,9 @@ class LocalPulseAiRepository implements PulseAiRepository {
 
   PulseAiResponse _explainWorkout(PulseAiRequest request) {
     final routine = request.routine!;
+    if (routine.exercises.isEmpty && routine.cardio.isNotEmpty) {
+      return _explainCardio(request);
+    }
     final insights = <PulseAiInsight>[
       PulseAiInsight(
         title: 'Estrutura da ficha',
@@ -87,6 +90,57 @@ class LocalPulseAiRepository implements PulseAiRepository {
       summary:
           'Uma leitura objetiva da estrutura atual, sem modificar nenhum exercício.',
       insights: insights,
+    );
+  }
+
+  PulseAiResponse _explainCardio(PulseAiRequest request) {
+    final insights = <PulseAiInsight>[];
+    var totalSeconds = 0;
+    for (final cardio in request.routine!.cardio) {
+      final plan = cardio.plan;
+      final intervals = plan.intervals;
+      if (plan.isInterval && intervals != null) {
+        totalSeconds += intervals.totalDurationSeconds;
+        insights.add(
+          PulseAiInsight(
+            title: '${cardio.modality.label} · Entenda os blocos',
+            body:
+                'Aquecimento: ${intervals.warmUpMinutes} min. Depois, repita ${intervals.cycles} ciclos de ${intervals.effortSeconds} s de esforço e ${intervals.recoverySeconds} s de recuperação. Termine com ${intervals.coolDownMinutes} min de volta à calma. A recuperação faz parte de cada ciclo, inclusive do último; ela não encerra a sessão.',
+          ),
+        );
+        insights.add(
+          PulseAiInsight(
+            title: 'Como o tempo é calculado',
+            body:
+                'Os ciclos somam ${intervals.cycles * (intervals.effortSeconds + intervals.recoverySeconds)} s: esforço e recuperação juntos. O total também inclui aquecimento e volta à calma. Intervalado descreve a alternância dos blocos; não significa automaticamente esforço máximo.',
+          ),
+        );
+      } else {
+        totalSeconds += cardio.plannedDurationMinutes * 60;
+        insights.add(
+          PulseAiInsight(
+            title: '${cardio.modality.label} · Cardio contínuo',
+            body:
+                'A duração cadastrada é ${cardio.plannedDurationMinutes} min, em um bloco sem ciclos programados de esforço e recuperação. Aquecimento e volta à calma não foram acrescentados automaticamente; confira se já estão incluídos na orientação recebida.',
+          ),
+        );
+      }
+      insights.add(
+        PulseAiInsight(
+          title: 'Intensidade e registro',
+          body:
+              'A intensidade cadastrada é ${plan.intensity.label.toLowerCase()}. O PULSE não deduz velocidade ou carga apenas dessa classificação. Ao finalizar, registre o tempo realmente feito e eventuais ajustes nas anotações para distinguir o planejado do realizado.',
+        ),
+      );
+    }
+    return PulseAiResponse(
+      mode: request.mode,
+      title: 'Entenda seu cardio',
+      summary:
+          'Tempo planejado: ${totalSeconds ~/ 60} min${totalSeconds % 60 == 0 ? '' : ' e ${totalSeconds % 60} s'}. Explicação dos blocos, sem alterar sua prescrição.',
+      insights: insights,
+      fallbackMessage:
+          'Explicação do plano feita no aparelho, sem consumir a cota de IA.',
     );
   }
 
@@ -157,6 +211,9 @@ class LocalPulseAiRepository implements PulseAiRepository {
 
   PulseAiResponse _reviewRoutine(PulseAiRequest request) {
     final routine = request.routine!;
+    if (routine.exercises.isEmpty && routine.cardio.isNotEmpty) {
+      return _explainCardio(request);
+    }
     final muscleCounts = <String, int>{};
     for (final exercise in routine.exercises) {
       final muscle = exercise.muscle.trim().isEmpty

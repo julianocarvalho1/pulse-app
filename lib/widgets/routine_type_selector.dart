@@ -8,10 +8,12 @@ class RoutineTypeSelector extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    this.addContent = false,
   });
 
   final RoutineType value;
   final ValueChanged<RoutineType> onChanged;
+  final bool addContent;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +21,7 @@ class RoutineTypeSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'TIPO DE TREINO',
+          addContent ? 'TOQUE PARA ADICIONAR À FICHA' : 'TIPO DE TREINO',
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
@@ -96,7 +98,9 @@ class RoutineTypeSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          value.description,
+          addContent
+              ? 'Cardio abre as opções contínuo e intervalado. O conteúdo atual é mantido.'
+              : value.description,
           style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,

@@ -35,19 +35,19 @@ final nextRoutineToTrainProvider = Provider<WorkoutRoutine?>((ref) {
     return null;
   }
 
-  final routines =
-      library.routines
-          .where((routine) => routine.groupName == library.activeProgramName)
-          .toList()
-        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  final routines = library.routines
+      .where((routine) => routine.groupName == library.activeProgramName)
+      .toList();
 
   if (routines.isEmpty) {
     return null;
   }
 
   WorkoutHistoryItem? lastProgramWorkout;
-  for (final item in history) {
-    if (routines.any((routine) => routine.name == item.routineName)) {
+  final recentHistory = [...history]..sort((a, b) => b.date.compareTo(a.date));
+  for (final item in recentHistory) {
+    if (!item.isIncomplete &&
+        routines.any((routine) => routine.name == item.routineName)) {
       lastProgramWorkout = item;
       break;
     }

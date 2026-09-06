@@ -8,8 +8,46 @@ import 'package:pulse/features/pulse_ai/data/repositories/remote_pulse_ai_reposi
 import 'package:pulse/features/pulse_ai/domain/models/pulse_ai_models.dart';
 import 'package:pulse/features/pulse_ai/domain/repositories/pulse_ai_repository.dart';
 import 'package:pulse/models/exercise.dart';
+import 'package:pulse/features/workouts/domain/models/cardio_log.dart';
 
 void main() {
+  test('explica cardio intervalado sem chamada remota e soma blocos', () async {
+    final client = _RecordingClient(
+      const PulseAiRemoteAnswer(answer: 'não usar', responseId: 'unused'),
+    );
+    final repository = RemotePulseAiRepository(client: client);
+    for (final mode in [
+      PulseAiAssistantMode.explainWorkout,
+      PulseAiAssistantMode.reviewRoutine,
+    ]) {
+      final response = await repository.analyze(
+        PulseAiRequest(
+          mode: mode,
+          routine: WorkoutRoutine(
+            id: 'cardio',
+            name: 'Cardio',
+            focus: '',
+            exercises: const [],
+            cardio: const [
+              RoutineCardio(
+                id: 'c',
+                modality: CardioModality.treadmill,
+                plannedDurationMinutes: 19,
+                plan: CardioPlan(
+                  format: CardioFormat.intervals,
+                  intervals: CardioIntervalPlan(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(client.lastRequest, isNull);
+      expect(response.summary, contains('19 min'));
+      expect(response.insights.map((i) => i.body).join(' '), contains('540 s'));
+      expect(response.generatedLocally, isTrue);
+    }
+  });
   const local = LocalPulseAiRepository(responseDelay: Duration.zero);
 
   const current = Exercise(

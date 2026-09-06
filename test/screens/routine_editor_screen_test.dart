@@ -31,35 +31,11 @@ void main() {
         ),
       ),
     );
-    await tester.scrollUntilVisible(
-      find.text('ADICIONAR CARDIO'),
-      250,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('ADICIONAR CARDIO'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Cardio'),
-      -250,
-      scrollable: find.byType(Scrollable).first,
-    );
+    expect(find.text('ADICIONAR CARDIO'), findsNothing);
+    await tester.ensureVisible(find.text('Cardio'));
     await tester.tap(find.text('Cardio'));
     await tester.pumpAndSettle();
-      expect(find.text('Remover musculação?'), findsNothing);
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Supino teste'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Supino teste'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('ADICIONAR CARDIO'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('ADICIONAR CARDIO'));
-    await tester.pumpAndSettle();
+    expect(find.text('Remover musculação?'), findsNothing);
     await tester.tap(
       find.byKey(const Key('cardio-template-editable_intervals')),
     );

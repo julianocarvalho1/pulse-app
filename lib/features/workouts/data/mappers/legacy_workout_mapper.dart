@@ -3,6 +3,19 @@ import '../../domain/models/workout_exercise_config.dart';
 class LegacyWorkoutMapper {
   const LegacyWorkoutMapper._();
 
+  static String targetForSet(String raw, int index) {
+    final target = raw.trim().replaceFirst(
+      RegExp(r'^\s*\d+\s*[x×]\s*', caseSensitive: false),
+      '',
+    );
+    final parts = target.split(RegExp(r'\s*[-–]\s*'));
+    if (parts.length >= 3 &&
+        parts.every((part) => int.tryParse(part) != null)) {
+      return parts[index.clamp(0, parts.length - 1)];
+    }
+    return target;
+  }
+
   static WorkoutExerciseConfig parseExerciseConfig({
     required String reps,
     required String rest,

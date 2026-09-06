@@ -91,13 +91,9 @@ class WorkoutState {
       return null;
     }
 
-    final programRoutines =
-        myRoutines
-            .where((routine) => routine.groupName == activeProgramName)
-            .toList()
-          ..sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          );
+    final programRoutines = myRoutines
+        .where((routine) => routine.groupName == activeProgramName)
+        .toList();
 
     if (programRoutines.isEmpty) {
       return null;
@@ -105,12 +101,14 @@ class WorkoutState {
 
     WorkoutHistoryItem? lastProgramWorkout;
 
-    for (final session in history) {
+    final recentHistory = [...history]
+      ..sort((a, b) => b.date.compareTo(a.date));
+    for (final session in recentHistory) {
       final belongsToProgram = programRoutines.any(
         (routine) => routine.name == session.routineName,
       );
 
-      if (belongsToProgram) {
+      if (belongsToProgram && !session.isIncomplete) {
         lastProgramWorkout = session;
         break;
       }

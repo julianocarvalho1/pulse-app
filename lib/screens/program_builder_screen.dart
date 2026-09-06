@@ -39,12 +39,21 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
   void initState() {
     super.initState();
     _generateDraftRoutines();
+    if (widget.defaultRoutineType == RoutineType.cardio) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _draftRoutines.isNotEmpty) _editDraftCardio(0);
+      });
+    }
   }
 
   void _generateDraftRoutines() {
     List<String> routineNames = [];
     if (widget.splitType == 'Full Body') {
-      routineNames = ['Treino Único'];
+      routineNames = [
+        widget.defaultRoutineType == RoutineType.cardio
+            ? 'Sessão de cardio'
+            : 'Treino Único',
+      ];
     } else if (widget.splitType == 'AB') {
       routineNames = ['Treino A', 'Treino B'];
     } else if (widget.splitType == 'ABC') {
@@ -461,6 +470,9 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                       _draftRoutines[routineIndex] = routine.copyWith(
                         exercises: updatedExercises,
                       );
+                      _draftTypes[routine.id] = routine.cardio.isEmpty
+                          ? RoutineType.strength
+                          : RoutineType.mixed;
                     });
 
                     Navigator.pop(ctx);
@@ -682,72 +694,12 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
 
   Future<void> _changeDraftType(int routineIndex, RoutineType nextType) async {
     final routine = _draftRoutines[routineIndex];
-    final currentType = _draftTypes[routine.id] ?? routine.type;
-    if (currentType == nextType) {
-      return;
+    if (nextType == RoutineType.cardio ||
+        (nextType == RoutineType.mixed && routine.exercises.isNotEmpty)) {
+      await _editDraftCardio(routineIndex);
+    } else {
+      _showExerciseSelector(routineIndex);
     }
-
-    if (nextType == RoutineType.cardio && routine.exercises.isNotEmpty) {
-      final confirmed = await _confirmContentRemoval(
-        title: 'Remover musculação desta ficha?',
-        message:
-            'Ao escolher Cardio, os exercícios de musculação desta ficha serão removidos.',
-      );
-      if (!confirmed || !mounted) {
-        return;
-      }
-      setState(() {
-        _draftTypes[routine.id] = nextType;
-        _draftRoutines[routineIndex] = routine.copyWith(
-          exercises: const <Exercise>[],
-        );
-      });
-      return;
-    }
-
-    if (nextType == RoutineType.strength && routine.cardio.isNotEmpty) {
-      final confirmed = await _confirmContentRemoval(
-        title: 'Remover cardio desta ficha?',
-        message:
-            'Ao escolher Musculação, as etapas de cardio desta ficha serão removidas.',
-      );
-      if (!confirmed || !mounted) {
-        return;
-      }
-      setState(() {
-        _draftTypes[routine.id] = nextType;
-        _draftRoutines[routineIndex] = routine.copyWith(
-          cardio: const <RoutineCardio>[],
-        );
-      });
-      return;
-    }
-
-    setState(() => _draftTypes[routine.id] = nextType);
-  }
-
-  Future<bool> _confirmContentRemoval({
-    required String title,
-    required String message,
-  }) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: Text(title),
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('CANCELAR'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('REMOVER'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
   }
 
   Future<void> _editDraftCardio(
@@ -758,7 +710,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
     final result = await showRoutineCardioEditorSheet(
       context,
       existing: existing,
-      initialPurpose: routine.type == RoutineType.cardio
+      initialPurpose: routine.exercises.isEmpty
           ? CardioPurpose.standalone
           : CardioPurpose.postWorkout,
     );
@@ -777,6 +729,9 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
         updated.add(result);
       }
       _draftRoutines[routineIndex] = routine.copyWith(cardio: updated);
+      _draftTypes[routine.id] = routine.exercises.isEmpty
+          ? RoutineType.cardio
+          : RoutineType.mixed;
     });
   }
 
@@ -942,6 +897,7 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                 ),
                 const SizedBox(height: 20),
                 RoutineTypeSelector(
+                  addContent: true,
                   value: type,
                   onChanged: (value) => _changeDraftType(index, value),
                 ),
@@ -1092,6 +1048,11 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                       _draftRoutines[index] = current.copyWith(
                                         exercises: updated,
                                       );
+                                      if (updated.isEmpty &&
+                                          current.cardio.isNotEmpty) {
+                                        _draftTypes[current.id] =
+                                            RoutineType.cardio;
+                                      }
                                     });
                                   },
                                   icon: const Icon(
@@ -1201,6 +1162,11 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                                   _draftRoutines[index] = current.copyWith(
                                     cardio: updated,
                                   );
+                                  if (updated.isEmpty &&
+                                      current.exercises.isNotEmpty) {
+                                    _draftTypes[current.id] =
+                                        RoutineType.strength;
+                                  }
                                 });
                               },
                               icon: const Icon(
@@ -1212,15 +1178,6 @@ class _ProgramBuilderScreenState extends ConsumerState<ProgramBuilderScreen> {
                         ),
                       );
                     }),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _editDraftCardio(index),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('ADICIONAR CARDIO'),
-                    ),
-                  ),
                 ],
               ],
             ),

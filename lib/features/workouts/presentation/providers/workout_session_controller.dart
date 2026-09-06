@@ -963,7 +963,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     return List<ActiveWorkoutSet>.generate(config.seriesCount, (index) {
       return _activeSetFromPrescription(
         setNumber: index + 1,
-        targetText: exercise.reps,
+        targetText: LegacyWorkoutMapper.targetForSet(exercise.reps, index),
       );
     });
   }

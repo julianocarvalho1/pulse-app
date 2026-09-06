@@ -44,23 +44,12 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
   }
 
   Future<void> _changeType(RoutineType nextType) async {
-    if (nextType == _type) {
+    if (nextType == RoutineType.cardio ||
+        (nextType == RoutineType.mixed && _exercises.isNotEmpty)) {
+      await _editCardio();
       return;
     }
-
-    if (nextType == RoutineType.cardio && _exercises.isNotEmpty) {
-      setState(() => _type = RoutineType.mixed);
-      _showMessage('Musculação mantida. Adicione o cardio abaixo.');
-      return;
-    }
-
-    if (nextType == RoutineType.strength && _cardio.isNotEmpty) {
-      setState(() => _type = RoutineType.mixed);
-      _showMessage('Cardio mantido. Adicione os exercícios abaixo.');
-      return;
-    }
-
-    setState(() => _type = nextType);
+    await _pickExercise();
   }
 
   Future<void> _pickExercise() async {
@@ -87,7 +76,10 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
       return;
     }
 
-    setState(() => _exercises.add(selected));
+    setState(() {
+      _exercises.add(selected);
+      _type = _cardio.isNotEmpty ? RoutineType.mixed : RoutineType.strength;
+    });
   }
 
   Future<void> _editExercisePrescription(int index) async {
@@ -217,6 +209,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                   ),
                   const SizedBox(height: 20),
                   RoutineTypeSelector(
+                    addContent: true,
                     value: _type,
                     onChanged: (value) => _changeType(value),
                   ),
@@ -277,9 +270,8 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                           subtitle: Text(
                             exercise.advancedPrescription.isEmpty
                                 ? '${exercise.reps} • ${exercise.rest}'
-                                : '${exercise.advancedPrescription.summary}\nToque para editar séries, RIR, cadência e técnicas',
+                                : exercise.advancedPrescription.summary,
                           ),
-                          isThreeLine: !exercise.advancedPrescription.isEmpty,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
@@ -290,7 +282,13 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                               IconButton(
                                 tooltip: 'Remover',
                                 onPressed: () {
-                                  setState(() => _exercises.removeAt(index));
+                                  setState(() {
+                                    _exercises.removeAt(index);
+                                    if (_exercises.isEmpty &&
+                                        _cardio.isNotEmpty) {
+                                      _type = RoutineType.cardio;
+                                    }
+                                  });
                                 },
                                 icon: const Icon(
                                   Icons.delete_outline_rounded,
@@ -324,7 +322,7 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                   icon: Icons.directions_run_rounded,
                   title: 'Nenhum cardio adicionado',
                   message:
-                      'Adicione esteira, bicicleta, corrida ou outra modalidade.',
+                      'Toque em Cardio no topo para escolher a modalidade e os blocos.',
                 )
               else
                 ..._cardio.asMap().entries.map((entry) {
@@ -355,7 +353,12 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                         trailing: IconButton(
                           tooltip: 'Remover',
                           onPressed: () {
-                            setState(() => _cardio.removeAt(index));
+                            setState(() {
+                              _cardio.removeAt(index);
+                              if (_cardio.isEmpty && _exercises.isNotEmpty) {
+                                _type = RoutineType.strength;
+                              }
+                            });
                           },
                           icon: const Icon(
                             Icons.delete_outline_rounded,
@@ -366,12 +369,6 @@ class _RoutineEditorScreenState extends ConsumerState<RoutineEditorScreen> {
                     ),
                   );
                 }),
-              const SizedBox(height: 4),
-              OutlinedButton.icon(
-                onPressed: () => _editCardio(),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('ADICIONAR CARDIO'),
-              ),
             ],
           ],
         ),

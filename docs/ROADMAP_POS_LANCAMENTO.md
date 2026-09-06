@@ -1,6 +1,39 @@
 # Roadmap pós-lançamento do PULSE
 
-Atualizado em 3 de setembro de 2026.
+Atualizado em 6 de setembro de 2026.
+
+## Ajustes após testes físicos — 6 de setembro
+
+- [x] Campo de repetições por série sem o multiplicador `3x`; preservar faixa e tempo.
+- [x] Progressão compara somente séries de trabalho na prescrição e no histórico; aquecimento não bloqueia nem interfere no RIR.
+- [x] Próxima ficha respeita a ordem salva do programa, não a alfabética; sessões incompletas e extras não avançam o ciclo.
+- [x] Cardio no topo abre diretamente o editor e mantém a musculação; remover botão redundante inferior, também no construtor.
+- [x] Criação só de cardio pula divisão ABC e abre configuração de blocos.
+- [x] Enxugar texto da sessão e da edição; critérios completos da progressão continuam disponíveis por toque.
+- [x] Explicação de fichas só de cardio calcula tempo e explica ciclos localmente, sem chamada Gemini.
+- [ ] Revalidar no aparelho os relatos de progressão travada e salto na sequência, com a ficha real do usuário.
+- [ ] Aprovar visualmente a densidade das telas e a descoberta do cardio no aparelho.
+- [ ] Instalar o novo APK debug quando o celular estiver conectado; não alterar o app público nem apagar dados.
+
+A primeira rodada automatizada desta revisão passou com 252 testes. A validação
+física permanece pendente; isso ainda não é uma liberação para publicação.
+
+### Reteste dirigido no aparelho
+
+1. Em uma ficha com `3x 10-12`, cada linha deve mostrar `10-12` no alvo de reps.
+2. Concluir todas as séries **de trabalho de um exercício na mesma sessão**,
+   incluindo aquecimentos separados. No próximo treino, conferir os critérios
+   da progressão. Completar cinco sessões não equivale a completar cinco séries;
+   a sugestão respeita a faixa, o modo escolhido e o esforço registrado e não
+   precisa recomendar aumento de carga em todos os casos.
+3. Finalizar a primeira ficha do programa de cinco dias e conferir se a próxima
+   é a segunda da lista. Uma sessão extra não deve alterar essa sequência.
+4. Editar uma ficha de musculação, tocar Cardio no topo, cancelar e conferir que
+   nada mudou; repetir e salvar um intervalado, verificando a ficha mista.
+5. Criar programa só de cardio: não deve mostrar ABC; avançar deve abrir os
+   modelos contínuo/intervalado. Conferir edição, cancelamento e salvamento.
+6. No assistente de uma ficha só de cardio, conferir o total de tempo com os
+   blocos cadastrados. A explicação deve funcionar sem chamada online.
 
 Este documento é a referência única para as próximas versões do PULSE. Uma
 funcionalidade só muda de fase quando os critérios de conclusão da fase atual
