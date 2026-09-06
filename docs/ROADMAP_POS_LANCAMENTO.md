@@ -11,12 +11,13 @@ Atualizado em 6 de setembro de 2026.
 - [x] Criação só de cardio pula divisão ABC e abre configuração de blocos.
 - [x] Enxugar texto da sessão e da edição; critérios completos da progressão continuam disponíveis por toque.
 - [x] Explicação de fichas só de cardio calcula tempo e explica ciclos localmente, sem chamada Gemini.
-- [ ] Revalidar no aparelho os relatos de progressão travada e salto na sequência, com a ficha real do usuário.
-- [ ] Aprovar visualmente a densidade das telas e a descoberta do cardio no aparelho.
-- [ ] Instalar o novo APK debug quando o celular estiver conectado; não alterar o app público nem apagar dados.
+- [x] Revalidar no aparelho os relatos de progressão travada e salto na sequência, com a ficha real do usuário (confirmação do usuário).
+- [x] Aprovar visualmente a densidade das telas e a descoberta do cardio no aparelho (retorno: ficou melhor aparentemente).
+- [x] Instalar o novo APK debug por atualização, sem alterar o app público nem apagar dados.
 
-A primeira rodada automatizada desta revisão passou com 252 testes. A validação
-física permanece pendente; isso ainda não é uma liberação para publicação.
+A rodada final automatizada passou com 253 testes e análise de código sem problemas.
+O usuário confirmou o reteste físico e autorizou preparar a atualização na Play.
+Envio e aprovação na loja devem ser registrados separadamente após confirmação.
 
 ### Reteste dirigido no aparelho
 
