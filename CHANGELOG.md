@@ -6,6 +6,8 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ### Corrigido
 
+- botão **Salvar cardio** agora reserva a área da barra de navegação do Android
+  e permanece totalmente visível na parte inferior da tela;
 - adicionar cardio na edição da ficha preserva os exercícios de musculação e
   transforma a ficha em mista; a ação está disponível sem trocar o tipo antes;
 - seleção de alternativas limitada ao mesmo grupo muscular, com verificação

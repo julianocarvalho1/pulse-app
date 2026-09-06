@@ -270,9 +270,13 @@ class _RoutineCardioEditorSheetState extends State<RoutineCardioEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final navigationInset = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomInset = keyboardInset > navigationInset
+        ? keyboardInset
+        : navigationInset;
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, bottomInset + 20),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, bottomInset + 28),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
