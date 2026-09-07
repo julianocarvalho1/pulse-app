@@ -189,13 +189,6 @@ class _RoutineCardioEditorSheetState extends State<RoutineCardioEditorSheet> {
         'Trecho repetido: ${_formatCardioSeconds(cycleSeconds)}.';
   }
 
-  int get _resolvedDurationMinutes {
-    if (_format == CardioFormat.intervals) {
-      return _readIntervals().totalDurationMinutes;
-    }
-    return _parseInt(_durationController.text) ?? 0;
-  }
-
   String? _validateDuration(String? value) {
     final minutes = _parseInt(value);
     if (minutes == null || minutes <= 0) {
