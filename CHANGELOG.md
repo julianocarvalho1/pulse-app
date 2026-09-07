@@ -6,6 +6,11 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ### Corrigido
 
+- revisão local posterior ao envio: editor de cardio intervalado separado em
+  início (uma vez), ciclo repetido e final (uma vez), com unidades explícitas,
+  fórmula do total e exibição exata de segundos. Os planos salvos não mudam.
+  Esta revisão ainda não está no pacote 6 aprovado pela Play.
+
 - alvos de repetições por série não repetem o multiplicador da prescrição;
 - progressão exclui aquecimentos também dos alvos e do RIR prescrito;
 - sequência das fichas segue a ordem do programa e ignora sessões incompletas;

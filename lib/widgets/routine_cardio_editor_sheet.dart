@@ -173,6 +173,22 @@ class _RoutineCardioEditorSheetState extends State<RoutineCardioEditorSheet> {
     );
   }
 
+  String _formatCardioSeconds(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainder = seconds % 60;
+    return remainder == 0 ? '$minutes min' : '$minutes min $remainder s';
+  }
+
+  String get _intervalCalculation {
+    final plan = _readIntervals();
+    final cycleSeconds =
+        (plan.effortSeconds + plan.recoverySeconds) * plan.cycles;
+    return '${plan.warmUpMinutes} min de aquecimento + '
+        '${plan.cycles} × (${plan.effortSeconds} s de esforço + ${plan.recoverySeconds} s de recuperação) '
+        '+ ${plan.coolDownMinutes} min de desaceleração.\n'
+        'Trecho repetido: ${_formatCardioSeconds(cycleSeconds)}.';
+  }
+
   int get _resolvedDurationMinutes {
     if (_format == CardioFormat.intervals) {
       return _readIntervals().totalDurationMinutes;
@@ -482,70 +498,76 @@ class _RoutineCardioEditorSheetState extends State<RoutineCardioEditorSheet> {
                 ),
               ] else ...<Widget>[
                 const _SectionTitle('BLOCOS DO INTERVALADO'),
-                const SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: _IntegerField(
-                        key: const Key('cardio-warm-up'),
-                        controller: _warmUpController,
-                        label: 'Aquecimento',
-                        suffix: 'min',
-                        validator: _validateIntervalMinutes,
-                        onChanged: (_) => _markCustomized(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _IntegerField(
-                        key: const Key('cardio-cool-down'),
-                        controller: _coolDownController,
-                        label: 'Desaceleração',
-                        suffix: 'min',
-                        validator: _validateIntervalMinutes,
-                        onChanged: (_) => _markCustomized(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: _IntegerField(
-                        key: const Key('cardio-effort'),
-                        controller: _effortController,
-                        label: 'Esforço',
-                        suffix: 's',
-                        validator: _validateIntervalSeconds,
-                        onChanged: (_) => _markCustomized(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _IntegerField(
-                        key: const Key('cardio-recovery'),
-                        controller: _recoveryController,
-                        label: 'Recuperação',
-                        suffix: 's',
-                        validator: _validateIntervalSeconds,
-                        onChanged: (_) => _markCustomized(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+                const _SectionTitle('1. INÍCIO · UMA VEZ'),
+                const SizedBox(height: 8),
                 _IntegerField(
-                  key: const Key('cardio-cycles'),
-                  controller: _cyclesController,
-                  label: 'Quantidade de ciclos',
-                  suffix: 'x',
-                  validator: _validateCycles,
+                  key: const Key('cardio-warm-up'),
+                  controller: _warmUpController,
+                  label: 'Aquecimento',
+                  suffix: 'min',
+                  validator: _validateIntervalMinutes,
                   onChanged: (_) => _markCustomized(),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _SectionTitle('2. CICLO QUE SE REPETE'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Cada ciclo = esforço + recuperação. Só este trecho se repete.',
+                      ),
+                      const SizedBox(height: 12),
+                      _IntegerField(
+                        key: const Key('cardio-effort'),
+                        controller: _effortController,
+                        label: 'Esforço por ciclo',
+                        suffix: 'segundos',
+                        validator: _validateIntervalSeconds,
+                        onChanged: (_) => _markCustomized(),
+                      ),
+                      const SizedBox(height: 10),
+                      _IntegerField(
+                        key: const Key('cardio-recovery'),
+                        controller: _recoveryController,
+                        label: 'Recuperação por ciclo',
+                        suffix: 'segundos',
+                        validator: _validateIntervalSeconds,
+                        onChanged: (_) => _markCustomized(),
+                      ),
+                      const SizedBox(height: 10),
+                      _IntegerField(
+                        key: const Key('cardio-cycles'),
+                        controller: _cyclesController,
+                        label: 'Repetir este ciclo',
+                        suffix: 'vezes',
+                        validator: _validateCycles,
+                        onChanged: (_) => _markCustomized(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const _SectionTitle('3. FINAL · UMA VEZ'),
+                const SizedBox(height: 8),
+                _IntegerField(
+                  key: const Key('cardio-cool-down'),
+                  controller: _coolDownController,
+                  label: 'Desaceleração',
+                  suffix: 'min',
+                  validator: _validateIntervalMinutes,
+                  onChanged: (_) => _markCustomized(),
+                ),
+                const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -554,9 +576,20 @@ class _RoutineCardioEditorSheetState extends State<RoutineCardioEditorSheet> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: Text(
-                    'Duração calculada: $_resolvedDurationMinutes min',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Duração calculada: ${_formatCardioSeconds(_readIntervals().totalDurationSeconds)}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(_intervalCalculation),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Aquecimento e desaceleração não se repetem. A recuperação está incluída em cada ciclo, inclusive no último.',
+                      ),
+                    ],
                   ),
                 ),
               ],

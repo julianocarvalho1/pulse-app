@@ -48,6 +48,25 @@ void main() {
 
     expect(find.text('BLOCOS DO INTERVALADO'), findsOneWidget);
     expect(find.text('Duração calculada: 19 min'), findsOneWidget);
+    expect(find.text('1. INÍCIO · UMA VEZ'), findsOneWidget);
+    expect(find.text('2. CICLO QUE SE REPETE'), findsOneWidget);
+    expect(find.text('3. FINAL · UMA VEZ'), findsOneWidget);
+    expect(find.textContaining('Trecho repetido: 9 min.'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('cardio-warm-up'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('cardio-effort'))).dy),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const Key('cardio-cycles'))).dy,
+      lessThan(tester.getTopLeft(find.byKey(const Key('cardio-cool-down'))).dy),
+    );
+
+    await tester.ensureVisible(find.byKey(const Key('cardio-recovery')));
+    await tester.enterText(find.byKey(const Key('cardio-recovery')), '31');
+    await tester.pump();
+    expect(find.text('Duração calculada: 16 min 6 s'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('cardio-recovery')), '60');
+    await tester.pump();
 
     await tester.ensureVisible(find.byKey(const Key('cardio-cycles')));
     await tester.enterText(find.byKey(const Key('cardio-cycles')), '4');
