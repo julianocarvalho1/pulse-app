@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../features/workouts/domain/models/active_workout_session.dart';
 import '../features/workouts/domain/models/cardio_log.dart';
 import '../theme/app_theme.dart';
+import 'cardio_guided_player.dart';
 
 class ActiveCardioSessionCard extends StatelessWidget {
   const ActiveCardioSessionCard({
@@ -16,7 +17,10 @@ class ActiveCardioSessionCard extends StatelessWidget {
   final int index;
   final ValueChanged<ActiveCardioEntry> onChanged;
 
-  Future<void> _openEditor(BuildContext context) async {
+  Future<void> _openEditor(
+    BuildContext context, {
+    ActiveCardioEntry? initial,
+  }) async {
     final result = await showModalBottomSheet<ActiveCardioEntry>(
       context: context,
       isScrollControlled: true,
@@ -25,7 +29,7 @@ class ActiveCardioSessionCard extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _ActiveCardioEditorSheet(entry: entry),
+      builder: (_) => _ActiveCardioEditorSheet(entry: initial ?? entry),
     );
 
     if (result != null && context.mounted) {
@@ -175,6 +179,35 @@ class ActiveCardioSessionCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!entry.isCompleted) ...[
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('INICIAR CARDIO GUIADO'),
+                  onPressed: () async {
+                    final seconds = await Navigator.push<int>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CardioGuidedPlayer(
+                          plan: entry.plan,
+                          minutes: entry.plannedDurationMinutes,
+                          modality: entry.modality,
+                        ),
+                      ),
+                    );
+                    if (seconds != null && context.mounted) {
+                      await _openEditor(
+                        context,
+                        initial: entry.copyWith(
+                          actualDurationMinutes: seconds ~/ 60,
+                          notes:
+                              '${entry.notes}${entry.notes.isEmpty ? '' : '\n'}Guia: ${seconds ~/ 60} min ${seconds % 60} s realizados. Revise o tempo antes de salvar.',
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
             ],
           ),
         ),

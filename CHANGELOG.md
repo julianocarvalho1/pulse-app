@@ -34,6 +34,14 @@ Todas as mudanças relevantes do PULSE serão registradas neste arquivo.
 
 ### Incluído
 
+- guia visual de cardio em teste: etapas, contagem regressiva, barra segmentada,
+  animação ilustrativa, pausa, avanço e avisos TTS opcionais;
+- tempo ativo do guia encaminhado à revisão de métricas, sem contar etapas
+  puladas; segundos exatos nas anotações (histórico continua em minutos);
+- nesta primeira versão o guia pausa ao sair do app/bloquear a tela e não
+  restaura seu cronômetro após encerramento do processo. Revisar e salvar ao sair.
+  Não incluído no AAB 6 já aprovado; requer novo pacote antes de publicação.
+
 - séries de aquecimento separadas das séries de trabalho, com identificação
   visual e descanso próprio;
 - tela curta de novidades exibida uma vez por versão;
