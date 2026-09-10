@@ -7,20 +7,20 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: WhatsNewScreen()));
 
     expect(find.text('Novidades do PULSE'), findsOneWidget);
-    expect(find.text('Versão 1.4.0'), findsOneWidget);
-    expect(find.text('Progressão mais fiel à ficha'), findsOneWidget);
+    expect(find.text('Versão 1.4.1'), findsOneWidget);
+    expect(find.text('Cardio guiado'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Cardio planejado de verdade'),
+      find.text('Intervalos mais claros'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Cardio planejado de verdade'), findsOneWidget);
+    expect(find.text('Intervalos mais claros'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Aquecimento separado do trabalho'),
+      find.text('Você escolhe a próxima ficha'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('Aquecimento separado do trabalho'), findsOneWidget);
+    expect(find.text('Você escolhe a próxima ficha'), findsOneWidget);
     expect(find.byKey(const Key('close-whats-new')), findsOneWidget);
   });
 

@@ -104,6 +104,9 @@ class WorkoutState {
     final recentHistory = [...history]
       ..sort((a, b) => b.date.compareTo(a.date));
     for (final session in recentHistory) {
+      for (final routine in programRoutines) {
+        if (routine.id == session.nextRoutineId) return routine;
+      }
       final belongsToProgram = programRoutines.any(
         (routine) => routine.name == session.routineName,
       );

@@ -482,6 +482,37 @@ void main() {
     expect(repository.clearActiveSessionCalls, 1);
   });
 
+  test(
+    'saves next routine choice while preserving incomplete status',
+    () async {
+      final repository = _SessionFakeRepository(routines: [routineB]);
+      final container = _buildContainer(repository);
+      addTearDown(container.dispose);
+      final controller = container.read(workoutControllerProvider.notifier);
+      await controller.initialization;
+      controller.startRoutine(routineB);
+      final saved = await controller.finishWorkout(
+        '05:00',
+        isIncomplete: true,
+        nextRoutineId: 'next-routine',
+        logs: [
+          ExerciseLog(
+            exerciseId: secondExercise.id,
+            exerciseName: secondExercise.name,
+            sets: const [ExerciseSet(reps: 10, weight: 40)],
+          ),
+        ],
+      );
+      expect(saved, isTrue);
+      expect(repository.history.single.nextRoutineId, 'next-routine');
+      expect(repository.history.single.isIncomplete, isTrue);
+      expect(
+        container.read(workoutControllerProvider).isWorkoutActive,
+        isFalse,
+      );
+    },
+  );
+
   test('mantém anotações do exercício ao salvar séries da sessão', () async {
     final repository = _SessionFakeRepository(
       routines: <WorkoutRoutine>[routineB],

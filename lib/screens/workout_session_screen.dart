@@ -1705,6 +1705,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
   }
 
   Future<void> _finishAndClose({
+    String? nextRoutineId,
     required WorkoutController provider,
     required List<ExerciseLog> logs,
     required List<CardioLog> cardio,
@@ -1722,6 +1723,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
     final messenger = ScaffoldMessenger.of(context);
 
     final saved = await provider.finishWorkout(
+      nextRoutineId: nextRoutineId,
       duration,
       isIncomplete: isIncomplete,
       logs: logs,
@@ -1914,16 +1916,72 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       ),
     );
 
-    if (mounted) {
-      _isFinishDialogOpen = false;
-    }
-
     if (!mounted || result == null) {
+      _isFinishDialogOpen = false;
       return;
     }
 
+    String? nextRoutineId;
+    final routines = provider.myRoutines
+        .where(
+          (routine) =>
+              provider.activeProgramName.isNotEmpty &&
+              routine.groupName == provider.activeProgramName,
+        )
+        .toList();
+    final currentIndex = routines.indexWhere(
+      (routine) => routine.name == activeSession?.routineName,
+    );
+    if (isIncomplete && currentIndex >= 0 && routines.length > 1) {
+      await _waitForTransientUiToSettle();
+      if (!mounted) return;
+      final current = routines[currentIndex];
+      final next = routines[(currentIndex + 1) % routines.length];
+      nextRoutineId = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Qual ficha fazer na próxima sessão?'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Este treino será salvo como incompleto. Manter a ficha significa começar uma nova sessão dela, não retomar apenas as atividades pendentes.',
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(dialogContext, next.id),
+                    child: Text('Seguir para ${next.name}'),
+                  ),
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext, current.id),
+                    child: Text('Manter ${current.name}'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Voltar ao treino'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || nextRoutineId == null) {
+        _isFinishDialogOpen = false;
+        return;
+      }
+    }
     // O provider só é encerrado depois que a rota do diálogo deixou a árvore.
     await _waitForTransientUiToSettle();
+    _isFinishDialogOpen = false;
 
     if (!mounted || _isRouteClosing) {
       return;
@@ -1935,6 +1993,7 @@ class _WorkoutSessionScreenState extends ConsumerState<WorkoutSessionScreen> {
       cardio: cardioLogs,
       isIncomplete: isIncomplete,
       notes: result.notes,
+      nextRoutineId: nextRoutineId,
     );
   }
 

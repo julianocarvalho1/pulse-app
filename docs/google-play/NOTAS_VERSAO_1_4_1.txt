@@ -1,0 +1,7 @@
+<pt-BR>
+Novidades no PULSE:
+• Cardio guiado com cronômetro, animação e avisos de voz opcionais.
+• Aquecimento, ciclos e desaceleração mais claros, com duração total explicada.
+• Ao salvar um treino incompleto, escolha seguir para a próxima ficha ou manter a atual.
+• Melhorias na sequência dos treinos, mantendo o histórico do que foi realizado.
+</pt-BR>

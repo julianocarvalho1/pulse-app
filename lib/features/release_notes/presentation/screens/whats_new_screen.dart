@@ -8,34 +8,22 @@ class WhatsNewScreen extends StatelessWidget {
 
   static const List<_ReleaseNote> _notes = <_ReleaseNote>[
     _ReleaseNote(
-      icon: Icons.trending_up_rounded,
-      title: 'Progressão mais fiel à ficha',
+      icon: Icons.directions_run_rounded,
+      title: 'Cardio guiado',
       description:
-          'As sugestões respeitam o limite de repetições e explicam o motivo da recomendação.',
-    ),
-    _ReleaseNote(
-      icon: Icons.sticky_note_2_outlined,
-      title: 'Anotações durante o treino',
-      description:
-          'Registre contexto por exercício, como máquina diferente ou carga não comparável.',
+          'Acompanhe cada etapa com cronômetro, animação e avisos de voz opcionais. Mantenha a tela do treino aberta para usar o guia.',
     ),
     _ReleaseNote(
       icon: Icons.timer_outlined,
-      title: 'Core e séries por tempo',
+      title: 'Intervalos mais claros',
       description:
-          'Novas sessões extras e cronômetro para pranchas, isometrias e circuitos.',
+          'Veja o aquecimento, os ciclos de esforço e recuperação e a desaceleração separados, com a duração total explicada.',
     ),
     _ReleaseNote(
-      icon: Icons.directions_run_rounded,
-      title: 'Cardio planejado de verdade',
+      icon: Icons.skip_next_rounded,
+      title: 'Você escolhe a próxima ficha',
       description:
-          'Escolha finalidade, intensidade, metas e blocos contínuos ou intervalados.',
-    ),
-    _ReleaseNote(
-      icon: Icons.local_fire_department_outlined,
-      title: 'Aquecimento separado do trabalho',
-      description:
-          'Séries de aquecimento têm alvo e descanso próprios e não alteram volume, recordes ou progressão.',
+          'Ao salvar um treino incompleto do programa ativo, escolha avançar ou manter a ficha. O histórico continua mostrando o que você realmente fez.',
     ),
   ];
 

@@ -39,6 +39,7 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
     required String notes,
     required WorkoutSessionStatus status,
     DateTime? date,
+    String? nextRoutineId,
   }) async {
     final item = WorkoutHistoryItem(
       id: id,
@@ -50,6 +51,7 @@ class WorkoutHistoryController extends Notifier<WorkoutHistoryState> {
       freeActivities: freeActivities,
       notes: notes,
       status: status,
+      nextRoutineId: nextRoutineId,
     );
 
     final previous = state.items;

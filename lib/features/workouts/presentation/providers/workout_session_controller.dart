@@ -855,6 +855,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
     required List<ExerciseLog> logs,
     List<CardioLog> cardio = const <CardioLog>[],
     String notes = '',
+    String? nextRoutineId,
   }) async {
     final session = activeSession;
 
@@ -878,6 +879,7 @@ class WorkoutSessionController extends Notifier<WorkoutSessionState> {
           .read(workoutHistoryControllerProvider.notifier)
           .addWorkout(
             id: session.startedAt.millisecondsSinceEpoch.toString(),
+            nextRoutineId: effectiveIncomplete ? nextRoutineId : null,
             routineName: state.routineName,
             duration: duration,
             exercises: logs,

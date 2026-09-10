@@ -82,6 +82,7 @@ void main() {
 
     final historyItem = WorkoutHistoryItem(
       id: 'history-1',
+      nextRoutineId: 'routine-b',
       routineName: 'Treino A',
       date: DateTime(2026, 7, 29),
       duration: '42:00',
@@ -110,6 +111,7 @@ void main() {
     await service.saveHistory([historyItem]);
 
     final loadedHistory = await service.loadHistory();
+    expect(loadedHistory.single.nextRoutineId, 'routine-b');
 
     expect(loadedHistory.single.totalVolume, 200);
     expect(loadedHistory.single.exercises.single.sets.first.reps, 10);

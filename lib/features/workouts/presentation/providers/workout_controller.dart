@@ -335,6 +335,7 @@ class WorkoutController extends Notifier<WorkoutState> {
     required List<ExerciseLog> logs,
     List<CardioLog> cardio = const <CardioLog>[],
     String notes = '',
+    String? nextRoutineId,
   }) {
     return ref
         .read(workoutSessionControllerProvider.notifier)
@@ -344,6 +345,7 @@ class WorkoutController extends Notifier<WorkoutState> {
           logs: logs,
           cardio: cardio,
           notes: notes,
+          nextRoutineId: nextRoutineId,
         );
   }
 

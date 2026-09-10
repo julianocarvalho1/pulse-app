@@ -46,6 +46,9 @@ final nextRoutineToTrainProvider = Provider<WorkoutRoutine?>((ref) {
   WorkoutHistoryItem? lastProgramWorkout;
   final recentHistory = [...history]..sort((a, b) => b.date.compareTo(a.date));
   for (final item in recentHistory) {
+    for (final routine in routines) {
+      if (routine.id == item.nextRoutineId) return routine;
+    }
     if (!item.isIncomplete &&
         routines.any((routine) => routine.name == item.routineName)) {
       lastProgramWorkout = item;

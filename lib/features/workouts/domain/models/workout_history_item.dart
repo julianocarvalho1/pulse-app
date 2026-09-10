@@ -18,6 +18,7 @@ class WorkoutHistoryItem {
     List<CardioLog> cardio = const <CardioLog>[],
     List<FreeActivityLog> freeActivities = const <FreeActivityLog>[],
     this.notes = '',
+    this.nextRoutineId,
     this.status = WorkoutSessionStatus.completed,
   }) : exercises = UnmodifiableListView<ExerciseLog>(
          List<ExerciseLog>.from(exercises),
@@ -35,6 +36,7 @@ class WorkoutHistoryItem {
   final List<CardioLog> cardio;
   final List<FreeActivityLog> freeActivities;
   final String notes;
+  final String? nextRoutineId;
   final WorkoutSessionStatus status;
 
   int get totalExercises => exercises.length;

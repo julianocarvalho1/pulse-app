@@ -109,6 +109,7 @@ class PulseBackupService {
     ],
     'workout_history': <String>[
       'id',
+      'next_routine_id',
       'routine_name',
       'date_ms',
       'duration',

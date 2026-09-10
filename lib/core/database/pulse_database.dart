@@ -12,7 +12,7 @@ class PulseDatabase {
   PulseDatabase._(this._databaseFactoryOverride, this._databasePathOverride);
 
   static const String databaseName = 'pulse.db';
-  static const int databaseVersion = 12;
+  static const int databaseVersion = 13;
 
   final DatabaseFactory? _databaseFactoryOverride;
   final String? _databasePathOverride;
@@ -126,6 +126,7 @@ class PulseDatabase {
     await db.execute('''
       CREATE TABLE workout_history (
         id TEXT PRIMARY KEY NOT NULL,
+        next_routine_id TEXT,
         routine_name TEXT NOT NULL,
         date_ms INTEGER NOT NULL,
         duration TEXT NOT NULL,
@@ -303,6 +304,14 @@ class PulseDatabase {
 
     if (oldVersion < 12) {
       await _addSetKindColumns(db);
+    }
+    if (oldVersion < 13) {
+      await _addColumnIfMissing(
+        db,
+        table: 'workout_history',
+        column: 'next_routine_id',
+        definition: 'TEXT',
+      );
     }
   }
 

@@ -290,6 +290,7 @@ class WorkoutLocalService {
         WorkoutHistoryItem(
           id: historyId,
           routineName: historyRow['routine_name']?.toString() ?? '',
+          nextRoutineId: historyRow['next_routine_id']?.toString(),
           date: DateTime.fromMillisecondsSinceEpoch(
             _readInt(historyRow['date_ms']),
           ),
@@ -619,6 +620,7 @@ class WorkoutLocalService {
     await executor.insert('workout_history', {
       'id': item.id,
       'routine_name': item.routineName,
+      'next_routine_id': item.nextRoutineId,
       'date_ms': item.date.millisecondsSinceEpoch,
       'duration': item.duration,
       'notes': item.notes,

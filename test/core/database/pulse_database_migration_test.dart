@@ -7,6 +7,47 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('v12 preserves history and adds nullable next routine choice', () async {
+    sqfliteFfiInit();
+    final directory = await Directory.systemTemp.createTemp(
+      'pulse-v12-choice-',
+    );
+    final path = '${directory.path}${Platform.pathSeparator}pulse.db';
+    final legacy = await databaseFactoryFfi.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: 12,
+        onCreate: (db, _) async {
+          await db.execute(
+            'CREATE TABLE workout_history (id TEXT PRIMARY KEY, routine_name TEXT, status TEXT)',
+          );
+          await db.insert('workout_history', {
+            'id': 'old',
+            'routine_name': 'A',
+            'status': 'incomplete',
+          });
+        },
+      ),
+    );
+    await legacy.close();
+    final database = PulseDatabase(
+      databaseFactoryOverride: databaseFactoryFfi,
+      databasePathOverride: path,
+    );
+    addTearDown(() async {
+      await database.close();
+      await directory.delete(recursive: true);
+    });
+    final db = await database.database;
+    final row = (await db.query('workout_history')).single;
+    expect(row['id'], 'old');
+    expect(row['status'], 'incomplete');
+    expect(row.containsKey('next_routine_id'), isTrue);
+    expect(row['next_routine_id'], isNull);
+    await db.update('workout_history', {'next_routine_id': 'b'});
+    expect((await db.query('workout_history')).single['next_routine_id'], 'b');
+  });
+
   test('migra da versão 9 preservando séries já registradas', () async {
     sqfliteFfiInit();
     final directory = await Directory.systemTemp.createTemp(

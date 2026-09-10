@@ -5,7 +5,7 @@ class ReleaseNotesLocalService {
     Future<SharedPreferences> Function()? preferencesLoader,
   }) : _preferencesLoader = preferencesLoader ?? SharedPreferences.getInstance;
 
-  static const String currentRelease = '1.4.0';
+  static const String currentRelease = '1.4.1';
   static const String _seenReleaseKey = 'release_notes_seen_version';
 
   final Future<SharedPreferences> Function() _preferencesLoader;

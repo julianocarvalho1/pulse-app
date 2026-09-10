@@ -49,13 +49,9 @@ void main() {
     await tester.pump();
     expect(find.text('Recuperação · ciclo 1 de 1'), findsWidgets);
     expect(spoken.any((text) => text.contains('Recuperação')), isTrue);
-    tester.binding.handleAppLifecycleStateChanged(
-      AppLifecycleState.inactive,
-    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
-    tester.binding.handleAppLifecycleStateChanged(
-      AppLifecycleState.resumed,
-    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text('Iniciar / continuar'), findsOneWidget);
     await tester.tap(find.text('Iniciar / continuar'));
